@@ -61,7 +61,12 @@ package com.minarto.controls {
 			if(_data == $v)	return;
 			delBind();
 			super.data = $v;
-			setBind();
+			addBind();
+		}
+		
+		
+		public function destroy():void{
+			delBind();
 		}
 		
 		
@@ -69,7 +74,7 @@ package com.minarto.controls {
 			if(_data == $data)	return;
 			delBind();
 			_data = $data;
-			setBind();
+			addBind();
         }
 		
 		
@@ -77,7 +82,7 @@ package com.minarto.controls {
 		}
 		
 		
-		protected function setBind():void{
+		protected function addBind():void{
 		}
 		
 		

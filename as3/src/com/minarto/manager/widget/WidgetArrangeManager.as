@@ -130,10 +130,8 @@ package com.minarto.manager.widget {
 				d.y = ty;
 				
 				var dic:* = childDic[$widgetID];
-				if(dic){
-					for($widgetID in dic){
-						arrange(dic[$widgetID]);
-					}
+				for($widgetID in dic){
+					arrange(dic[$widgetID]);
 				}
 				
 				var f:Function = o.onComplete;
@@ -141,10 +139,8 @@ package com.minarto.manager.widget {
 			}
 			else{
 				dic = childDic["stage"];
-				if(dic){
-					for($widgetID in dic){
-						arrange(dic[$widgetID]);
-					}
+				for($widgetID in dic){
+					arrange(dic[$widgetID]);
 				}
 			}
 		}

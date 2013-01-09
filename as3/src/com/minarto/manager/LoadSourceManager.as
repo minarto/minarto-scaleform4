@@ -6,23 +6,10 @@ package com.minarto.manager {
 	
 
 	public class LoadSourceManager {
-		protected static var _instance: LoadSourceManager = new LoadSourceManager;
+		protected static var loader:Loader, request:URLRequest = new URLRequest, reservations:Array = [], functionDic:* = {};
 		
 		
-		protected var loader:Loader, request:URLRequest = new URLRequest(), reservations:Array = [], functionDic:* = {};
-		
-		
-		public static function getInstance():LoadSourceManager{
-			return	_instance;
-		}
-		
-		
-		public function LoadSourceManager() {
-			if(_instance)	throw new Error("don't create instance");
-		}
-		
-		
-		public function load($src:String, $onComplete:Function):void{
+		public static function load($src:String, $onComplete:Function):void{
 			if(!$src)	return;
 			
 			var dic:Dictionary = functionDic[$src];
@@ -41,7 +28,7 @@ package com.minarto.manager {
 		}
 		
 		
-		public function close($src:String, $onComplete:Function):void{
+		public static function close($src:String, $onComplete:Function):void{
 			if(!$src)	return;
 			
 			var dic:Dictionary = functionDic[$src];
@@ -58,7 +45,7 @@ package com.minarto.manager {
 		}
 		
 		
-		protected function _load():void {
+		protected static function _load():void {
 			request.url = reservations[0];
 			
 			if(loader){
@@ -76,7 +63,7 @@ package com.minarto.manager {
 		}
 		
 		
-		protected function onComplete($e:Event):void {
+		protected static function onComplete($e:Event):void {
 			var info:LoaderInfo = loader.contentLoaderInfo;
 			
 			var content:DisplayObject = info.content;
@@ -97,7 +84,7 @@ package com.minarto.manager {
 		}
 		
 		
-		protected function onIoError($e:IOErrorEvent):void {
+		protected static function onIoError($e:IOErrorEvent):void {
 			DebugManager.error(IOErrorEvent.IO_ERROR, reservations.shift());
 			
 			if(reservations.length)	_load();

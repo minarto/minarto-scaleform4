@@ -24,7 +24,7 @@ package com.minarto.manager {
 					a = [];
 					reservations[$src] = a;
 					
-					LoadSourceManager.getInstance().load("img://" + $src, function($bm:Bitmap):void{
+					LoadSourceManager.load("img://" + $src, function($bm:Bitmap):void{
 						if($bm){
 							var bd:BitmapData = $bm.bitmapData;
 							dic[$src] = bd;
