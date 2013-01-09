@@ -1,6 +1,9 @@
 ﻿import com.minarto.data.Binding;
 import com.minarto.utils.*;
 
+/*
+ * use class after Binding.init
+ */
 class com.minarto.utils.Alarm {
 	private static var _dic = {};
 	
