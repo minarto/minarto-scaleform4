@@ -46,14 +46,14 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public function setContainer($containers:DisplayObjectContainer, $topArrange:int=0):void{
-			containers[$topArrange] = $containers;
+		public function setContainer($container:DisplayObjectContainer, $topArrange:int=0):void{
+			containers[$topArrange] = $container;
 			
 			for(var widgetID:* in widgetDic){
 				var o:LoadWidgetObject = widgetDic[widgetID];
 				if(o.topArrange == $topArrange){
 					var w:Widget = o.widget;
-					if(!$containers.contains(w))	$containers.addChild(w);
+					if(!$container.contains(w))	$container.addChild(w);
 				}
 			}
 		}
@@ -100,7 +100,7 @@ package com.minarto.manager.widget {
 						}
 					}
 					
-					if(currentLoadWidgetObj && currentLoadWidgetObj.src == src)	LoadSourceManager.getInstance().close(src, onLoadUI);
+					if(currentLoadWidgetObj && currentLoadWidgetObj.src == src)	LoadSourceManager.close(src, onLoadUI);
 				}
 				
 				var a:Array = widgetDic[src];
@@ -112,7 +112,7 @@ package com.minarto.manager.widget {
 			else{
 				clearTimeout(_loadID);
 				
-				if(currentLoadWidgetObj)	LoadSourceManager.getInstance().close(currentLoadWidgetObj.src, onLoadUI);
+				if(currentLoadWidgetObj)	LoadSourceManager.close(currentLoadWidgetObj.src, onLoadUI);
 				
 				delWidget(null, null);				
 				for(i=0, c = _sources.length; i<c; ++ i){
@@ -128,7 +128,7 @@ package com.minarto.manager.widget {
 		
 		protected function _loadUI():void {
 			currentLoadWidgetObj = _sources.shift();
-			if(currentLoadWidgetObj)	LoadSourceManager.getInstance().load(currentLoadWidgetObj.src, onLoadUI);
+			if(currentLoadWidgetObj)	LoadSourceManager.load(currentLoadWidgetObj.src, onLoadUI);
 		}
 		
 		

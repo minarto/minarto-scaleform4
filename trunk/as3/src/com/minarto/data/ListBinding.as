@@ -9,15 +9,13 @@ package com.minarto.data {
 	
 	
 	public class ListBinding {
-		protected static var listDic:Dictionary = new Dictionary(true),  listData:* = {},
+		protected static var listData:* = {},
 							dataListKey:Dictionary = new Dictionary(true),	//	아이템이 포함된 리스트의 키를 반환
 							dataBindingDic:Dictionary = new Dictionary(true);	//	모든 아이템의 바인딩 데이터
 		
 		
 		public static function regist($listKey:String, $list:CoreList):void{
 			if(!$listKey || !$list)	return;
-			
-			listDic[$list] = $list;
 			
 			var dataProvider:DataProvider = listData[$listKey] || (listData[$listKey] = new DataProvider);
 			
@@ -29,8 +27,6 @@ package com.minarto.data {
 		
 		public static function unregist($listKey:String, $list:CoreList):void{
 			if(!$listKey || !$list)	return;
-			
-			delete	listDic[$listKey];
 			
 			$list.dataProvider = null;
 			$list.validateNow();
@@ -90,7 +86,7 @@ package com.minarto.data {
 		}
 		
 		
-		public static function addBindingData($data:*, $handler:Function, ...$properties):void {
+		public static function addBind($data:*, $handler:Function, ...$properties):void {
 			if($data){
 				var binding:* = dataBindingDic[$data];
 				if(binding){
@@ -105,7 +101,7 @@ package com.minarto.data {
 		}
 		
 		
-		public static function deleBindingData($data:*, $handler:Function, ...$properties):void {
+		public static function delBind($data:*, $handler:Function, ...$properties):void {
 			if(!$data)	return;
 			
 			var binding:* = dataBindingDic[$data];
