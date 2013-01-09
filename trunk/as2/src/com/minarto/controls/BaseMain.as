@@ -1,4 +1,6 @@
-﻿import gfx.events.EventDispatcher;
+﻿import com.minarto.controls.*;
+import com.minarto.data.Binding;
+import gfx.events.*;
 
 
 /**
@@ -18,24 +20,25 @@ class com.minarto.controls.BaseMain extends MovieClip {
 	
 	
 	public function BaseMain($main:MovieClip) {
+		_global.gfxExtensions = true;
+		
 		EventDispatcher.initialize(this);
 		
 		if ($main) {
 			$main.__proto__ = this;
 			this = Object($main);
-			if (!_global.CLIK_loadCallback) {
-				onLoad();
-			}
 		}
 	}
 	
 	
 	private function onLoad():Void {
-		var e = { type:"reSize", target:this };
+		var e = { type:EventTypes.RESIZE, target:this };
 		onResize = function():Void {
 			dispatchEvent(e);
 		}
 		Stage.addListener(this);
+		
+		Binding.init();
 		
 		configUI();
 		if (_global.CLIK_loadCallback) { _global.CLIK_loadCallback("main", targetPath(this), this); }
