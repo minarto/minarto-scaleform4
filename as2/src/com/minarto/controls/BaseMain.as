@@ -32,7 +32,7 @@ class com.minarto.controls.BaseMain extends MovieClip {
 	
 	
 	private function onLoad():Void {
-		var e = { type:EventTypes.RESIZE, target:this };
+		var e = { type:"reSize", target:this };
 		onResize = function():Void {
 			dispatchEvent(e);
 		}

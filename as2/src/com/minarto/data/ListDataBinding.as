@@ -20,7 +20,7 @@
 	}
 	
 	
-	private function addBind($key:String, $handler:String, $scope) {
+	private function addBind($key:String, $scope, $handler:String) {
 		var a:Array = this["__binds__"];
 		for (var i:Number = 0, c:Number = a.length; i < c; i += 2) {
 			if (a[i] == $handler && a[i + 1] == $scope) {
@@ -39,10 +39,10 @@
 	}
 	
 	
-	private function delBind($key:String, $handler:String, $handlerScope) {
+	private function delBind($key:String, $scope, $handler:String) {
 		var a:Array = this["__binds__"];
 		for (var i:Number = 0, c:Number = a.length; i < c; i += 2) {
-			if (a[i] == $handler && a[i + 1] == $handlerScope) {
+			if (a[i] == $handler && a[i + 1] == $scope) {
 				a.splice(i, 2);
 				return	this;
 			}

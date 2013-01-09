@@ -81,24 +81,24 @@ class com.minarto.data.ListBinding {
 	}
 		
 		
-	public static function addBind($data, $handler:String, $scope, $property:String):Void {
+	public static function addBind($data, $scope, $handler:String, $property:String):Void {
 		if ($data) {
 			ListDataBinding.bind($data);
 			
 			var p:Array = arguments.slice(3, arguments.length);
 			for ($property in p) {
-				$data.addBind($property, $handler, $scope);
+				$data.addBind($property, $scope, $handler);
 			}
 		}
 	}
 		
 		
-	public static function delBind($data, $handler:String, $scope, $property:String):Void {
+	public static function delBind($data, $scope, $handler:String, $property:String):Void {
 		if(!$data)	return;
 		
 		var p:Array = arguments.slice(3, arguments.length);
 		for ($property in p) {
-			$data.delBind($property, $handler, $scope);
+			$data.delBind($property, $scope, $handler);
 		}
 	}
 }
