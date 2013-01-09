@@ -55,7 +55,7 @@ class com.minarto.data.Binding {
 	}
 	
 	
-	public static function addBind($key:String, $handlerOrProperty:String, $scope:Object):Void {
+	public static function addBind($key:String, $scope, $handlerOrProperty:String):Void {
 		if(!$key)	return;
 		
 		var a:Array = _bindingDic[$key] || (_bindingDic[$key] = []);
@@ -81,7 +81,7 @@ class com.minarto.data.Binding {
 	}
 		
 		
-	public static function delBind($key:String, $handlerOrProperty:String, $scope:Object):Void {
+	public static function delBind($key:String, $scope, $handlerOrProperty:String):Void {
 		if($key){
 			var a:Array = _bindingDic[$key];
 			for (var i in a) {

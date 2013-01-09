@@ -37,12 +37,12 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 		
 		
 	private function delBind($data):Void {
-		//ListBinding.delBind($data, "invalidate", this, "url");
+		//ListBinding.delBind($data, this, "invalidate", "url");
 	}
 	
 	
 	private function setBind($p, $old, $new, $binds):Void {
-		//ListBinding.addBind($data, "invalidate", this, "url");
+		//ListBinding.addBind($data, this, "invalidate", "url");
 	}
 		
 		
