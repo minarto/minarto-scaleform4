@@ -1,8 +1,8 @@
 package com.minarto.controls {
 	import com.minarto.data.ListBinding;
 	import com.minarto.manager.ImageManager;
+	import com.minarto.manager.ToolTipManager;
 	import com.minarto.utils.GPool;
-	import com.scaleform.mmo.events.TooltipEvent;
 	
 	import de.polygonal.core.ObjectPool;
 	
@@ -24,8 +24,7 @@ package com.minarto.controls {
 					isDrag:Boolean = true, isUse:Boolean = true;
 		
 					
-		protected var _index:uint, _selectable:Boolean = true,
-						tooltipEvt:TooltipEvent = new TooltipEvent(TooltipEvent.REGISTER_ELEMENT, true, false, this as UIComponent);
+		protected var _index:uint, _selectable:Boolean = true;
 		
 		
 		public function get index():uint { return _index; }
@@ -90,8 +89,12 @@ package com.minarto.controls {
 			super.draw();
 			
 			bm.bitmapData = null;
-			
-			stage.dispatchEvent(_data ? tooltipEvt : new TooltipEvent(TooltipEvent.UNREGISTER_ELEMENT, true, false, this));
+			if(_data){
+				ToolTipManager.getInstance().regist(this);
+			}
+			else{
+				ToolTipManager.getInstance().unRegist(this);
+			}
 		}
 		
 		
