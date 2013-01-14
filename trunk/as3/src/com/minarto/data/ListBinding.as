@@ -14,26 +14,26 @@ package com.minarto.data {
 			dataBindingDic:Dictionary = new Dictionary(true);	//	모든 아이템의 바인딩 데이터
 		
 		
-		public static function regist($listKey:String, $list:CoreList):void{
-			if(!$listKey || !$list)	return;
+		public static function regist($key:String, $list:CoreList):void{
+			if(!$key || !$list)	return;
 			
-			var dic:Dictionary = listDic[$listKey] || (listDic[$listKey] = new Dictionary(true));
+			var dic:Dictionary = listDic[$key] || (listDic[$key] = new Dictionary(true));
 			dic[$list] = $list;
-			$list.dataProvider = listData[$listKey];
+			$list.dataProvider = listData[$key];
 		}
 		
 		
-		public static function unregist($listKey:String, $list:CoreList):void{
-			if($listKey){
+		public static function unregist($key:String, $list:CoreList):void{
+			if($key){
 				if($list){
-					var dic:Dictionary = listDic[$listKey];
+					var dic:Dictionary = listDic[$key];
 					if(dic)	delete	dic[$list];
 					
 					$list.dataProvider = null;
 					$list.validateNow();
 				}
 				else{
-					dic = listDic[$listKey];
+					dic = listDic[$key];
 					for(var i:* in dic){
 						$list = dic[i];
 						
@@ -43,12 +43,12 @@ package com.minarto.data {
 						delete	dic[i];
 					}
 					
-					delete	listDic[$listKey];
+					delete	listDic[$key];
 				}
 			}
 			else{
-				for($listKey in listDic){
-					dic = listDic[$listKey];
+				for($key in listDic){
+					dic = listDic[$key];
 					for(i in dic){
 						$list = dic[i];
 						$list.dataProvider = null;
@@ -63,13 +63,13 @@ package com.minarto.data {
 		
 		/**
 		 * 
-		 * @param $listKey
+		 * @param $key
 		 * @param $a
 		 * 
 		 */		
-		public static function setListData($listKey:String, $a:Array):void {
-			if($listKey){
-				var dataProvider:DataProvider = listData[$listKey];
+		public static function setListData($key:String, $a:Array):void {
+			if($key){
+				var dataProvider:DataProvider = listData[$key];
 				if(dataProvider){
 					for(var i:* in dataProvider){
 						var d:* = dataProvider[i];
@@ -79,17 +79,17 @@ package com.minarto.data {
 					dataProvider.setSource($a);
 				}
 				else{
-					listData[$listKey] = dataProvider = new DataProvider($a);
+					listData[$key] = dataProvider = new DataProvider($a);
 					var n:Boolean = true;
 				}
 				
 				for(i in dataProvider){
 					d = dataProvider[i];
-					_setData(d, $listKey);
+					_setData(d, $key);
 				}
 				
 				if(n){
-					d = listDic[$listKey];
+					d = listDic[$key];
 					for(i in d){
 						var list:CoreList = d[i];
 						list.dataProvider = dataProvider;
@@ -107,15 +107,15 @@ package com.minarto.data {
 		}
 		
 		
-		public static function getListData($listKey:String):DataProvider {
-			return listData[$listKey];
+		public static function getListData($key:String):DataProvider {
+			return listData[$key];
 		}
 		
 		
-		protected static function _setData($data:*, $listKey:String):void {
+		protected static function _setData($data:*, $key:String):void {
 			if(!$data)	return;
 			
-			dataListKey[$data] = $listKey;
+			dataListKey[$data] = $key;
 			dataBindingDic[$data] = {};
 		}
 		
