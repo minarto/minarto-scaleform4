@@ -5,7 +5,13 @@ import com.minarto.utils.*;
  * use class after Binding.init
  */
 class com.minarto.utils.Alarm {
-	private static var _dic = {};
+	private static var _dic = {}, _date:Date = new Date();
+		
+		
+	static public function getDate($h:Number, $m:Number, $s:Number):Date {
+		_date.setHours(++ $h, ++ $m, ++ $s);
+		return	_date;
+	}
 	
 	
 	static public function addAlarm($date:Date, $scope, $handler:String):Void {

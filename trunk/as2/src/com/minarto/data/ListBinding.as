@@ -6,37 +6,33 @@ import gfx.data.DataProvider;
 
 class com.minarto.data.ListBinding {
 	private static var listDic = {}, listData = {},
-							dataListKey = {},	//	아이템이 포함된 리스트의 키를 반환
-							dataBindingDic = {};	//	모든 아이템의 바인딩 데이터
 	
 	
 	public static function regist($listKey:String, $list:CoreList):Void{
 		if(!$listKey || !$list)	return;
 		
-		listDic[$listKey] = $list;
+		var dic:Array = listDic[$listKey] || (listDic[$listKey] = []);
+		for (var i in dic) {
+			if (dic[i] == $list)	return;
+		}
+		dic.push($list);
 		
-		var dataProvider = listData[$listKey];
-		
-		setList($listKey);
-		$list.dataProvider = dataProvider;
-		$list.validateNow();
+		$list.dataProvider = listData[$listKey];
 	}
 	
 	
 	public static function unregist($listKey:String, $list:CoreList):Void{
 		if (!$listKey || !$list)	return;
 		
-		delete listDic[$listKey];
-		
 		$list.dataProvider = null;
 		$list.validateNow();
-	}
 		
-		
-	private static function setList($listKey:String):Void{
-		var dataProvider = listData[$listKey];
-		for (var i in dataProvider) {
-			_setData(dataProvider[i], $listKey);
+		var dic:Array = listDic[$listKey];
+		for (var i in dic) {
+			if (dic[i] == $list) {
+				dic.splice(i, 1);
+				return;
+			}
 		}
 	}
 		
@@ -48,31 +44,16 @@ class com.minarto.data.ListBinding {
 	 * 
 	 */		
 	public static function setListData($listKey:String, $a:Array):Void {
-		var dataProvider = listData[$listKey];
-		for(var i in dataProvider){
-			var data = dataProvider[i];
-			delete dataListKey[data];
-			delete dataBindingDic[data];
-		}
+		DataProvider.initialize($a);
 		
-		var list:CoreList = listDic[$listKey];
-		if (list) {
-			list.dataProvider = [$a];
-			for(var i in dataProvider){
-				var data = dataProvider[i];
-				delete dataListKey[data];
-				delete dataBindingDic[data];
-			}
-			dataProvider.setSource($a);
-		}
-		else{
-			dataProvider = new DataProvider($a);
-			listData[$listKey] = dataProvider;
-		}
+		listData[$listKey] = $a;
 		
-		setList($listKey);
-		
-		dataProvider.invalidate();
+		var dic:Array = listDic[$listKey];
+		for(var i in dic){
+			var list:CoreList = dic[i];
+			list.dataProvider = null;
+			list.dataProvider = $a;
+		}
 	}
 		
 		
@@ -99,6 +80,57 @@ class com.minarto.data.ListBinding {
 		var p:Array = arguments.slice(3, arguments.length);
 		for ($property in p) {
 			$data.delBind($property, $scope, $handler);
+		}
+	}
+		
+		
+	public static function getData($listKey:String, $index:Number){
+		var dataProvider = listData[$listKey];
+		return	dataProvider ? dataProvider[$index] : dataProvider;
+	}
+		
+		
+	public static function setData($target, $data, $index:Number):Void {
+		var data, listKey:String, dataProvider:Array;
+		
+		if($target as String){
+			listKey = $target;
+			
+			dataProvider = listData[listKey];
+			if(dataProvider){
+				if($index < 0)	dataProvider.push($data)
+				else{
+					dataProvider[$index] = $data;
+				}
+				dataProvider.invalidate();
+			}
+			else{
+				dataProvider = [];
+				if($index < 0){
+					dataProvider[0] = $data;
+				}
+				else{
+					dataProvider[$index] = $data;
+				}
+				
+				setListData(listKey, dataProvider);
+			}
+		}
+		else if($target){
+			data = $target;
+			
+			for (listKey in listData) {
+				dataProvider = listData[listKey];
+				for ($index in dataProvider) {
+					if (dataProvider[$index] == $target) {
+						dataProvider[$index] = $data;
+						dataProvider.invalidate();
+						
+						dataProvider.invalidate();
+						return;
+					}
+				}
+			}
 		}
 	}
 }
