@@ -1,12 +1,16 @@
 package com.minarto.utils {
 	import com.minarto.data.Binding;
 	
-	import de.polygonal.core.ObjectPool;
-	
 	import flash.utils.Dictionary;
 	
     public class Alarm {
-		private static var _dic:* = {};
+		private static var _dic:* = {}, _date:Date = new Date();
+		
+		
+		static public function getDate($h:uint, $m:uint, $s:uint):Date {
+			_date.setHours(++ $h, ++ $m, ++ $s);
+			return	_date;
+		}
 		
 		
 		static public function addAlarm($date:Date, $handler:Function):void {
