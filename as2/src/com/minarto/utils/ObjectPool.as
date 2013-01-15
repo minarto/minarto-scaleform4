@@ -1,6 +1,6 @@
 ﻿class com.minarto.utils.ObjectPool {
 	private var _dic:Array = [],
-				_constructor:Function;
+				_constructor:Function, _currSize:Number = 0;
 	
 	
 	public function ObjectPool($size:Number, $constructor:Function) {
@@ -13,13 +13,13 @@
 		
 		_constructor = $constructor;
 		
-		for (var i:Number = 0; i < $size; i++ ) {
-			_dic.push(new $constructor);
+		while ($size --) {
+			_currSize = _dic.push(new $constructor);
 		}
 	}
 	
 	
-	public function getObj() {
+	public get function object() {
 		if (_dic.length) {
 			return	_dic.pop();
 		}
@@ -29,13 +29,30 @@
 	}
 	
 	
-	public function returnObj($obj):Void {
-		_dic.push($obj);
+	public get function object($obj):Void {
+		_currSize = _dic.push($obj);
 	}
 	
 	
 	public function deconstruct():Void {
-		_dic.length = 0;
+		purge();
 		_constructor = null;
+	}
+	
+	
+	public function get size():Number {
+		return _currSize;
+	}
+	
+	
+	public function initialze(func:String, args:Array):Void {
+		for (var i in _dic) {
+			_dic[i][func].apply(n.data, args);
+		}
+	}
+	
+	
+	public function purge():Void {
+		_dic.length = _currSize = 0;
 	}
 }

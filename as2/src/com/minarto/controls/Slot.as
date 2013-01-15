@@ -32,7 +32,7 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 		
 	private function onChangeData($p, $old, $new):Void {
 		delBind($old);
-		setBind($old);
+		setBind($new);
 	}
 		
 		
@@ -41,7 +41,7 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 	}
 	
 	
-	private function setBind($p, $old, $new, $binds):Void {
+	private function setBind($data):Void {
 		//ListBinding.addBind($data, this, "invalidate", "url");
 	}
 		
@@ -49,6 +49,7 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 	public function toString() : String {
 		return "com.minarto.controls.Slot";
 	}
+	
 	
 	private function draw():void {
 		super.draw();
