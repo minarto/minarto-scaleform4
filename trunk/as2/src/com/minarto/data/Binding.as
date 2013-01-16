@@ -1,18 +1,26 @@
 ﻿import flash.external.ExternalInterface;
+import com.minarto.data.*;
+import gfx.events.EventDispatcher;
 
 
-class com.minarto.data.Binding {
-	private static var _valueDic = { }, _bindingDic = { };
+class com.minarto.data.Binding extends EventDispatcher {
+	private static var _valueDic = { }, _bindingDic = { }, _instance = new Binding;
+	
+	
+	public function Binding() {
+		if(_instance)	throw	new Error("don't create instance");
+	}
 	
 	
 	public static function init($dateInterval:Number):Void {
-		if(ExternalInterface.available)	ExternalInterface.call("Binding", Binding);
-		trace("Binding.init");
+		if(ExternalInterface.available)	ExternalInterface.call("Binding", _instance);
 		
 		_setValue("date", new Date);
 		setInterval(function(){
 						_setValue("date", new Date);
 					}, $dateInterval || 100);
+					
+		trace("Binding.init");
 	}
 		
 		
@@ -26,6 +34,12 @@ class com.minarto.data.Binding {
 				_setValue($key, $value);
 			}
 		}
+	}
+	
+	
+	
+	public static function action($e):Void{
+		_instance.dispatchEvent($e);
 	}
 		
 		
