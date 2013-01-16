@@ -98,21 +98,12 @@ class com.minarto.data.ListBinding {
 			
 			dataProvider = listData[listKey];
 			if(dataProvider){
-				if($index < 0)	dataProvider.push($data)
-				else{
-					dataProvider[$index] = $data;
-				}
+				dataProvider[$index] = $data;
 				dataProvider.invalidate();
 			}
 			else{
 				dataProvider = [];
-				if($index < 0){
-					dataProvider[0] = $data;
-				}
-				else{
-					dataProvider[$index] = $data;
-				}
-				
+				dataProvider[$index] = $data;
 				setListData(listKey, dataProvider);
 			}
 		}
@@ -124,8 +115,6 @@ class com.minarto.data.ListBinding {
 				for ($index in dataProvider) {
 					if (dataProvider[$index] == $target) {
 						dataProvider[$index] = $data;
-						dataProvider.invalidate();
-						
 						dataProvider.invalidate();
 						return;
 					}
