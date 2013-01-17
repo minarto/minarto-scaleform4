@@ -2,8 +2,6 @@
  * 
  */
 package com.minarto.data {
-	import com.minarto.utils.Alarm;
-	
 	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.utils.*;
