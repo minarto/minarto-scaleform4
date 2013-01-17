@@ -24,7 +24,7 @@ package com.minarto.data {
 		 * @param $timeInterval	시간 데이터 갱신 주기
 		 * 
 		 */
-		public static function init($timeInterval:uint=100):void {
+		public static function init($timeInterval:uint=100):Binding {
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
 			
 			_setValue("date", new Date);
@@ -33,6 +33,8 @@ package com.minarto.data {
 						}, $timeInterval || 100);
 			
 			trace("Binding.init");
+			
+			return	_instance;
 		}
 		
 		
