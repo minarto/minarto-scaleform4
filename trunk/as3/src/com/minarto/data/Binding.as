@@ -2,14 +2,22 @@
  * 
  */
 package com.minarto.data {
+	import com.minarto.utils.Alarm;
+	
+	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.utils.*;
 	
 	import scaleform.gfx.Extensions;
 	
 	
-	public class Binding {
-		private static var valueDic:* = {}, bindingDic:* = {};
+	public class Binding extends EventDispatcher {
+		private static var valueDic:* = {}, bindingDic:* = {}, _instance:Binding = new Binding;
+		
+		
+		public function Binding(){
+			if(_instance)	throw	new Error("don't create instance");
+		}
 		
 		
 		/**
@@ -19,13 +27,19 @@ package com.minarto.data {
 		 * 
 		 */
 		public static function init($timeInterval:uint=100):void {
-			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", Binding);
-			trace("Binding.init");
+			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
 			
 			_setValue("date", new Date);
 			setInterval(function():void{
 							_setValue("date", new Date);
 						}, $timeInterval || 100);
+			
+			trace("Binding.init");
+		}
+		
+		
+		public static function action($e:Event):void{
+			_instance.dispatchEvent($e);
 		}
 		
 		

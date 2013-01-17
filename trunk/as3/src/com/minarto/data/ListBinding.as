@@ -165,7 +165,7 @@ package com.minarto.data {
 		}
 		
 		
-		public static function setData($target:*, $data:*, $index:int = - 1):void {
+		public static function setData($target:*, $data:*, $index:uint=0):void {
 			var data:*, listKey:String, dataProvider:DataProvider;
 			
 			if($target as String){
@@ -174,42 +174,35 @@ package com.minarto.data {
 				dataProvider = listData[listKey];
 				if(dataProvider){
 					_setData($data, listKey);
-					if($index < 0)	dataProvider.push($data)
-					else{
-						data = dataProvider[$index];
+
+					data = dataProvider[$index];
+					if(data){
 						delete dataListKey[data];
 						delete dataBindingDic[data];
-						
-						dataProvider[$index] = $data;
 					}
+					dataProvider[$index] = $data;
 					dataProvider.invalidate();
 				}
 				else{
 					var a:Array = [];
-					if($index < 0){
-						a[0] = $data;
-					}
-					else{
-						a[$index] = $data;
-					}
-					
+					a[$index] = $data;
 					setListData(listKey, a);
 				}
 			}
 			else if($target){
 				data = $target;
-				listKey = dataListKey[data];
-				dataProvider = listData[listKey];
+				if(data){
+					listKey = dataListKey[data];
+					delete dataListKey[data];
+					delete dataBindingDic[data];
+					
+					dataProvider = listData[listKey];
+					dataProvider[(dataProvider as Array).indexOf(data)] = $data;
 				
-				$index = (dataProvider as Array).indexOf(data);
-				if($index > - 1)	dataProvider.splice($index, 1, $data);
+					_setData($data, listKey);
 				
-				delete dataListKey[data];
-				delete dataBindingDic[data];
-				
-				_setData($data, listKey);
-				
-				dataProvider.invalidate();
+					dataProvider.invalidate();
+				}
 			}
 		}
 	}

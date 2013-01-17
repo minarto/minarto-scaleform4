@@ -57,10 +57,9 @@ package com.minarto.utils {
 			var d:Date = Binding.getValue("date");
 			
 			var s:Number = d.getTime() + $delay;
-			
-			for (var i:uint = 0; i < $repeat; ++ i) {
-				var j:Number = s + i * $delay;
-				var dic:Dictionary = _dic[j] || (_dic[j] = new Dictionary(true));
+			while($repeat -- ){
+				var i:Number = s + $repeat * $delay;
+				var dic:Dictionary = _dic[i] || (_dic[i] = new Dictionary(true));
 				dic[$handler] =  $handler;
 			}
 			
