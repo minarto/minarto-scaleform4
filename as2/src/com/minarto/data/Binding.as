@@ -12,7 +12,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 	}
 	
 	
-	public static function init($dateInterval:Number):Void {
+	public static function init($dateInterval:Number):Binding {
 		if(ExternalInterface.available)	ExternalInterface.call("Binding", _instance);
 		
 		_setValue("date", new Date);
@@ -21,6 +21,8 @@ class com.minarto.data.Binding extends EventDispatcher {
 					}, $dateInterval || 100);
 					
 		trace("Binding.init");
+		
+		return	_instance;
 	}
 		
 		
