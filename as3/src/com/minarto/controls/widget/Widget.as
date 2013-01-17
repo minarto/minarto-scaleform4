@@ -21,13 +21,7 @@ package com.minarto.controls.widget {
 		
 		
 		public function Widget(){
-			var t:* = this;
-			addEventListener(Event.ADDED_TO_STAGE, function ($e:Event):void{
-				t.removeEventListener(Event.ADDED_TO_STAGE, arguments.callee);
-				
-				CLIK.initialize(stage, null);
-				configUI();
-			});
+			addEventListener(Event.ADDED_TO_STAGE, configUI);
 		}
 		
 		
@@ -55,7 +49,9 @@ package com.minarto.controls.widget {
 		}
 		
 		
-		protected function configUI():void {
+		protected function configUI($e:Event):void {
+			removeEventListener(Event.ADDED_TO_STAGE, configUI);
+			CLIK.initialize(stage, null);
 		}
 	}
 }
