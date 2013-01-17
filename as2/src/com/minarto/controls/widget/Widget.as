@@ -32,7 +32,6 @@ class com.minarto.controls.widget.Widget extends MovieClip {
 	
 	private function onLoad():Void {
 		configUI();
-		if (_global.CLIK_loadCallback) { _global.CLIK_loadCallback(widgetID, targetPath(this), this); }
 	}
 	
 	
