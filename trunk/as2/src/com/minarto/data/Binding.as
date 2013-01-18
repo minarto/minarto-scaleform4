@@ -18,7 +18,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 		_setValue("date", new Date);
 		setInterval(function(){
 						_setValue("date", new Date);
-					}, $dateInterval || 100);
+					}, $dateInterval || 10);
 					
 		trace("Binding.init");
 		
