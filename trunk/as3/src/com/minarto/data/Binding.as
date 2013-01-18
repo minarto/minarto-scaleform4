@@ -10,7 +10,7 @@ package com.minarto.data {
 	
 	
 	public class Binding extends EventDispatcher {
-		private static var valueDic:* = {}, bindingDic:* = {}, _instance:Binding = new Binding;
+		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding = new Binding;
 		
 		
 		public function Binding(){
@@ -51,8 +51,8 @@ package com.minarto.data {
 		 * 
 		 */				
 		public static function addBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
-			var v:* = valueDic[$key];
-			var dic:Dictionary = bindingDic[$key] || (bindingDic[$key] = new Dictionary(true));
+			var v:* = _valueDic[$key];
+			var dic:Dictionary = _bindingDic[$key] || (_bindingDic[$key] = new Dictionary(true));
 			if($scope){
 				var f:* = dic[$scope] || (dic[$scope] = {});
 				f[$handlerOrProperty] = $handlerOrProperty;
@@ -73,7 +73,7 @@ package com.minarto.data {
 		 */			
 		public static function delBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
 			if($key){
-				var dic:Dictionary = bindingDic[$key];
+				var dic:Dictionary = _bindingDic[$key];
 				if(dic){
 					var f:* = dic[$scope];
 					if(f){
@@ -87,7 +87,7 @@ package com.minarto.data {
 				}
 			}
 			else{
-				bindingDic = {};
+				_bindingDic = {};
 			}
 		}
 		
@@ -103,7 +103,7 @@ package com.minarto.data {
 			}
 			else{
 				$value = undefined;
-				for($key in valueDic){
+				for($key in _valueDic){
 					_setValue($key, $value);
 				}
 			}
@@ -115,11 +115,11 @@ package com.minarto.data {
 			
 			for(p in $value)	_setValue($key + "." + p, $value[p]);
 			
-			v = valueDic[$key];
+			v = _valueDic[$key];
 			if (v == $value) return;
-			valueDic[$key] = $value;
+			_valueDic[$key] = $value;
 			
-			var dic:Dictionary = bindingDic[$key];
+			var dic:Dictionary = _bindingDic[$key];
 			for (p in dic){
 				f = dic[p];
 				if(f as Function){
@@ -141,7 +141,7 @@ package com.minarto.data {
 		 * 
 		 */		
 		public static function getValue($key:String):* {
-			return	valueDic[$key];
+			return	_valueDic[$key];
 		}
 	}
 }
