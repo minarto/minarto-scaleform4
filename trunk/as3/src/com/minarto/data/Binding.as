@@ -43,16 +43,13 @@ package com.minarto.data {
 		 * 
 		 */				
 		public static function addBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
-			var v:* = _valueDic[$key];
 			var dic:Dictionary = _bindingDic[$key] || (_bindingDic[$key] = new Dictionary(true));
 			if($scope){
 				var f:* = dic[$scope] || (dic[$scope] = {});
 				f[$handlerOrProperty] = $handlerOrProperty;
-				$scope[$handlerOrProperty] = v;
 			}
 			else{
 				dic[$handlerOrProperty] = $handlerOrProperty;
-				$handlerOrProperty(v);
 			}
 		}
 		
