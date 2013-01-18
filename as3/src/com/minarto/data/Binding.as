@@ -20,20 +20,10 @@ package com.minarto.data {
 		
 		/**
 		 * 초기화
-		 * 
-		 * @param $dateInterval	시간 데이터 갱신 주기 - 값이 0 이상이면 UI 에서 직접 시스템의 시간을 가져다 쓴다. 0이면 클라이언트가 직접 시간 데이터를 넣어줘야 함 
-		 * 
 		 */
-		public static function init($dateInterval:uint=10):Binding {
+		public static function init():Binding {
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
-			
-			if($dateInterval){
-				_setValue("date", new Date);
-				setInterval(function():void{
-					_setValue("date", new Date);
-				}, $dateInterval);
-			}
-			
+
 			trace("Binding.init");
 			
 			return	_instance;
