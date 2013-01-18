@@ -12,13 +12,22 @@ class com.minarto.data.Binding extends EventDispatcher {
 	}
 	
 	
+	/**
+	 * 초기화
+	 * 
+	 * @param $dateInterval	시간 데이터 갱신 주기 - 값이 0 이상이면 UI 에서 직접 시스템의 시간을 가져다 쓴다. 0이면 클라이언트가 직접 시간 데이터를 넣어줘야 함 
+	 * 
+	 */
 	public static function init($dateInterval:Number):Binding {
 		if(ExternalInterface.available)	ExternalInterface.call("Binding", _instance);
 		
-		_setValue("date", new Date);
-		setInterval(function(){
-						_setValue("date", new Date);
-					}, $dateInterval || 10);
+		if ($dateInterval) {
+			_setValue("date", new Date);
+			setInterval(function(){
+							_setValue("date", new Date);
+						}, $dateInterval);
+		}
+		
 					
 		trace("Binding.init");
 		
