@@ -81,17 +81,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 		}
 		if (!o) a.push((o = { obj:$scope, key: { }}));
 		
-		o.key[$handlerOrProperty] = $handlerOrProperty;		
-		
-
-		i = _valueDic[$key];
-		
-		if (typeof($scope[$handlerOrProperty]) == "function") {
-			$scope[$handlerOrProperty](i);
-		}
-		else {
-			$scope[$handlerOrProperty] = i;
-		}
+		o.key[$handlerOrProperty] = $handlerOrProperty;
 	}
 		
 		
