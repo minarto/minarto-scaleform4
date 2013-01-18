@@ -21,16 +21,16 @@ package com.minarto.data {
 		/**
 		 * 초기화
 		 * 
-		 * @param $timeInterval	시간 데이터 갱신 주기
+		 * @param $dateInterval	시간 데이터 갱신 주기
 		 * 
 		 */
-		public static function init($timeInterval:uint=100):Binding {
+		public static function init($dateInterval:uint=10):Binding {
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
 			
 			_setValue("date", new Date);
 			setInterval(function():void{
 							_setValue("date", new Date);
-						}, $timeInterval || 100);
+						}, $dateInterval || 10);
 			
 			trace("Binding.init");
 			
@@ -51,8 +51,6 @@ package com.minarto.data {
 		 * 
 		 */				
 		public static function addBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
-			if(!$key)	return;
-			
 			var v:* = valueDic[$key];
 			var dic:Dictionary = bindingDic[$key] || (bindingDic[$key] = new Dictionary(true));
 			if($scope){
