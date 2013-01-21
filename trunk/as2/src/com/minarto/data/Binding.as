@@ -69,7 +69,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 	}
 	
 	
-	public static function addBind($key:String, $scope, $handlerOrProperty:String):Void {
+	public static function addBind($key:String, $handlerOrProperty:String, $scope):Void {
 		if(!$key)	return;
 		
 		var a:Array = _bindingDic[$key] || (_bindingDic[$key] = []);
@@ -85,7 +85,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 	}
 		
 		
-	public static function delBind($key:String, $scope, $handlerOrProperty:String):Void {
+	public static function delBind($key:String, $handlerOrProperty:String, $scope):Void {
 		if($key){
 			var a:Array = _bindingDic[$key];
 			for (var i in a) {

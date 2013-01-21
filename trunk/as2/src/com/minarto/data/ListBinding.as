@@ -1,39 +1,101 @@
-﻿import com.minarto.data.ListDataBinding;
-import flash.external.ExternalInterface;
+﻿import com.minarto.data.*;
+import com.minarto.manager.list.ListBridge;
 import gfx.controls.CoreList;
 import gfx.data.DataProvider;
 
 
 class com.minarto.data.ListBinding {
-	private static var listDic = {}, listData = {},
+	private static var _listDic = { }, _listBindingDic:* = { },
+						_bridge:ListBridge;
 	
 	
-	public static function regist($listKey:String, $list:CoreList):Void{
-		if(!$listKey || !$list)	return;
-		
-		var dic:Array = listDic[$listKey] || (listDic[$listKey] = []);
-		for (var i in dic) {
-			if (dic[i] == $list)	return;
-		}
-		dic.push($list);
-		
-		$list.dataProvider = listData[$listKey];
+	public function ListBinding(){
+		throw	new Error("don't create instance");
 	}
-	
-	
-	public static function unregist($listKey:String, $list:CoreList):Void{
-		if (!$listKey || !$list)	return;
 		
-		$list.dataProvider = null;
-		$list.validateNow();
 		
-		var dic:Array = listDic[$listKey];
-		for (var i in dic) {
-			if (dic[i] == $list) {
-				dic.splice(i, 1);
-				return;
+	public static function addListBind($key:String, $listOrScope, $property:String):Void{
+		if(!$key)	return;
+		
+		var dataProvider:DataProvider = _listDic[$key];
+		if (!dataProvider) {
+			var a:Array = [];
+			DataProvider.initialize(a);
+			_listDic[$key] = dataProvider = a;
+		}
+		
+		var dic:Array = _listBindingDic[$key] || (_listBindingDic[$key] = []);
+		if ($listOrScope as CoreList) {
+			dic.push($listOrScope);
+			$listOrScope.dataProvider = dataProvider;
+		}
+		else if ($listOrScope[$property] as Function) {
+			dic.push($listOrScope);
+			$listOrScope[$property](dataProvider);
+		}
+		else {
+			var t:* = dic[$listOrScope] || (dic[$listOrScope] = {});
+			t[$property] = $property;
+			$listOrScope[$property] = dataProvider;
+		}
+	}
+		
+		
+	public static function delListBind($key:String, $listOrScope, $property:String):Void{
+		if($key){
+			var dic:Array = _listBindingDic[$key];
+			if(dic){
+				if ($listOrScope as CoreList) {
+					for (var i in dic) {
+						if (dic[i] == $listOrScope) {
+							dic.splice(i, 1);
+							return;
+						}
+					}
+					$listOrScope.dataProvider = null;
+				}
+				else if ($property) {
+					for (i in dic) {
+						if (dic[i] == $listOrScope) {
+							dic.splice(i, 1);
+							if (typeof($listOrScope[$property]) == "function") {
+								$listOrScope[$property](null);
+							}
+							else {
+								$listOrScope[$property] = null;
+							}
+							return;
+						}
+					}
+				}
+				else {
+					for (i in dic) {
+						if (dic[i] == $listOrScope) {
+							dic.splice(i, 1);
+							$listOrScope = dic[i];
+							for (var j in $listOrScope) {
+								if (typeof($listOrScope[j]) == "function") {
+									$listOrScope[j](null);
+								}
+								else {
+									$listOrScope[j] = null;
+								}
+							}
+							return;
+						}
+					}
+				}
 			}
 		}
+		else{
+			_listBindingDic = {};
+		}
+	}
+		
+		
+	public static function init($bridge:ListBridge):Void{
+		_bridge = $bridge;
+		trace("ListBinding.init");
 	}
 		
 		
@@ -54,6 +116,11 @@ class com.minarto.data.ListBinding {
 			list.dataProvider = null;
 			list.dataProvider = $a;
 		}
+	}
+		
+		
+	public static function action($e):Void{
+		_bridge.dispatchEvent($e);
 	}
 		
 		
