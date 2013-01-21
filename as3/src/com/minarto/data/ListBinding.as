@@ -2,62 +2,85 @@
  * 
  */
 package com.minarto.data {
+	import com.minarto.manager.list.ListBridge;
+	import com.minarto.utils.GPool;
+	
+	import de.polygonal.core.ObjectPool;
+	
+	import flash.events.Event;
+	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
 	
 	import scaleform.clik.controls.CoreList;
 	import scaleform.clik.data.DataProvider;
+	import scaleform.gfx.Extensions;
 	
 	
 	public class ListBinding {
-		protected static var listDic:* = {},  listData:* = {},
-			dataListKey:Dictionary = new Dictionary(true),	//	아이템이 포함된 리스트의 키를 반환
-			dataBindingDic:Dictionary = new Dictionary(true);	//	모든 아이템의 바인딩 데이터
+		private static var _listDic:* = {}, _listBindingDic:* = {},
+			_dataListKey:Dictionary = new Dictionary(true),	//	아이템이 포함된 리스트의 키를 반환
+			_dataBindingDic:Dictionary = new Dictionary(true),	//	모든 아이템의 바인딩 데이터
+			_bridge:ListBridge;
 		
 		
-		public static function regist($key:String, $list:CoreList):void{
-			if(!$key || !$list)	return;
-			
-			var dic:Dictionary = listDic[$key] || (listDic[$key] = new Dictionary(true));
-			dic[$list] = $list;
-			$list.dataProvider = listData[$key];
+		public function ListBinding(){
+			throw	new Error("don't create instance");
 		}
 		
 		
-		public static function unregist($key:String, $list:CoreList):void{
+		public static function addListBind($key:String, $listOrScope:*, $property:String=null):void{
+			if(!$key)	return;
+			
+			var dataProvider:DataProvider = _listDic[$key];
+			if(!dataProvider)	_listDic[$key] = dataProvider = GPool.getPool(DataProvider).object;
+			
+			var dic:Dictionary = _listBindingDic[$key] || (_listBindingDic[$key] = new Dictionary(true));
+			if($listOrScope as CoreList){
+				$listOrScope.dataProvider = dataProvider;
+			}
+			else if($listOrScope as Function){
+				$listOrScope(dataProvider);
+			}
+			else {
+				var t:* = dic[$listOrScope] || (dic[$listOrScope] = {});
+				t[$property] = $property;
+				$listOrScope[$property] = dataProvider;
+			}
+		}
+		
+		
+		public static function delListBind($key:String, $listOrScope:*, $property:String=null):void{
 			if($key){
-				if($list){
-					var dic:Dictionary = listDic[$key];
-					if(dic)	delete	dic[$list];
-					
-					$list.dataProvider = null;
-					$list.validateNow();
-				}
-				else{
-					dic = listDic[$key];
-					for(var i:* in dic){
-						$list = dic[i];
-						
-						$list.dataProvider = null;
-						$list.validateNow();
-						
-						delete	dic[i];
+				var dic:Dictionary = _listBindingDic[$key];
+				if(dic){
+					if($listOrScope as CoreList){
+						$listOrScope.dataProvider = null;
+						delete	dic[$listOrScope];
 					}
-					
-					delete	listDic[$key];
+					else if($listOrScope as Function){
+						$listOrScope(null);
+						delete	dic[$listOrScope];
+					}
+					else{
+						var t:* = dic[$listOrScope];
+						if(t)	delete	t[$property];
+					}
 				}
 			}
 			else{
-				for($key in listDic){
-					dic = listDic[$key];
-					for(i in dic){
-						$list = dic[i];
-						$list.dataProvider = null;
-						$list.validateNow();
-					}
-				}
-				
-				listDic = {};
+				_listBindingDic = {};
 			}
+		}
+		
+		
+		public static function init($bridge:ListBridge):void{
+			_bridge = $bridge;
+			trace("ListBinding.init");
+		}
+		
+		
+		public static function action($e:Event):void{
+			_bridge.dispatchEvent($e);
 		}
 		
 		
@@ -67,20 +90,22 @@ package com.minarto.data {
 		 * @param $a
 		 * 
 		 */		
-		public static function setListData($key:String, $a:Array):void {
+		public static function setList($key:String, $a:Array):void {
 			if($key){
-				var dataProvider:DataProvider = listData[$key];
+				var dataProvider:DataProvider = _listDic[$key];
 				if(dataProvider){
 					for(var i:* in dataProvider){
 						var d:* = dataProvider[i];
-						delete dataListKey[d];
-						delete dataBindingDic[d];
+						delete _dataListKey[d];
+						delete _dataBindingDic[d];
 					}
 					dataProvider.setSource($a);
 				}
 				else{
-					listData[$key] = dataProvider = new DataProvider($a);
-					var n:Boolean = true;
+					var p:ObjectPool = GPool.getPool(DataProvider);
+					dataProvider = p.object;
+					dataProvider.setSource($a);
+					_listDic[$key] = dataProvider;
 				}
 				
 				for(i in dataProvider){
@@ -88,41 +113,41 @@ package com.minarto.data {
 					_setData(d, $key);
 				}
 				
-				if(n){
-					d = listDic[$key];
-					for(i in d){
-						var list:CoreList = d[i];
+				var dic:Dictionary = _listBindingDic[$key];
+				for(i in dic){
+					var list:CoreList = d[i];
+					if(list.dataProvider == dataProvider){
+						dataProvider.invalidate();
+					}
+					else{
 						list.dataProvider = dataProvider;
 					}
 				}
-				else{
-					dataProvider.invalidate();
-				}
 			}
 			else{
-				listData = {};
-				dataListKey = new Dictionary(true);
-				dataBindingDic = new Dictionary(true);
+				_listDic = {};
+				_dataListKey = new Dictionary(true);
+				_dataBindingDic = new Dictionary(true);
 			}
 		}
 		
 		
-		public static function getListData($key:String):DataProvider {
-			return listData[$key];
+		public static function getList($key:String):DataProvider {
+			return _listDic[$key];
 		}
 		
 		
 		protected static function _setData($data:*, $key:String):void {
 			if(!$data)	return;
 			
-			dataListKey[$data] = $key;
-			dataBindingDic[$data] = {};
+			_dataListKey[$data] = $key;
+			_dataBindingDic[$data] = {};
 		}
 		
 		
-		public static function addBind($data:*, $handler:Function, ...$properties):void {
+		public static function addDataBind($data:*, $handler:Function, ...$properties):void {
 			if($data){
-				$data = dataBindingDic[$data];
+				$data = _dataBindingDic[$data];
 				if($data){
 					for(var p:String in $properties){
 						var d:Dictionary = $data[$properties[p]] || ($data[$properties[p]] = new Dictionary(true));
@@ -135,12 +160,12 @@ package com.minarto.data {
 		}
 		
 		
-		public static function delBind($data:*, $handler:Function, ...$properties):void {
+		public static function delDataBind($data:*, $handler:Function, ...$properties):void {
 			if(!$data && !Boolean($handler)){
-				dataBindingDic = new Dictionary(true);
+				_dataBindingDic = new Dictionary(true);
 			}
 			else{
-				$data = dataBindingDic[$data];
+				$data = _dataBindingDic[$data];
 				if($data){
 					for(var p:String in $properties){
 						var d:Dictionary = $data[$properties[p]];
@@ -157,7 +182,7 @@ package com.minarto.data {
 			$data[$p] = $value;
 			
 			//	해당 아이템 바인딩
-			$value = dataBindingDic[$data];
+			$value = _dataBindingDic[$data];
 			$data = $value[$p];
 			for($value in $data){
 				$data[$value]();
@@ -166,19 +191,19 @@ package com.minarto.data {
 		
 		
 		public static function setData($target:*, $data:*, $index:uint=0):void {
-			var data:*, listKey:String, dataProvider:DataProvider;
+			var data:*, key:String, dataProvider:DataProvider;
 			
 			if($target as String){
-				listKey = $target;
+				key = $target;
 				
-				dataProvider = listData[listKey];
+				dataProvider = _listDic[key];
 				if(dataProvider){
-					_setData($data, listKey);
-
+					_setData($data, key);
+					
 					data = dataProvider[$index];
 					if(data){
-						delete dataListKey[data];
-						delete dataBindingDic[data];
+						delete _dataListKey[data];
+						delete _dataBindingDic[data];
 					}
 					dataProvider[$index] = $data;
 					dataProvider.invalidate();
@@ -186,21 +211,21 @@ package com.minarto.data {
 				else{
 					var a:Array = [];
 					a[$index] = $data;
-					setListData(listKey, a);
+					setList(key, a);
 				}
 			}
 			else if($target){
 				data = $target;
 				if(data){
-					listKey = dataListKey[data];
-					delete dataListKey[data];
-					delete dataBindingDic[data];
+					key = _dataListKey[data];
+					delete _dataListKey[data];
+					delete _dataBindingDic[data];
 					
-					dataProvider = listData[listKey];
+					dataProvider = _listDic[key];
 					dataProvider[(dataProvider as Array).indexOf(data)] = $data;
-				
-					_setData($data, listKey);
-				
+					
+					_setData($data, key);
+					
 					dataProvider.invalidate();
 				}
 			}

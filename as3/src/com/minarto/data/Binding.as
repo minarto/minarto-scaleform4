@@ -4,13 +4,13 @@
 package com.minarto.data {
 	import flash.events.*;
 	import flash.external.ExternalInterface;
-	import flash.utils.*;
+	import flash.utils.Dictionary;
 	
 	import scaleform.gfx.Extensions;
 	
 	
 	public class Binding extends EventDispatcher {
-		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding = new Binding;
+		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding;
 		
 		
 		public function Binding(){
@@ -22,6 +22,7 @@ package com.minarto.data {
 		 * 초기화
 		 */
 		public static function init():Binding {
+			_instance = new Binding;
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
 
 			trace("Binding.init");
@@ -42,7 +43,7 @@ package com.minarto.data {
 		 * @param $scope	바인딩 속성 사용시 해당 객체
 		 * 
 		 */				
-		public static function addBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
+		public static function addBind($key:String, $handlerOrProperty:*, $scope:Object=null):void {
 			var dic:Dictionary = _bindingDic[$key] || (_bindingDic[$key] = new Dictionary(true));
 			if($scope){
 				var f:* = dic[$scope] || (dic[$scope] = {});
@@ -53,6 +54,20 @@ package com.minarto.data {
 			}
 		}
 		
+		
+		public static function addBindAndPlay($key:String, $handlerOrProperty:*, $scope:Object=null):void {
+			if(!$key)	return;
+			
+			addBind($key, $handlerOrProperty, $scope);
+			if($scope){
+				$scope[$handlerOrProperty] = _valueDic[$key];
+			}
+			else{
+				$handlerOrProperty(_valueDic[$key]);
+			}
+		}
+		
+		
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
@@ -60,7 +75,7 @@ package com.minarto.data {
 		 * @param $scope	바인딩 속성 사용시 해당 객체
 		 * 
 		 */			
-		public static function delBind($key:String, $handlerOrProperty:Object, $scope:Object=null):void {
+		public static function delBind($key:String, $handlerOrProperty:*, $scope:Object=null):void {
 			if($key){
 				var dic:Dictionary = _bindingDic[$key];
 				if(dic){

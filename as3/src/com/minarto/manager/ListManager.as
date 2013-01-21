@@ -19,89 +19,115 @@ package com.minarto.manager {
 	
 	
 	public class ListManager extends EventDispatcher {
-		protected static var _instance:ListManager;
-		
-		
-		protected var dic:* = {}, dicListProperties:Dictionary = new Dictionary, 
-						dragTarget:Bitmap = new Bitmap, dragIndex:int, dragListKey:String, dragData:*, _dragSize:int = 42, _dragPoint:int = - 21,
-						clickEvt:SlotEvent = new SlotEvent(ListEvent.ITEM_CLICK), dropEvt:SlotEvent = new SlotEvent(DragEvent.DROP);
-		
-		
-		public function ListManager($stage:Stage) {
-			if(_instance)	throw new Error("don't create instance");
+		protected var listDic:Dictionary = new Dictionary(true), 
+			dragType:String = "drag&drop", moveButton:uint = 0, useMouseButton:uint = 1,
 			
-			$stage.addEventListener("listRegist", onRegist);
-			$stage.addEventListener("listUnRegist", onUnRegist);
+			keyURL:String, keyUseEnable:String, keyMoveEnable:String,
 			
-			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("ListManager", this);
-			trace("ListManager init");
+			dragTarget:DisplayObject, dragIndex:int, dragListKey:String, dragData:*, _dragSize:int, _dragPoint:int,
+			clickEvt:SlotEvent = new SlotEvent(ListEvent.ITEM_CLICK), dropEvt:SlotEvent = new SlotEvent(DragEvent.DROP);
+		
+		
+		public function ListManager() {
+			trace("ListManager");
 		}
 		
 		
-		protected function onRegist($e:CustomEvent):void {
-			var param:* = $e.param;
-			var list:CoreList = param.list;
-			ListBinding.regist(param.key, list);
-			dicListProperties[list] = param;
-			
-			list.addEventListener(ListEvent.ITEM_PRESS, onItemPress);
-			list.addEventListener(ListEvent.ITEM_CLICK, onItemClick);
+		public function setDragType($type:String="drag&drop"):void{
+			dragType = $type;
 		}
 		
 		
-		protected function onUnRegist($e:CustomEvent):void {
-			var param:* = $e.param;
-			var list:CoreList = param.list;
-			var key:String = param.key;
-			if(list){
-				list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
-				list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
-				ListBinding.unregist(key, list);
-				
-				delete	dic[key];
-				delete	dicListProperties[list];
+		public function setMouseButton($move:uint = MouseEventEx.LEFT_BUTTON, $use:uint=MouseEventEx.RIGHT_BUTTON):void{
+			moveButton = $move;
+			useMouseButton = $use;
+		}
+		
+		
+		public function setDataKey($keyURL:String, $keyUseEnable:String, $keyMoveEnable:String):void{
+			keyURL = $keyURL;
+			keyUseEnable = $keyUseEnable;
+			keyMoveEnable = $keyMoveEnable;
+		}
+		
+		
+		public function addList($list:CoreList, $param:*):void{
+			if($param){
+				if($param[keyMoveEnable])	$list.addEventListener(ListEvent.ITEM_PRESS, onItemPress);
+				if($param[keyUseEnable])	$list.addEventListener(ListEvent.ITEM_CLICK, onItemClick);
 			}
 			else{
-				for(key in dic){
-					list = dic[key];
-					list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
-					list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
-					
-					ListBinding.unregist(key, list);
-				}
+				$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
+				$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
 			}
 			
-			dic = {};
-			dicListProperties = new Dictionary;
+			listDic[$list] = $param;
+			ListBinding.addListBind($param.key, $list, $param);
+		}
+		
+		
+		public function delList($list:CoreList):void{
+			if($list){
+				$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
+				$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
+				
+				$list.dataProvider = null;
+				$list.invalidate();
+				
+				delete	listDic[$list];
+			}
+			else{
+				for(var p:* in listDic){
+					$list = listDic[p];
+					$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
+					$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
+				}
+				
+				listDic = new Dictionary(true);
+			}
+			
+			//ListBinding.getInstance().delListBind($key, $list);
 		}
 		
 		
 		protected function onItemPress($e:ListEvent):void {
+			dragData = $e.itemData;
+			
+			if ($e.buttonIdx == moveButton && dragData && dragData[keyMoveEnable]) {
+				
+				var list:CoreList = $e.target as CoreList;
+				var param:* = listDic[list];
+				dragListKey = param.key;
+				dragIndex = $e.index;
+			}
+			else{
+				dragData = null;
+			}
 		}
 		
 		
-		protected function onComplete($bd:BitmapData):void{
-			dragTarget.bitmapData = $bd;
-			
-			dragTarget.width = _dragSize;
-			dragTarget.height = _dragSize;
+		protected function dragStart():void{
+			ImageManager.load(dragData[keyURL], onImgLoadComplete);
 			
 			var s:Stage = CLIK.stage;
 			s.addEventListener(Event.ENTER_FRAME, onDrag);
 			s.addEventListener(MouseEvent.MOUSE_UP, onDragEnd);
-			
 			dragTarget.visible = true;
 		}
 		
 		
-		private function onDrag($e:Event):void {
+		protected function onImgLoadComplete($bd:BitmapData):void{
+		}
+		
+		
+		protected function onDrag($e:Event):void {
 			var s:Stage = CLIK.stage;
 			dragTarget.x = s.mouseX + _dragPoint;
 			dragTarget.y = s.mouseY + _dragPoint;
 		}
 		
 		
-		private function onDragEnd($e:Event):void {
+		protected function onDragEnd($e:Event):void {
 			dragTarget.visible = false;
 			
 			var s:Stage = CLIK.stage;
@@ -115,9 +141,12 @@ package com.minarto.manager {
 			var t:IListItemRenderer = $e.target as IListItemRenderer;
 			if (t) {
 				var list:CoreList = t.owner as CoreList;
-				dropEvt.data = t["data"];
-				dropEvt.index = t.index;
-				dropEvt.listKey = dicListProperties[list].key;
+				var param:* = listDic[list];
+				if(param){
+					dropEvt.data = t["data"];
+					dropEvt.index = t.index;
+					dropEvt.listKey = param.key;
+				}
 			}
 			else {
 				dropEvt.data = null;
@@ -125,11 +154,22 @@ package com.minarto.manager {
 				dropEvt.listKey = null;
 			}
 			
-			dispatchEvent(dropEvt);
+			ListBinding.action(dropEvt);
 		}
 		
 		
 		protected function onItemClick($e:ListEvent):void {
+			var d:* = $e.itemData;
+			if ($e.buttonIdx == useMouseButton && d && d[keyUseEnable]) {
+				var list:CoreList = $e.target as CoreList;
+				var param:* = listDic[list];
+				
+				clickEvt.data = d;
+				clickEvt.index = $e.index;
+				clickEvt.listKey = param.key;
+				
+				ListBinding.action(clickEvt);
+			}
 		}
 	}
 }

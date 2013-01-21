@@ -9,15 +9,7 @@ package com.minarto.controls.widget {
 	 * @author KIMMINHWAN
 	 */
 	public class Widget extends Sprite {
-		protected var _widgetID:String;
-		
-		
-		public var background:MovieClip;
-		
-		
-		public function get widgetID():String {
-			return _widgetID;
-		}
+		public var background:MovieClip, widgetID:String;
 		
 		
 		public function Widget(){
