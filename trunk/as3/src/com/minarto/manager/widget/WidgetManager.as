@@ -59,25 +59,36 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public function loadWidget(...$args):void{
-			var c:uint = $args.length;
-			if (c) {
-				for(var i:uint=0; i<c; ++ i){
-					var o:LoadWidgetObject = pool.object;
-					o.topArrange = 0;
-					o.src = $args[i];
-					_sources.push(o);
-				}
-				
-				if(!currentLoadWidgetObj)	_loadUI();
-			}
+		/**
+		 * 
+		 * @param $args widgetID, src, widgetID, src, widgetID, src, widgetID, src... 
+		 * 
+		 */		
+		public function addWidget($widgetID:String, $src:String, $parentWidgetID:String="stage", $xrate:Number=0, $yrate:Number=0, $align:String="C", $xpadding:Number=10, $ypadding:Number=10, $scaleEnable:Boolean=true):void{
+			var o:LoadWidgetObject = pool.object;
+			
+			o.widgetID = $widgetID;
+			o.src = $src;
+			o.parentWidgetID = $parentWidgetID;
+			o.xrate = $xrate;
+			o.yrate = $yrate;
+			o.align = $align;
+			o.xpadding = $xpadding;
+			o.ypadding = $ypadding;
+			o.scaleEnable = $scaleEnable;
+			
+			_sources.push(o);
 		}
 		
 		
-		public function loadWidgetByArrange($src:String, $topArrange:int=0):void{
-			if(!$src)	return;
-			
+		public function load():void{
+			_loadUI();
+		}
+		
+		
+		public function loadWidgetByArrange($widgetID:String, $src:String, $topArrange:int=0):void{
 			var o:LoadWidgetObject = pool.object;
+			o.widgetID = $widgetID;
 			o.topArrange = $topArrange;
 			o.src = $src;
 			_sources.push(o);
@@ -135,7 +146,8 @@ package com.minarto.manager.widget {
 		protected function onLoadUI($widget:DisplayObject):void{
 			var w:Widget = $widget as Widget;
 			currentLoadWidgetObj.widget = w;
-			var id:String = w.widgetID;
+			var id:String = currentLoadWidgetObj.widgetID;
+			w.widgetID = id;
 			widgetDic[id] = currentLoadWidgetObj;
 			
 			w.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
