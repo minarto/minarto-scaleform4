@@ -11,7 +11,7 @@ package com.minarto.manager.list {
 		
 		
 		protected var listDic:* = {}, keyParams:* = {}, coolTimeDataDic:Dictionary = new Dictionary(true), 
-						keyCooltimeRate:String, keyCooltimeTotal:String, coolTimeDic:* = {},coolTimeIDDic:* = {};
+						keyCooltimeRate:String, keyCooltimeTotal:String, coolTimeDic:* = {}, coolTimeIDDic:* = {};
 		
 		
 		public function ListBridge(){
@@ -137,7 +137,12 @@ package com.minarto.manager.list {
 		
 		
 		public function delList($key:String):void{
-			delete	keyParams[$key];
+			if($key){
+				delete	keyParams[$key];
+			}
+			else{
+				keyParams = {};
+			}
 		}
 	}
 }
