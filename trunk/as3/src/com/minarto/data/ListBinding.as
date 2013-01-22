@@ -36,9 +36,11 @@ package com.minarto.data {
 			
 			var dic:Dictionary = _listBindingDic[$key] || (_listBindingDic[$key] = new Dictionary(true));
 			if($listOrScope as CoreList){
+				dic[$listOrScope] = $listOrScope;
 				$listOrScope.dataProvider = dataProvider;
 			}
 			else if($listOrScope as Function){
+				dic[$listOrScope] = $listOrScope;
 				$listOrScope(dataProvider);
 			}
 			else {
@@ -161,10 +163,7 @@ package com.minarto.data {
 		
 		
 		public static function delDataBind($data:*, $handler:Function, ...$properties):void {
-			if(!$data && !Boolean($handler)){
-				_dataBindingDic = new Dictionary(true);
-			}
-			else{
+			if(Boolean($handler)){
 				$data = _dataBindingDic[$data];
 				if($data){
 					for(var p:String in $properties){
@@ -172,6 +171,9 @@ package com.minarto.data {
 						if(d)	delete d[$handler];
 					}
 				}
+			}
+			else{
+				_dataBindingDic = new Dictionary(true);
 			}
 		}
 		
