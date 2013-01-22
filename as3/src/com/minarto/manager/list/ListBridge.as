@@ -2,16 +2,18 @@ package com.minarto.manager.list {
 	import com.minarto.data.ListBinding;
 	
 	import flash.events.EventDispatcher;
-	import flash.utils.Dictionary;
-	import flash.utils.setInterval;
+	import flash.utils.*;
 	
 	
 	public class ListBridge extends EventDispatcher {
 		private static var _instance:ListBridge;
 		
 		
-		protected var listDic:* = {}, keyParams:* = {}, coolTimeDataDic:Dictionary = new Dictionary(true), 
+		protected var listDic:* = {}, keyParams:* = {}, coolTimeDataDic:Dictionary = new Dictionary(true), countSourceDic:* = {}, 
 						keyCooltimeRate:String, keyCooltimeTotal:String, coolTimeDic:* = {}, coolTimeIDDic:* = {};
+		
+		
+		public var keyTableID:String;
 		
 		
 		public function ListBridge(){
@@ -21,12 +23,24 @@ package com.minarto.manager.list {
 		
 		
 		public function setList($key:String, $a:Array):void {
-			var param:* = keyParams[$key];
-			for(var i:* in $a){
-				_setData(null, $a[i], param);
-			}
+			setListParam($key, $a, keyParams[$key]);
 			listDic[$key] = $a;
 			ListBinding.setList($key, $a);
+		}
+		
+		
+		public function setParam($key:String, $param:*):void{
+			keyParams[$key] = $param;
+			setListParam($key, listDic[$key], $param);
+		}
+		
+		
+		protected function setListParam($key:String, $a:Array, $param:*):void{
+			if(!$a || !$param)	return;
+			
+			for(var i:* in $a){
+				_setData(null, $a[i], $param);
+			}
 		}
 		
 		
@@ -41,6 +55,20 @@ package com.minarto.manager.list {
 		
 		
 		protected function _setData($oData:*, $nData:*, $param:*):void{
+			if($oData){
+				var id:String = $oData[keyTableID];
+				var dic:Dictionary = countSourceDic[id];
+				if(dic)	delete	dic[$oData];
+			}
+			
+			if($nData){
+				if($param){
+					id = $oData[keyTableID];
+					dic = countSourceDic[id] || (countSourceDic[id] = new Dictionary(true));
+					dic[$nData] = $nData;
+				}
+			}
+			
 			coolTimeDataDic[$nData] = {};
 		}
 		
