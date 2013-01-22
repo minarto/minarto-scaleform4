@@ -51,6 +51,13 @@ package com.minarto.data {
 		}
 		
 		
+		/**
+		 * 바인딩을 걸고 실행 
+		 * @param $key
+		 * @param $handlerOrProperty
+		 * @param $scope
+		 * 
+		 */		
 		public static function addBindAndPlay($key:String, $handlerOrProperty:*, $scope:Object=null):void {
 			if(!$key)	return;
 			
