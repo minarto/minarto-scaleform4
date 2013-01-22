@@ -5,7 +5,9 @@ import gfx.data.DataProvider;
 
 
 class com.minarto.data.ListBinding {
-	private static var _listDic = { }, _listBindingDic:* = { },
+	private static var _listDic = { }, _listBindingDic = { },
+						_dataListKey:Array = [],	//	아이템이 포함된 리스트의 키를 반환
+						_dataBindingDic:Array = [],	//	모든 아이템의 바인딩 데이터
 						_bridge:ListBridge;
 	
 	
@@ -105,12 +107,21 @@ class com.minarto.data.ListBinding {
 	 * @param $a
 	 * 
 	 */		
-	public static function setListData($listKey:String, $a:Array):Void {
+	public static function setList($key:String, $a:Array):Void {
+		var dataProvider:DataProvider = _listDic[$key];
+		if(dataProvider){
+			for(var i in dataProvider){
+				var d = dataProvider[i];
+				delete _dataListKey[d];
+				delete _dataBindingDic[d];
+			}
+		}
+		
 		DataProvider.initialize($a);
 		
-		listData[$listKey] = $a;
+		_listDic[$key] = $a;
 		
-		var dic:Array = listDic[$listKey];
+		var dic:Array = _listDic[$listKey];
 		for(var i in dic){
 			var list:CoreList = dic[i];
 			list.dataProvider = null;
@@ -124,46 +135,58 @@ class com.minarto.data.ListBinding {
 	}
 		
 		
-	public static function getListData($listKey:String):Array {
-		return listData[$listKey];
+	public static function getList($key:String):Array {
+		return _listDic[$key];
 	}
 		
 		
-	public static function addBind($data, $scope, $handler:String, $property:String):Void {
+	private static function _setData($data, $key:String):Void {
+		if(!$data)	return;
+		
+		//_dataListKey[$data] = $key;
+		_dataBindingDic.push($data);
+	}
+	
+	
+	public static function addDataBind($data:Object, $scope, $handler:String, $property:String):Void {
 		if ($data) {
-			ListDataBinding.bind($data);
+			var ps:Array = arguments.slice(2, arguments.length);
 			
-			var p:Array = arguments.slice(3, arguments.length);
-			for ($property in p) {
-				$data.addBind($property, $scope, $handler);
+			for (var i in ps) {
+				$data.addBind(ps[i], $scope, $handler);
+			}
+			
+			_dataBindingDic.push($data);
+		}
+	}
+		
+		
+	public static function delDataBind($data, $scope, $handler:String, $property:String):Void {
+		if ($scope || $handler) {
+			if ($data) {
+				var ps:Array = arguments.slice(2, arguments.length);
+				
+				for (var i in ps) {
+					$data.delBind(ps[i], $scope, $handler);
+				}
+			}
+		}
+		else {
+			for (i in _dataBindingDic) {
+				$data = _dataBindingDic[i];
+				$data.delBind();
 			}
 		}
 	}
 		
 		
-	public static function delBind($data, $scope, $handler:String, $property:String):Void {
-		if(!$data)	return;
-		
-		var p:Array = arguments.slice(3, arguments.length);
-		for ($property in p) {
-			$data.delBind($property, $scope, $handler);
-		}
-	}
-		
-		
-	public static function getData($listKey:String, $index:Number){
-		var dataProvider = listData[$listKey];
-		return	dataProvider ? dataProvider[$index] : dataProvider;
-	}
-		
-		
 	public static function setData($target, $data, $index:Number):Void {
-		var data, listKey:String, dataProvider:Array;
+		var data, key:String, dataProvider:Array;
 		
 		if($target as String){
-			listKey = $target;
+			key = $target;
 			
-			dataProvider = listData[listKey];
+			dataProvider = _listDic[key];
 			if(dataProvider){
 				dataProvider[$index] = $data;
 				dataProvider.invalidate();
@@ -171,14 +194,14 @@ class com.minarto.data.ListBinding {
 			else{
 				dataProvider = [];
 				dataProvider[$index] = $data;
-				setListData(listKey, dataProvider);
+				setList(key, dataProvider);
 			}
 		}
 		else if($target){
 			data = $target;
 			
-			for (listKey in listData) {
-				dataProvider = listData[listKey];
+			for (key in listData) {
+				dataProvider = listData[key];
 				for ($index in dataProvider) {
 					if (dataProvider[$index] == $target) {
 						dataProvider[$index] = $data;
