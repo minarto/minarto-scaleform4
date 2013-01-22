@@ -10,7 +10,7 @@ package com.minarto.data {
 	
 	
 	public class Binding extends EventDispatcher {
-		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding;
+		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding = new Binding;
 		
 		
 		public function Binding(){
@@ -21,13 +21,9 @@ package com.minarto.data {
 		/**
 		 * 초기화
 		 */
-		public static function init():Binding {
-			_instance = new Binding;
+		public static function init():void {
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
-
 			trace("Binding.init");
-			
-			return	_instance;
 		}
 		
 		
