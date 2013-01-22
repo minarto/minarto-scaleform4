@@ -8,7 +8,7 @@ package com.minarto.manager.list {
 		private static var _instance:ListBridge;
 		
 		
-		protected var listDic:* = {}, keyParams:* = {};
+		protected var keyParams:* = {}, config:String;
 		
 		
 		public function ListBridge(){
@@ -17,32 +17,75 @@ package com.minarto.manager.list {
 		}
 		
 		
+		/**
+		 * 리스트 데이터 설정
+		 *  
+		 * @param $key
+		 * @param $a
+		 * 
+		 */		
 		public function setList($key:String, $a:Array):void {
 			ListBinding.setList($key, $a);
 		}
 		
 		
+		/**
+		 * 리스트 옵션 설정 
+		 * @param $key
+		 * @param $param
+		 * 
+		 */		
 		public function setParam($key:String, $param:ListParam):void {
 			keyParams[$key] = $param;
 		}
 		
 		
+		/**
+		 * 데이터 속성 설정 
+		 * @param $data
+		 * @param $p
+		 * @param $value
+		 * 
+		 */		
 		public function setDataProperty($data:*, $p:String, $value:*):void {
 			ListBinding.setDataProperty($data, $p, $value);
 		}
 		
 		
+		/**
+		 * 데이터 설정 
+		 * @param $target
+		 * @param $data
+		 * @param $index
+		 * 
+		 */		
 		public function setData($target:*, $data:*, $index:uint=0):void {
 			ListBinding.setData($target, $data, $index);
 		}
 		
-		public function addList($key:String, $param:*):void{
-			keyParams[$key] = $param;
+		
+		/**
+		 * 리스트 설정을 받음 
+		 * @param $config
+		 * 
+		 */		
+		public function setConfig($config:String):void{
+			config = $config;
 		}
 		
 		
+		/**
+		 * 리스트 옵션 삭제 
+		 * @param $key
+		 * 
+		 */		
 		public function delParam($key:String):void{
-			delete	keyParams[$key];
+			if($key){
+				delete	keyParams[$key];
+			}
+			else{
+				keyParams = {};
+			}
 		}
 	}
 }
