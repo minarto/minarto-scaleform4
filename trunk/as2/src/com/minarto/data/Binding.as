@@ -4,7 +4,7 @@ import gfx.events.EventDispatcher;
 
 
 class com.minarto.data.Binding extends EventDispatcher {
-	private static var _valueDic = { }, _bindingDic = { }, _instance = new Binding;
+	private static var _valueDic = { }, _bindingDic = { }, _instance:Binding = new Binding;
 	
 	
 	public function Binding() {
@@ -15,12 +15,9 @@ class com.minarto.data.Binding extends EventDispatcher {
 	/**
 	 * 초기화
 	 */
-	public static function init():Binding {
+	public static function init():Void {
 		if(ExternalInterface.available)	ExternalInterface.call("Binding", _instance);
-					
 		trace("Binding.init");
-		
-		return	_instance;
 	}
 		
 		
@@ -79,9 +76,25 @@ class com.minarto.data.Binding extends EventDispatcher {
 				break;
 			}
 		}
-		if (!o) a.push((o = { obj:$scope, key: { }}));
+		if (!o) {
+			o = { obj:$scope, key: { }};
+			a.push(o);
+		}
 		
 		o.key[$handlerOrProperty] = $handlerOrProperty;
+	}
+		
+		
+	public static function addBindAndPlay($key:String, $handlerOrProperty:String, $scope):Void {
+		if(!$key)	return;
+		
+		addBind($key, $handlerOrProperty, $scope);
+		if($scope){
+			$scope[$handlerOrProperty] = _valueDic[$key];
+		}
+		else{
+			$handlerOrProperty(_valueDic[$key]);
+		}
 	}
 		
 		
