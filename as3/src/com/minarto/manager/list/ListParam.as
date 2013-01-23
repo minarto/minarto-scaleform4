@@ -2,6 +2,7 @@ package com.minarto.manager.list {
 	public class ListParam {
 		// 리스트 타입
 		public static const SOURCE_LIST:String = "sourceList";	//	실제 가지고 있는 아이템 (예 : 인벤토리, 스킬, 창고)
+		public static const REFERENCE_LIST:String = "referenceList";	//	자기 것이 아닌 참조로만 존재하는 아이템 (예 : 상점, 경매장)
 		public static const LINK_LIST:String = "linkList";	//	링크된 리스트 (예 : 퀵슬롯)
 		
 		
