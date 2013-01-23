@@ -25,6 +25,11 @@ class com.minarto.data.ListBridge extends EventDispatcher {
 	}
 		
 		
+	public function getList($key:String):Array {
+		return	ListBinding.getList($key);
+	}
+		
+		
 	public function setParam($key:String, $param:ListParam):Void {
 		keyParams[$key] = $param;
 	}
