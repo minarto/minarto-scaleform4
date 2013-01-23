@@ -1,9 +1,8 @@
-﻿import com.minarto.data.ListBinding;
-import com.minarto.manager.list.*;
+﻿import com.minarto.data.*;
 import gfx.events.EventDispatcher;
 
 
-class com.minarto.manager.list.ListBridge extends EventDispatcher {
+class com.minarto.data.ListBridge extends EventDispatcher {
 	private static var _instance:ListBridge;
 		
 		
