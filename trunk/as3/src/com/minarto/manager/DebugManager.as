@@ -29,7 +29,7 @@ package com.minarto.manager {
 			_instance.dispatchEvent(_evt);
 			
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("error", $type, $message);
-			trace("error", $type, $message);
+			trace("error - ", $type + " :", $message);
 		}
 	}
 }
