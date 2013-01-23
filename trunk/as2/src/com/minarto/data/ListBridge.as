@@ -1,4 +1,5 @@
 ﻿import com.minarto.data.*;
+import flash.external.ExternalInterface;
 import gfx.events.EventDispatcher;
 
 
@@ -12,6 +13,9 @@ class com.minarto.data.ListBridge extends EventDispatcher {
 	public function ListBridge(){
 		if(_instance)	throw	new Error("don't create instance");
 		_instance = this;
+			
+		if(ExternalInterface.available)	ExternalInterface.call("ListBridge", this);
+		trace("ListBridge init");
 	}
 	
 	
