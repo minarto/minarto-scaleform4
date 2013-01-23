@@ -24,6 +24,6 @@ class com.minarto.manager.DebugManager extends EventDispatcher {
 		_instance.dispatchEvent(_evt);
 		
 		if(ExternalInterface.available)	ExternalInterface.call("error", $type, $message);
-		trace("error : " + $type + " : " + $message);
+		trace("error - " + $type + " : " + $message);
 	}
 }
