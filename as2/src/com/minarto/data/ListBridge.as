@@ -1,4 +1,5 @@
 ﻿import com.minarto.data.*;
+import com.minarto.manager.list.ListParam;
 import flash.external.ExternalInterface;
 import gfx.events.EventDispatcher;
 
