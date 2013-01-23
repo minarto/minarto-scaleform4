@@ -1,7 +1,7 @@
-package com.minarto.manager.list {
-	import com.minarto.data.ListBinding;
+package com.minarto.data {
 	
 	import flash.events.EventDispatcher;
+	import com.minarto.manager.list.ListParam;
 	
 	
 	public class ListBridge extends EventDispatcher {
