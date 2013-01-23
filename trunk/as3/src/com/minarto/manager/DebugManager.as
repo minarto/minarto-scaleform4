@@ -8,7 +8,7 @@ package com.minarto.manager {
 	
 	
 	public class DebugManager extends EventDispatcher {
-		private static var _instance:DebugManager = new DebugManager, _evt:CustomEvent = new CustomEvent("error");
+		private static var _instance:DebugManager = new DebugManager, _evt:CustomEvent = new CustomEvent("error", {});
 		
 		
 		public static function getInstance():DebugManager{
