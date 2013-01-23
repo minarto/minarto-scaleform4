@@ -35,6 +35,11 @@ package com.minarto.data {
 		}
 		
 		
+		public function getList($key:String):Array {
+			return	ListBinding.getList($key);
+		}
+		
+		
 		/**
 		 * 리스트 옵션 설정 
 		 * @param $key
