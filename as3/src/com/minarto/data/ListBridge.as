@@ -1,7 +1,11 @@
 package com.minarto.data {
 	
-	import flash.events.EventDispatcher;
 	import com.minarto.manager.list.ListParam;
+	
+	import flash.events.EventDispatcher;
+	import flash.external.ExternalInterface;
+	
+	import scaleform.gfx.Extensions;
 	
 	
 	public class ListBridge extends EventDispatcher {
@@ -14,6 +18,9 @@ package com.minarto.data {
 		public function ListBridge(){
 			if(_instance)	throw	new Error("don't create instance");
 			_instance = this;
+			
+			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("ListBridge", this);
+			trace("ListBridge init");
 		}
 		
 		
