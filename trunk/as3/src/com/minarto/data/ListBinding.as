@@ -2,7 +2,6 @@
  * 
  */
 package com.minarto.data {
-	import com.minarto.manager.list.ListBridge;
 	import com.minarto.utils.GPool;
 	
 	import de.polygonal.core.ObjectPool;
