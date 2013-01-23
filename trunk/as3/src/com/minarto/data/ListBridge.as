@@ -1,5 +1,4 @@
 package com.minarto.data {
-	
 	import com.minarto.manager.list.ListParam;
 	
 	import flash.events.EventDispatcher;
