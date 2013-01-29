@@ -14,11 +14,13 @@ package com.minarto.manager {
 			if(!r){
 				r = ExternalInterface.call("translate", $msg);
 				
-				if(!r){
+				if(r){
+					_dic[$msg] = r;
+				}
+				else{
 					DebugManager.error("translate", $msg);
 				}				
 				
-				_dic[$msg] = r;
 			}
 			return	r;	
 		}

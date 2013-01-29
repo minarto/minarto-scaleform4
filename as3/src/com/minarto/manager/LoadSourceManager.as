@@ -2,90 +2,129 @@ package com.minarto.manager {
 	import flash.display.*;
 	import flash.events.*;
 	import flash.net.URLRequest;
-	import flash.utils.Dictionary;
 	
 
 	public class LoadSourceManager {
-		protected static var loader:Loader, request:URLRequest = new URLRequest, reservations:Array = [], functionDic:* = {};
+		private static var loader:Loader, request:URLRequest = new URLRequest(), reservations:Array = [], currentURL:String, currentComplete:Function;
 		
 		
-		public static function load($src:String, $onComplete:Function):void{
+		public static function getURL():String{
+			return	currentURL;
+		}
+		
+		
+		public function LoadSourceManager() {
+			throw new Error("don't create instance");
+		}
+		
+		
+		public static function load($src:String, $onComplete:Function, ...$srcAndOnComplete):void{
 			if(!$src)	return;
 			
-			var dic:Dictionary = functionDic[$src];
-			if(dic){
-				dic[$onComplete] = $onComplete;
+			reservations.push($src, $onComplete);
+			reservations.push.apply(null, $srcAndOnComplete);
+			
+			if(!loader)	_load();
+		}
+		
+		
+		public static function unLoad($src:String, $onComplete:Function):void{
+			if($src){
+				if(loader && (currentURL == $src && currentComplete == $onComplete)){
+					loader.close();
+					
+					var info:LoaderInfo = loader.contentLoaderInfo;
+					info.removeEventListener(Event.COMPLETE, _onComplete);
+					info.removeEventListener(IOErrorEvent.IO_ERROR, _onIoError);
+
+					loader = null;
+					currentURL = null;
+					currentComplete = null;
+				}
+				
+				var i:int = reservations.indexOf($src);
+				while(i > - 1 && reservations[i + 1] == $onComplete){
+					reservations.splice(i, 2);
+					i = reservations.indexOf($src, i + 1);
+				}
 			}
 			else{
-				dic = new Dictionary;
-				dic[$onComplete] = $onComplete;
-				functionDic[$src] = dic;
+				if(loader){
+					loader.close();
+					
+					info = loader.contentLoaderInfo;
+					info.removeEventListener(Event.COMPLETE, _onComplete);
+					info.removeEventListener(IOErrorEvent.IO_ERROR, _onIoError);
+					
+					loader = null;
+					currentURL = null;
+					currentComplete = null;
+				}
 				
-				reservations.push($src);
-				
-				_load();
-			}
+				reservations.length = 0;
+			}			
 		}
 		
 		
-		public static function close($src:String, $onComplete:Function):void{
-			if(!$src)	return;
-			
-			var dic:Dictionary = functionDic[$src];
-			if(dic){
-				delete	dic[$onComplete];
-			}
+		public static function clear():void{
+			reservations.length = 0;
 			
 			if(loader){
+				loader.close();
+				
 				var info:LoaderInfo = loader.contentLoaderInfo;
-				info.removeEventListener(Event.COMPLETE, onComplete);
-				info.removeEventListener(IOErrorEvent.IO_ERROR, onIoError);
+				info.removeEventListener(Event.COMPLETE, _onComplete);
+				info.removeEventListener(IOErrorEvent.IO_ERROR, _onIoError);
+				
 				loader = null;
+				currentURL = null;
+				currentComplete = null;
 			}
 		}
 		
 		
-		protected static function _load():void {
-			request.url = reservations[0];
+		private static function _load():void {
+			request.url = currentURL = reservations[0];
+			currentComplete = reservations[1];
 			
-			if(loader){
-				var info:LoaderInfo = loader.contentLoaderInfo;
-				info.removeEventListener(Event.COMPLETE, onComplete);
-				info.removeEventListener(IOErrorEvent.IO_ERROR, onIoError);
-			}
-			
+			reservations = reservations.slice(2, reservations.length);
 			
 			loader = new Loader;
-			info = loader.contentLoaderInfo;
-			info.addEventListener(Event.COMPLETE, onComplete);
-			info.addEventListener(IOErrorEvent.IO_ERROR, onIoError);
+			
+			var info:LoaderInfo = loader.contentLoaderInfo;
+			info.addEventListener(Event.COMPLETE, _onComplete);
+			info.addEventListener(IOErrorEvent.IO_ERROR, _onIoError);
+			
 			loader.load(request);
 		}
 		
 		
-		protected static function onComplete($e:Event):void {
+		private static function _onComplete($e:Event):void {
 			var info:LoaderInfo = loader.contentLoaderInfo;
 			
-			var content:DisplayObject = info.content;
+			currentComplete(info.content);
 			
-			var src:String = reservations.shift();
-			var dic:Dictionary = functionDic[src];
-			for(var f:* in dic){
-				dic[f](content);
-			}
+			info.removeEventListener(Event.COMPLETE, _onComplete);
+			info.removeEventListener(IOErrorEvent.IO_ERROR, _onIoError);
 			
-			delete	functionDic[src];
-			
-			info.removeEventListener(Event.COMPLETE, onComplete);
-			info.removeEventListener(IOErrorEvent.IO_ERROR, onIoError);
 			loader = null;
+			currentURL = null;
+			currentComplete = null;
 			
 			if(reservations.length)	_load();
 		}
 		
 		
-		protected static function onIoError($e:IOErrorEvent):void {
-			DebugManager.error(IOErrorEvent.IO_ERROR, reservations.shift());
+		private static function _onIoError($e:IOErrorEvent):void {
+			DebugManager.error(IOErrorEvent.IO_ERROR, currentURL);
+			
+			var info:LoaderInfo = loader.contentLoaderInfo;
+			info.removeEventListener(Event.COMPLETE, _onComplete);
+			info.removeEventListener(IOErrorEvent.IO_ERROR, _onIoError);
+
+			loader = null;
+			currentURL = null;
+			currentComplete = null;
 			
 			if(reservations.length)	_load();
 		}

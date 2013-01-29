@@ -1,12 +1,20 @@
 package com.minarto.manager.widget {
+	import com.minarto.controls.widget.Widget;
+	
 	import de.polygonal.core.ObjectPool;
 	
 	import flash.display.*;
 	import flash.events.Event;
+	import flash.utils.Dictionary;
 
 
 	public class WidgetArrangeManager {
-		protected static var objectDic:* = {}, widgetDic:* = {}, childDic:* = {}, widgetScale:Number = 1, minStageWidth:Number=1366, minStageHeight:Number=768, staticScale:Number = 1, pool:ObjectPool;
+		protected static var objectDic:Dictionary = new Dictionary(true), idDic:* = {}, childDic:* = {}, widgetScale:Number = 1, staticScale:Number = 1, resolution:String = "1366x768";
+		
+		
+		public static function getResolution():String{
+			return	resolution;
+		}
 		
 		
 		public static function getWidgetScale():Number{
@@ -14,13 +22,27 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public static function init($stage:Stage, $minStageWidth:Number=1366, $minStageHeight:Number=768):void{
-			minStageWidth = $minStageWidth;
-			minStageHeight = $minStageHeight;
-			widgetDic["stage"] = $stage;
+		public static function init($stage:Stage, $minStageWidth:uint=1366, $minStageHeight:uint=768):void{
+			idDic["stage"] = $stage;
 			$stage.addEventListener(Event.RESIZE, function ($e:Event):void {
-				if($stage.stageWidth < minStageWidth || $stage.stageHeight < minStageHeight){
-					widgetScale = staticScale * Math.min($stage.stageWidth / minStageWidth, $stage.stageHeight / minStageHeight);
+				var sw:uint = $stage.stageWidth;
+				var sh:uint = $stage.stageHeight;
+				
+				resolution = "" + sw + "x" + sh;
+				
+				childDic = {};
+				
+				for(var i:* in objectDic){
+					var o:WidgetParamObject = objectDic[i];
+					var a:WidgetArrangeObject = o.getArrange();
+					
+					var id:String = a.parentWidgetID;
+					var dic:Dictionary = childDic[id] || (childDic[id] = new Dictionary(true));
+					dic[o.widget] = o;
+				}
+				
+				if(sw < $minStageWidth || sh < $minStageHeight){
+					widgetScale = staticScale * Math.min(sw / $minStageWidth, sh / $minStageHeight);
 				}
 				else{
 					widgetScale = staticScale;
@@ -28,8 +50,7 @@ package com.minarto.manager.widget {
 				arrange(null);
 			});
 			
-			pool = new ObjectPool(true);
-			pool.allocate(10, ArrangeObject);
+			trace("WidgetArrangeManager init");
 		}
 		
 		
@@ -42,24 +63,25 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public static function arrange($widgetID:String):void{
-			if($widgetID == "stage")	$widgetID = null;
-			
-			if($widgetID){
-				var o:ArrangeObject = objectDic[$widgetID];
-				var d:DisplayObject = widgetDic[$widgetID];
-				if(!o || !d)	return;
+		public static function arrange($widget:DisplayObject):void{
+			if($widget && (!$widget as Stage)){
+				var o:WidgetParamObject = objectDic[$widget];
+				if(!o)	return;
 				
-				if(o.scaleEnable){
-					d.scaleX = widgetScale;
-					d.scaleY = widgetScale;
+				var a:WidgetArrangeObject = o.getArrange();
+				if(!a)	return;
+				
+				if(a.scaleEnable){
+					$widget.scaleX = widgetScale;
+					$widget.scaleY = widgetScale;
 				}
 				else{
-					d.scaleX = staticScale;
-					d.scaleY = staticScale;
+					$widget.scaleX = staticScale;
+					$widget.scaleY = staticScale;
 				}
 				
-				var p:DisplayObject = widgetDic[o.parentWidgetID];
+				var po:WidgetParamObject = idDic[a.parentWidgetID];
+				var p:DisplayObject = po.widget;
 				if(p){
 					var stage:Stage = p as Stage;
 					if(stage){
@@ -75,16 +97,16 @@ package com.minarto.manager.widget {
 					return;
 				}
 				
-				var xr:Number = w * o.xrate;
-				var yr:Number = h * o.yrate;
+				var xr:Number = w * a.xrate;
+				var yr:Number = h * a.yrate;
 				
-				var xp:Number = o.xpadding * staticScale;
-				var yp:Number = o.ypadding * staticScale;
+				var xp:Number = a.xpadding * staticScale;
+				var yp:Number = a.ypadding * staticScale;
 				
-				var dw:Number = d.width;
-				var dh:Number = d.height;
+				var dw:Number = $widget.width;
+				var dh:Number = $widget.height;
 				
-				switch(o.align){
+				switch(a.align){
 					case StageAlign.TOP:
 						var tx:Number = xr + xp - dw * 0.5;
 						var ty:Number = yr + yp;
@@ -126,109 +148,68 @@ package com.minarto.manager.widget {
 						ty = yr + yp - dh * 0.5;
 				}
 				
-				d.x = tx;
-				d.y = ty;
+				$widget.x = tx;
+				$widget.y = ty;
 				
-				var dic:* = childDic[$widgetID];
-				for($widgetID in dic){
-					arrange(dic[$widgetID]);
+				dic = childDic[o.widgetID];
+				for(i in dic){
+					arrange(dic[i]);
 				}
-				
-				var f:Function = o.onComplete;
-				if(Boolean(f))	f(d);
 			}
 			else{
-				dic = childDic["stage"];
-				for($widgetID in dic){
-					arrange(dic[$widgetID]);
+				var dic:Dictionary = childDic["stage"];
+				for(var i:* in dic){
+					o = dic[i];
+					arrange(o.widget);
 				}
 			}
 		}
 		
 		
-		public static function addWidget($widgetID:String, $widget:DisplayObject):void{
-			if(!$widgetID || !$widget)	return;
-			widgetDic[$widgetID] = $widget;
-			arrange($widgetID);
+		public static function addWidget($o:WidgetParamObject):void{
+			if(!$o)	return;
+			
+			var w:Widget = $o.widget;
+			objectDic[w] = $o;
+			
+			var id:String = $o.widgetID;
+			idDic[id] = $o;
+			
+			var a:WidgetArrangeObject = $o.getArrange();
+			if(a){
+				id = a.parentWidgetID;
+				var dic:Dictionary = childDic[id] || (childDic[id] = new Dictionary(true));
+				dic[w] = $o;
+			}
+			
+			arrange(w);
 		}
 		
 		
-		public static function delWidget($widgetID:String=null):void{
-			if($widgetID){
-				delete	widgetDic[$widgetID];
-			}
-			else{
-				widgetDic = {};
-			}
-		}
-		
-		
-		public static function addArrange($widgetID:String, $parentWidgetID:String="stage", $xrate:Number=0, $yrate:Number=0, $align:String="CENTER", $xpadding:Number=10, $ypadding:Number=10, $scaleEnable:Boolean=true, $onComplete:Function=null):void{
-			if(!$widgetID)	return;
-			
-			if(!pool){
-				pool = new ObjectPool(true);
-				pool.allocate(10, ArrangeObject);
-			}
-			
-			delArrange($widgetID);
-			
-			var o:ArrangeObject = pool.object;
-			objectDic[$widgetID] = o;
-			
-			var dic:* = childDic[$parentWidgetID];
-			if(!dic){
-				dic = {$widgetID:$widgetID};
-				childDic[$parentWidgetID] = dic;
-			}
-			o.parentWidgetID = $parentWidgetID;
-			o.xrate = $xrate;
-			o.yrate = $yrate;
-			o.align = $align;
-			o.xpadding = $xpadding;
-			o.ypadding = $ypadding;
-			o.scaleEnable = $scaleEnable;
-			o.onComplete = $onComplete;
-			
-			arrange($widgetID);
-		}
-		
-		
-		public static function delArrange($widgetID:String):void{
-			if(!pool){
-				pool = new ObjectPool(true);
-				pool.allocate(10, ArrangeObject);
-			}
-			
-			if($widgetID){
-				var o:ArrangeObject = objectDic[$widgetID];
-				if(o){
-					var id:String = o.parentWidgetID;
-					arrange(id);
-					pool.object = o;
-				}
+		public static function delWidget($o:WidgetParamObject=null):void{
+			if($o){
+				var w:Widget = $o.widget;
+				delete	objectDic[w];
 				
-				delete objectDic[$widgetID];
-				delete childDic[$widgetID];
+				var id:String = $o.widgetID;
+				delete	childDic[id];
+				delete	idDic[id];
 				
 				for(id in childDic){
-					var dic:* = objectDic[id];
-					delete	dic[$widgetID];
+					var dic:Dictionary = childDic[id];
+					for(var i:* in dic){
+						if(w == dic[i].widget){
+							delete	dic[i];
+							break;
+						}
+					}
 				}
 			}
 			else{
-				for(id in objectDic){
-					o = objectDic[id];
-					pool.object = o;
-				}
-				
-				objectDic = {};
+				objectDic = new Dictionary(true);
 				childDic = {};
+				idDic = {};
 			}
 		}
 	}
-}
-
-internal class ArrangeObject {
-	public var parentWidgetID:String, widgetID:String, xrate:Number = 0, yrate:Number = 0, align:String, xpadding:Number=10, ypadding:Number=10, scaleEnable:Boolean = true, onComplete:Function;
 }
