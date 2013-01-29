@@ -1,6 +1,8 @@
 package com.minarto.manager {
 	import com.minarto.data.ListBinding;
 	import com.minarto.events.*;
+	import com.minarto.manager.list.ItemMoveActionType;
+	import com.minarto.manager.list.ListParam;
 	import com.minarto.utils.GPool;
 	
 	import de.polygonal.core.ObjectPool;
@@ -18,82 +20,92 @@ package com.minarto.manager {
 	import scaleform.gfx.*;
 	
 	
-	public class ListManager extends EventDispatcher {
-		protected var listDic:Dictionary = new Dictionary(true), 
-			dragType:String = "drag&drop", moveButton:uint = 0, useMouseButton:uint = 1,
-			
+	public class CoreListManager {
+		public var itemMoveActionType:String = ItemMoveActionType.DRAG_AND_DROP;	//	아이템 이동 방식
+		public var itemMoveButton:uint = MouseEventEx.LEFT_BUTTON;	//	아이템 이동시 사용하는 마우스 버튼
+		public var useMouseButton:uint = MouseEventEx.RIGHT_BUTTON;	//	아이템 사용시 사용하는 마우스 버튼
+		
+		
+		protected var listDic:* = {}, paramDic:* = {}, 
 			keyURL:String, keyUseEnable:String, keyMoveEnable:String,
 			
 			dragTarget:DisplayObject, dragIndex:int, dragListKey:String, dragData:*, _dragSize:int, _dragPoint:int,
 			clickEvt:SlotEvent = new SlotEvent(ListEvent.ITEM_CLICK), dropEvt:SlotEvent = new SlotEvent(DragEvent.DROP);
 		
 		
-		public function ListManager() {
-			trace("ListManager");
+		public function CoreListManager() {
+			trace("CoreListManager");
 		}
 		
 		
-		public function setDragType($type:String="drag&drop"):void{
-			dragType = $type;
+		public function addParam($paramKey:String, $param:ListParam):void{
+			paramDic[$paramKey] = $param;
 		}
 		
 		
-		public function setMouseButton($move:uint = MouseEventEx.LEFT_BUTTON, $use:uint=MouseEventEx.RIGHT_BUTTON):void{
-			moveButton = $move;
-			useMouseButton = $use;
-		}
-		
-		
-		public function setDataKey($keyURL:String, $keyUseEnable:String, $keyMoveEnable:String):void{
-			keyURL = $keyURL;
-			keyUseEnable = $keyUseEnable;
-			keyMoveEnable = $keyMoveEnable;
-		}
-		
-		
-		public function addList($list:CoreList, $param:*):void{
-			if($param){
-				if($param[keyMoveEnable])	$list.addEventListener(ListEvent.ITEM_PRESS, onItemPress);
-				if($param[keyUseEnable])	$list.addEventListener(ListEvent.ITEM_CLICK, onItemClick);
-			}
-			else{
-				$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
-				$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
-			}
+		public function addList($listKey:String, $list:CoreList, $paramKey:String):void{
+			delList($list);
 			
-			listDic[$list] = $param;
-			ListBinding.addListBind($param.key, $list, $param);
+			var dic:* = listDic[$paramKey] || (listDic[$paramKey] = {});
+			dic[$listKey] = $list;
+			
+			ListBinding.addListBind($listKey, $list);
+			
+			var param:ListParam = paramDic[$paramKey];
+			if(param){
+				if(param.useEnable)	$list.addEventListener(ListEvent.ITEM_CLICK, onItemClick);
+				if(param.moveEnable){
+					switch(itemMoveActionType){
+						case  ItemMoveActionType.DOWN_AND_DOWN :
+							$list.addEventListener(ListEvent.ITEM_CLICK, dragStart);
+							break;
+						default :
+							$list.addEventListener(ListEvent.ITEM_PRESS, dragStart);
+					}
+				}
+			}
 		}
 		
 		
 		public function delList($list:CoreList):void{
 			if($list){
-				$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
+				$list.removeEventListener(ListEvent.ITEM_CLICK, dragStart);
+				$list.removeEventListener(ListEvent.ITEM_PRESS, dragStart);
 				$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
 				
-				$list.dataProvider = null;
-				$list.invalidate();
-				
-				delete	listDic[$list];
+				for(var paramKey:String in listDic){
+					var dic:* = listDic[paramKey];
+					for(var listKey:String in dic){
+						if(dic[listKey] == $list){
+							ListBinding.delListBind(listKey, $list);
+							delete	dic[listKey];
+							return;
+						}
+					}
+				}				
 			}
 			else{
-				for(var p:* in listDic){
-					$list = listDic[p];
-					$list.removeEventListener(ListEvent.ITEM_PRESS, onItemPress);
-					$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
+				for(paramKey in listDic){
+					dic = listDic[paramKey];
+					for(listKey in dic){
+						$list = dic[listKey];
+						$list.removeEventListener(ListEvent.ITEM_CLICK, dragStart);
+						$list.removeEventListener(ListEvent.ITEM_PRESS, dragStart);
+						$list.removeEventListener(ListEvent.ITEM_CLICK, onItemClick);
+					}
 				}
 				
-				listDic = new Dictionary(true);
+				ListBinding.delListBind(null, $list);
+				
+				listDic = {};
 			}
-			
-			//ListBinding.getInstance().delListBind($key, $list);
 		}
 		
 		
 		protected function onItemPress($e:ListEvent):void {
 			dragData = $e.itemData;
 			
-			if ($e.buttonIdx == moveButton && dragData && dragData[keyMoveEnable]) {
+			if ($e.buttonIdx == itemMoveButton && dragData && dragData[keyMoveEnable]) {
 				
 				var list:CoreList = $e.target as CoreList;
 				var param:* = listDic[list];
@@ -106,12 +118,30 @@ package com.minarto.manager {
 		}
 		
 		
-		protected function dragStart():void{
+		protected function dragStart($e:ListEvent):void{
+			dragData = $e.itemData;
+			
+			if ($e.buttonIdx == itemMoveButton && dragData && dragData[keyMoveEnable]) {
+				var list:CoreList = $e.target as CoreList;
+				var param:* = listDic[list];
+				dragListKey = param.key;
+				dragIndex = $e.index;
+			}
+			else{
+				dragData = null;
+			}
+			
 			ImageManager.load(dragData[keyURL], onImgLoadComplete);
 			
 			var s:Stage = CLIK.stage;
 			s.addEventListener(Event.ENTER_FRAME, onDrag);
-			s.addEventListener(MouseEvent.MOUSE_UP, onDragEnd);
+			switch(itemMoveActionType){
+				case  ItemMoveActionType.DOWN_AND_DOWN :
+					s.addEventListener(MouseEvent.MOUSE_UP, onDragEnd);
+					break;
+				default :
+					s.addEventListener(MouseEvent.CLICK, onDragEnd);
+			}
 			dragTarget.visible = true;
 		}
 		

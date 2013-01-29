@@ -1,6 +1,7 @@
 package com.minarto.manager.widget {
 	import com.minarto.controls.widget.Widget;
 	import com.minarto.events.CustomEvent;
+	import com.minarto.manager.LoadSourceManager;
 	import com.scaleform.mmo.events.WidgetEvent;
 	
 	import de.polygonal.core.ObjectPool;
@@ -13,7 +14,7 @@ package com.minarto.manager.widget {
 	import scaleform.clik.core.CLIK;
 	import scaleform.clik.events.DragEvent;
 	import scaleform.gfx.Extensions;
-	import com.minarto.manager.LoadSourceManager;
+	import scaleform.gfx.FocusManager;
 	
 	
 	/**
@@ -23,11 +24,11 @@ package com.minarto.manager.widget {
 		protected static var _instance:WidgetManager = new WidgetManager;
 		
 		
-		protected var widgetDic:* = { }, topWidgetDic:* = {}, 
-			dragWidget:Sprite, 
+		protected var widgetDic:Dictionary = new Dictionary(true), widgetIdDic:* = {}, 
+			dragWidget:Sprite, focusEvt:CustomEvent = new CustomEvent("focusWidget"), closeEvt:CustomEvent = new CustomEvent(WidgetEvent.CLOSE_WIDGET), 
 			containers:* = {},
 			_sources:Array = [], pool:ObjectPool,
-			currentLoadWidgetObj:LoadWidgetObject, _loadID:uint;
+			currentLoadWidgetObj:WidgetParamObject, _loadID:uint;
 		
 		
 		public function WidgetManager() {
@@ -37,7 +38,7 @@ package com.minarto.manager.widget {
 			trace("WidgetManager init");
 			
 			pool = new ObjectPool(true);
-			pool.allocate(10, LoadWidgetObject);
+			pool.allocate(10, WidgetParamObject);
 		}
 		
 		
@@ -46,198 +47,255 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public function setContainer($container:DisplayObjectContainer, $topArrange:int=0):void{
-			containers[$topArrange] = $container;
-			
-			for(var widgetID:* in widgetDic){
-				var o:LoadWidgetObject = widgetDic[widgetID];
-				if(o.topArrange == $topArrange){
-					var w:Widget = o.widget;
-					if(!$container.contains(w))	$container.addChild(w);
-				}
-			}
+		public function setContainer($containers:DisplayObjectContainer, $topArrange:int=0):void{
+			containers[$topArrange] = $containers;
 		}
 		
 		
-		/**
-		 * 
-		 * @param $args widgetID, src, widgetID, src, widgetID, src, widgetID, src... 
-		 * 
-		 */		
-		public function addWidget($widgetID:String, $src:String, $parentWidgetID:String="stage", $xrate:Number=0, $yrate:Number=0, $align:String="C", $xpadding:Number=10, $ypadding:Number=10, $scaleEnable:Boolean=true):void{
-			var o:LoadWidgetObject = pool.object;
+		public function loadWidget($src:String, $widgetID:String, $containerIndex:int=0, $resolution:String=null, $widgetArrangeObject:WidgetArrangeObject=null, ...$resolutionNarrangeObject):void{
+			var o:WidgetParamObject = pool.object;
 			
-			o.widgetID = $widgetID;
 			o.src = $src;
-			o.parentWidgetID = $parentWidgetID;
-			o.xrate = $xrate;
-			o.yrate = $yrate;
-			o.align = $align;
-			o.xpadding = $xpadding;
-			o.ypadding = $ypadding;
-			o.scaleEnable = $scaleEnable;
+			o.widgetID = $widgetID;
+			o.containerIndex = $containerIndex;
+			
+			if($widgetArrangeObject && $resolution){
+				o.setArrange($widgetArrangeObject, $resolution);
+				
+				for(var i:uint = 0, c:uint = $resolutionNarrangeObject.length; i<c; i += 2){
+					o.setArrange($resolutionNarrangeObject[i + 1], $resolutionNarrangeObject[i]);
+				}
+			}			
 			
 			_sources.push(o);
 		}
 		
 		
 		public function load():void{
-			_loadUI();
-		}
-		
-		
-		public function loadWidgetByArrange($widgetID:String, $src:String, $topArrange:int=0):void{
-			var o:LoadWidgetObject = pool.object;
-			o.widgetID = $widgetID;
-			o.topArrange = $topArrange;
-			o.src = $src;
-			_sources.push(o);
-			
-			if(!currentLoadWidgetObj)	_loadUI();
-		}
-		
-		
-		public function unLoadWidget(...$args):void{
-			if ($args.length) {
-				for(var p:* in $args){
-					var src:String = $args[p];
-					
-					for(var i:uint=0, c:uint = _sources.length; i<c; ++ i){
-						currentLoadWidgetObj = _sources[i];
-						if(currentLoadWidgetObj.src == src){
-							pool.object = currentLoadWidgetObj;
-							_sources.splice(i, 1);
-							-- i;
-						}
-					}
-					
-					if(currentLoadWidgetObj && currentLoadWidgetObj.src == src)	LoadSourceManager.close(src, onLoadUI);
-				}
-				
-				var a:Array = widgetDic[src];
-				for(p in a){
-					var w:Widget = a[p];
-					delWidget(w.widgetID, w);
-				}
+			if(_sources.length){
+				currentLoadWidgetObj = _sources.shift();
+				_loadUI();
 			}
-			else{
-				clearTimeout(_loadID);
-				
-				if(currentLoadWidgetObj)	LoadSourceManager.close(currentLoadWidgetObj.src, onLoadUI);
-				
-				delWidget(null, null);				
-				for(i=0, c = _sources.length; i<c; ++ i){
-					currentLoadWidgetObj = _sources[i];
-					pool.object = currentLoadWidgetObj;
-				}
-				_sources.length = 0;
-			}
-			
-			currentLoadWidgetObj = null;
 		}
 		
 		
 		protected function _loadUI():void {
-			currentLoadWidgetObj = _sources.shift();
-			if(currentLoadWidgetObj)	LoadSourceManager.load(currentLoadWidgetObj.src, onLoadUI);
+			LoadSourceManager.load(currentLoadWidgetObj.src, onLoadUI);
 		}
 		
 		
 		protected function onLoadUI($widget:DisplayObject):void{
 			var w:Widget = $widget as Widget;
 			currentLoadWidgetObj.widget = w;
-			var id:String = currentLoadWidgetObj.widgetID;
-			w.widgetID = id;
-			widgetDic[id] = currentLoadWidgetObj;
+			var id:String = w.widgetID;
+			widgetDic[w] = currentLoadWidgetObj;
+			widgetIdDic[id] = currentLoadWidgetObj;
 			
 			w.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 			w.addEventListener(DragEvent.DRAG_START, onDragStart);
 			w.addEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
 			
-			WidgetArrangeManager.addWidget(id, $widget);
+			WidgetArrangeManager.addWidget(currentLoadWidgetObj);
 			
-			var container:DisplayObjectContainer = containers[currentLoadWidgetObj.topArrange];
-			if(container)	container.addChild($widget);
+			var c:DisplayObjectContainer = containers[currentLoadWidgetObj.containerIndex];
+			if(c)	c.addChild($widget);
 			
-			currentLoadWidgetObj = null;
-			if(_sources.length)	_loadID = setTimeout(_loadUI, 200);
-		}
-		
-		
-		public function delWidget($widgetID:String, $widget:Widget):void{
-			if($widgetID && $widget){
-				
-				$widget.destroy();
-				
-				$widget.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-				$widget.removeEventListener(DragEvent.DRAG_START, onDragStart);
-				$widget.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
-				
-				delete widgetDic[$widgetID];
-				
-				var container:DisplayObjectContainer = $widget.parent;
-				container.removeChild($widget);
+			if(_sources.length){
+				currentLoadWidgetObj = _sources.shift();
+				_loadID = setTimeout(_loadUI, 200);
 			}
 			else{
-				for ($widgetID in widgetDic) {
-					var o:LoadWidgetObject = widgetDic[$widgetID];
+				currentLoadWidgetObj = null;
+				WidgetArrangeManager.arrange(null);
+				dispatchEvent(new Event(Event.COMPLETE));
+			}
+			
+			if(Boolean(Extensions.CLIK_addedToStageCallback))	Extensions.CLIK_addedToStageCallback(id, CLIK.getTargetPathFor(w), w);
+		}
+		
+		
+		public function delWidgetByID(...$widgetID):void{
+			if($widgetID.length){
+				for(var i:* in $widgetID){
+					var widgetID:String = $widgetID[i];
 					
-					$widget = o.widget;
+					if(currentLoadWidgetObj && currentLoadWidgetObj.widgetID == widgetID){
+						_delWidget(o);
+					}
 					
-					$widget.destroy();
+					for(var j:* in _sources){
+						var o:WidgetParamObject = _sources[j];
+						if(o.widgetID == widgetID){
+							_delWidget(o);
+							break;
+						}
+					}
 					
-					$widget.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-					$widget.removeEventListener(DragEvent.DRAG_START, onDragStart);
-					$widget.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
+					for(j in widgetIdDic){
+						o = widgetIdDic[j];
+						if(o.widgetID == widgetID){
+							_delWidget(o);
+							break;
+						}
+					}
+				}
+			}
+			else{
+				_delWidget(null);
+			}
+		}
+		
+		
+		public function delWidget(...$widget):void{
+			if($widget.length){
+				for(var i:* in $widget){
+					var widget:Widget = $widget[i];
 					
-					container = $widget.parent;
-					container.removeChild($widget);
+					for(var j:* in widgetDic){
+						var o:WidgetParamObject = widgetDic[j];
+						if(o.widget == widget){
+							_delWidget(o);
+							break;
+						}
+					}
+				}
+			}
+			else{
+				_delWidget(null);
+			}
+		}
+		
+		
+		protected function _delWidget($o:WidgetParamObject):void{
+			if($o){
+				if(currentLoadWidgetObj == $o){
+					clearTimeout(_loadID);
+					LoadSourceManager.unLoad($o.src, onLoadUI);
+					currentLoadWidgetObj = null;
+				}
+				else{
+					for(var i:* in _sources){
+						var o:WidgetParamObject = _sources[i];
+						if(o == $o){
+							pool.object = o;
+							_sources.splice(i, 1);
+							return;
+						}
+					}
 					
-					pool.object = o;
+					for(i in widgetDic){
+						o = widgetDic[i];
+						if(o == $o){
+							var w:Widget = o.widget;
+							w.destroy();
+							w.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+							w.removeEventListener(DragEvent.DRAG_START, onDragStart);
+							w.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
+							
+							pool.object = o;
+							
+							var c:DisplayObjectContainer = w.parent;
+							if(c)	c.removeChild(w);
+							
+							delete	widgetDic[w];
+							delete	widgetIdDic[o.widgetID];
+							return;
+						}						
+					}
+				}
+			}
+			else{
+				if(currentLoadWidgetObj){
+					clearTimeout(_loadID);
+					LoadSourceManager.unLoad(currentLoadWidgetObj.src, onLoadUI);
+					currentLoadWidgetObj = null;
 				}
 				
-				widgetDic = {};
+				for(i in _sources){
+					o = _sources[i];
+					pool.object = o;
+				}
+				_sources.length = 0;
+				
+				for(i in widgetDic){
+					o = widgetDic[i];
+					w = o.widget;
+					w.destroy();
+					w.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+					w.removeEventListener(DragEvent.DRAG_START, onDragStart);
+					w.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
+					
+					pool.object = o;
+					
+					c = w.parent;
+					if(c)	c.removeChild(w);
+				}
+				
+				widgetDic = new Dictionary(true);
+				widgetIdDic = {};
 			}
 		}
 		
 		
-		public function open($widgetID:String):Widget {
-			var o:LoadWidgetObject = widgetDic[$widgetID];
-			
-			var w:Widget = getWidget($widgetID);
-			if (w) {
-				var container:DisplayObjectContainer = w.parent;
-				container.setChildIndex(w, container.numChildren - 1);
+		public function open($widget:Widget):Widget {
+			return	_open($widget);
+		}
+		
+		
+		public function openByID($widgetID:String):Widget {
+			return	_open(getWidget($widgetID));
+		}
+		
+		
+		protected function _open($widget:Widget):Widget {
+			if ($widget) {
+				var c:DisplayObjectContainer = $widget.parent;
+				if(c){
+					c.setChildIndex($widget, c.numChildren - 1);
+				}
+				else{
+					var o:WidgetParamObject = widgetDic[$widget];
+					c = containers[o.containerIndex];
+					if(c)	c.addChild($widget);
+				}
 				
-				w.open();
+				$widget.open();
+				FocusManager.setFocus($widget);
 				
-				dispatchEvent(new CustomEvent("focusWidget", w));
+				if(FocusManager.getFocus() == $widget){
+					focusEvt.param = $widget;
+					dispatchEvent(focusEvt);
+				}				
 			}			
 			
-			return	w;
+			return	$widget;
 		}
 		
 		
-		public function close($widgetID:String):Widget {
-			var w:Widget = getWidget($widgetID);
-			if (w) {
-				w.close();
-			}
-			
-			return	w;
+		public function close($widget:Widget):Widget {
+			return	_close($widget);
 		}
 		
 		
-		public function getTopWidget($topArrange:int=0):Widget {
-			var container:DisplayObjectContainer = containers[$topArrange];
-			return	container ? container.getChildAt(container.numChildren - 1) as Widget : null;
+		public function closeByID($widgetID:String):Widget {
+			return	_close(getWidget($widgetID));
+		}
+		
+		
+		protected function _close($widget:Widget):Widget {
+			if ($widget) $widget.close();
+			return	$widget;
+		}
+		
+		
+		public function getTopWidget($containerIndex:int=0):DisplayObject {
+			var c:DisplayObjectContainer = containers[$containerIndex];
+			return	c ? c.getChildAt(c.numChildren - 1) : c;
 		}
 		
 		
 		public function getFocusWidget():Widget{
-			var s:Stage = CLIK.stage;
-			
-			var f:InteractiveObject = s.focus;
+			var f:InteractiveObject = FocusManager.getFocus();
 			var p:DisplayObjectContainer = f.parent;
 			while(p){
 				if(p as Widget){
@@ -253,38 +311,43 @@ package com.minarto.manager.widget {
 		
 		
 		public function getWidget($widgetID:String):Widget {
-			return	widgetDic[$widgetID];
+			return	widgetIdDic[$widgetID];
 		}
 		
 		
-		private function onClose($e:DragEvent):void {
+		protected function onClose($e:DragEvent):void {
 			var w:Widget = $e.dragSprite as Widget;
 			w.close();
-			dispatchEvent(new CustomEvent(WidgetEvent.CLOSE_WIDGET, w));
+			if(getFocusWidget() == w){
+				FocusManager.setFocus(null);
+			}
+			closeEvt.param = w;
+			dispatchEvent(closeEvt);
 		}
 		
 		
-		private function onMouseDown($e:MouseEvent):void {
+		protected function onMouseDown($e:MouseEvent):void {
 			var w:DisplayObject = $e.currentTarget as DisplayObject;
-			var container:DisplayObjectContainer = w.parent;
-			container.setChildIndex(w, container.numChildren - 1);
+			var c:DisplayObjectContainer = w.parent;
+			if(c)	c.setChildIndex(w, c.numChildren - 1);
 			
-			dispatchEvent(new CustomEvent("focusWidget", w));
+			focusEvt.param = w;
+			dispatchEvent(focusEvt);
 		}
 		
 		
-		private function onDragStart($e:DragEvent):void {
+		protected function onDragStart($e:DragEvent):void {
 			dragWidget = $e.dragSprite;
 			dragWidget.startDrag();
 			
-			CLIK.stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp, true);
+			CLIK.stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 		}
 		
 		
-		private function onMouseUp($e:MouseEvent):void {
+		protected function onMouseUp($e:MouseEvent):void {
 			$e.stopPropagation();
 			
-			CLIK.stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp, true);
+			CLIK.stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 			
 			dragWidget.stopDrag();
 			dragWidget = null;
