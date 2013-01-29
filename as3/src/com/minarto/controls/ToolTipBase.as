@@ -17,19 +17,26 @@ package com.minarto.controls {
 		
 		
 		protected function delBind():void{
-			//ListBinding.delDataBind(data, dataConvert, HashKeyManager.url);
+			if(data as String){
+				dataConvert();
+			}
+			else if(data){
+				//ListBinding.delDataBind(data, dataConvert, HashKeyManager.url);
+			}
 		}
 		
 		
 		protected function addBind():void{
-			//ListBinding.addDataBind(data, dataConvert, HashKeyManager.url);
+			if(data as String){
+				dataConvert();
+			}
+			else if(data){
+				//ListBinding.addDataBind(data, dataConvert, HashKeyManager.url);
+			}
 		}
 		
 		
 		protected function dataConvert():void{
-			if(data){
-				invalidate();
-			}
 		}
 		
 		

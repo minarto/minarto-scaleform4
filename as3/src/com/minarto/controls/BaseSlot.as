@@ -12,7 +12,7 @@ package com.minarto.controls {
 	 * @author KIMMINHWAN
 	 */
 	public class BaseSlot extends Button implements IListItemRenderer {
-		public var content:MovieClip;
+		public var content:DisplayObject;
 		
 		protected var _index:uint, _selectable:Boolean = true;
 		
