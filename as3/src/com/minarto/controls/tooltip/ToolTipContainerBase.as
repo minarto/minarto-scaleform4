@@ -1,16 +1,16 @@
-package com.minarto.manager.tooltip {
+package com.minarto.controls.tooltip {
 	import flash.display.*;
 	import flash.events.MouseEvent;
 	import flash.utils.*;
 	
 	import scaleform.gfx.InteractiveObjectEx;
-	import com.minarto.controls.ToolTipBase;
+	import com.minarto.manager.tooltip.IToolTipManager;
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
 	public class ToolTipContainerBase extends Sprite implements IToolTipManager {
-		private var target:InteractiveObject, btnDic:Dictionary = new Dictionary(true), toolTipDelay:uint = 300, delayID:uint;
+		private var target:InteractiveObject, btnDic:Dictionary = new Dictionary(true), delay:uint = 300, delayID:uint;
 		
 		public var toolTip:ToolTipBase, toolTip1:ToolTipBase;
 		
@@ -27,8 +27,8 @@ package com.minarto.manager.tooltip {
 		public function regist(...$button):void{
 			for(var p:* in $button){
 				var b:InteractiveObject = $button[p];
-				b.addEventListener(MouseEvent.ROLL_OVER, onRollOver);
-				b.addEventListener(MouseEvent.ROLL_OUT, onRollOut);
+				b.addEventListener(MouseEvent.ROLL_OVER, hnRollOver);
+				b.addEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 				
 				btnDic[$button] = $button;
 			}
@@ -39,8 +39,8 @@ package com.minarto.manager.tooltip {
 			if($button.length){
 				for(var p:* in $button){
 					var b:InteractiveObject = $button[p];
-					b.removeEventListener(MouseEvent.ROLL_OVER, onRollOver);
-					b.removeEventListener(MouseEvent.ROLL_OUT, onRollOut);
+					b.removeEventListener(MouseEvent.ROLL_OVER, hnRollOver);
+					b.removeEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 					
 					delete	btnDic[b];
 				}
@@ -48,8 +48,8 @@ package com.minarto.manager.tooltip {
 			else{
 				for(p in btnDic){
 					b = btnDic[p];
-					b.removeEventListener(MouseEvent.ROLL_OVER, onRollOver);
-					b.removeEventListener(MouseEvent.ROLL_OUT, onRollOut);
+					b.removeEventListener(MouseEvent.ROLL_OVER, hnRollOver);
+					b.removeEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 				}
 				
 				btnDic = new Dictionary(true);
@@ -57,14 +57,14 @@ package com.minarto.manager.tooltip {
 		}
 		
 		
-		protected function onRollOver($e:MouseEvent) : void {
+		protected function hnRollOver($e:MouseEvent) : void {
 			delToolTip();
 			target = $e.target as InteractiveObject;
-			if(target.hasOwnProperty("data") && target["data"])	delayID = setTimeout(delayToolTip, toolTipDelay);
+			if(target.hasOwnProperty("data") && target["data"])	delayID = setTimeout(delayToolTip, delay);
 		}
 		
 		
-		protected function onRollOut($e:MouseEvent) : void {
+		protected function hnRollOut($e:MouseEvent) : void {
 			delToolTip();
 		}
 		

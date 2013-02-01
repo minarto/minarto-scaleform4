@@ -27,6 +27,11 @@ package com.minarto.data {
 		}
 		
 		
+		public static function getBridge():ListBridge{
+			return	_bridge;
+		}
+		
+		
 		public static function addListBind($key:String, $listOrScope:*, $property:String=null):void{
 			if(!$key)	return;
 			
@@ -35,11 +40,9 @@ package com.minarto.data {
 			
 			var dic:Dictionary = _listBindingDic[$key] || (_listBindingDic[$key] = new Dictionary(true));
 			if($listOrScope as CoreList){
-				dic[$listOrScope] = $listOrScope;
 				$listOrScope.dataProvider = dataProvider;
 			}
 			else if($listOrScope as Function){
-				dic[$listOrScope] = $listOrScope;
 				$listOrScope(dataProvider);
 			}
 			else {
@@ -50,21 +53,29 @@ package com.minarto.data {
 		}
 		
 		
-		public static function delListBind($key:String, $listOrScope:*, $property:String=null):void{
-			if($key){
-				var dic:Dictionary = _listBindingDic[$key];
-				if(dic){
-					if($listOrScope as CoreList){
-						$listOrScope.dataProvider = null;
-						delete	dic[$listOrScope];
-					}
-					else if($listOrScope as Function){
-						$listOrScope(null);
-						delete	dic[$listOrScope];
-					}
-					else{
-						var t:* = dic[$listOrScope];
-						if(t)	delete	t[$property];
+		public static function delListBind($listOrScope:*, $property:String=null):void{
+			if($listOrScope){
+				for(var key:String in _listBindingDic){
+					var dic:Dictionary = _listBindingDic[key];
+					
+					for(var i:* in dic){
+						var listOrScope:* = dic[i];
+						if(listOrScope == $listOrScope){
+							if($listOrScope as CoreList){
+								$listOrScope.dataProvider = null;
+								delete	dic[$listOrScope];
+							}
+							else if($listOrScope as Function){
+								$listOrScope(null);
+								delete	dic[$listOrScope];
+							}
+							else{
+								listOrScope = dic[$listOrScope];
+								if(listOrScope)	delete	listOrScope[$property];
+							}
+							
+							return;
+						}
 					}
 				}
 			}
@@ -81,7 +92,7 @@ package com.minarto.data {
 		
 		
 		public static function action($e:Event):void{
-			_bridge.dispatchEvent($e);
+			if(_bridge)	_bridge.dispatchEvent($e);
 		}
 		
 		
@@ -162,7 +173,10 @@ package com.minarto.data {
 		
 		
 		public static function delDataBind($data:*, $handler:Function, ...$properties):void {
-			if(Boolean($handler)){
+			if(!$data && !Boolean($handler)){
+				_dataBindingDic = new Dictionary(true);
+			}
+			else{
 				$data = _dataBindingDic[$data];
 				if($data){
 					for(var p:String in $properties){
@@ -170,9 +184,6 @@ package com.minarto.data {
 						if(d)	delete d[$handler];
 					}
 				}
-			}
-			else{
-				_dataBindingDic = new Dictionary(true);
 			}
 		}
 		
