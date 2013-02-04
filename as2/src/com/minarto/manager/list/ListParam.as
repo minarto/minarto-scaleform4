@@ -18,6 +18,7 @@ class com.minarto.manager.list.ListParam {
 	
 	
 	//	 소스/링크 양쪽 다 사용하는 옵션
+	public var key:String;
 	public var linkEnabled:Boolean;	//	링크 가능 여부 (예 : true - 인벤토리, 퀵슬롯, false - 창고)
 	public var listType:String = SOURCE_LIST;	//	리스트 타입 (예 : link - 퀵슬롯, 물약 슬롯, source - 인벤토리, 창고, 스킬, 제작기술)
 	public var useEnable:Boolean;	//	사용 가능 여부 (예 : 트레이드 창)

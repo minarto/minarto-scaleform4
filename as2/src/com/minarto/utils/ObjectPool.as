@@ -1,4 +1,6 @@
-﻿class com.minarto.utils.ObjectPool {
+﻿import com.minarto.utils.*;
+
+class com.minarto.utils.ObjectPool {
 	private var _dic:Array = [],
 				_constructor:Function, _currSize:Number = 0;
 	

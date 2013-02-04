@@ -16,7 +16,7 @@ class com.minarto.data.ListBridge extends EventDispatcher {
 		_instance = this;
 			
 		if(ExternalInterface.available)	ExternalInterface.call("ListBridge", this);
-		trace("ListBridge init");
+		trace("ListBridge");
 	}
 	
 	
