@@ -1,6 +1,7 @@
 ﻿import com.minarto.controls.widget.Widget;
 import com.minarto.manager.LoadSourceManager;
 import com.minarto.manager.widget.*;
+import com.minarto.utils.ObjectPool;
 import flash.external.ExternalInterface;
 import gfx.events.EventDispatcher;
 import gfx.events.EventTypes;
@@ -11,12 +12,13 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	private static var _instance:WidgetManager = new WidgetManager;
 		
 		
-	private var widgetDic = { }, topWidgetDic = {}, 
+	private var widgetDic = { }, widgetIdDic = {}, 
 		dragWidget:MovieClip, 
 		containers = {},
-		_sources:Array = [],
-		currentLoadWidgetObj, _loadID:Number, 
-		focusEvt = {type:"focusWidget", target:this}, closeEvt = {type:"closeWidget", target:this};
+		_sources:Array = [], pool:ObjectPool,
+		currentLoadWidgetObj:LoadWidgetObject, 
+		focusEvt = { type:"focusWidget", target:this }, closeEvt = { type:"closeWidget", target:this },
+		onMouseDown:Function, onMouseUp:Function;
 	
 	
 	public function WidgetManager() {
@@ -24,6 +26,11 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 		
 		Mouse.addListener(this);
 		
+		onMouseDown = _onMouseDown;
+		
+		pool = new ObjectPool(1, LoadWidgetObject);
+		pool.allocate(10, LoadWidgetObject);
+			
 		if(ExternalInterface.available)	ExternalInterface.call("WidgetManager", this);
 		trace("WidgetManager init");
 	}
@@ -52,131 +59,223 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	}
 		
 		
-	public function loadWidget($src:String):Void{
-		var c:Number = arguments.length;
-		if (c) {
-			for(var i:Number=0; i<c; ++ i){
-				var o = {};
-				o.topArrange = 0;
-				o.src = arguments[i];
-				_sources.push(o);
-			}
-			
-			if(!currentLoadWidgetObj)	_loadUI();
-		}
-	}
+	public function loadWidget($src:String, $widgetID:String, $parentWidgetID:String, $xrate:Number, $yrate:Number, $align:String, $xpadding:Number, $ypadding:Number, $scaleEnable:Boolean, $topArrange:Number):Void{
+		var o:LoadWidgetObject = pool.object;
 		
-		
-	public function loadWidgetByArrange($src:String, $topArrange:Number):Void{
-		if(!$src)	return;
-		
-		var o = {};
-		o.topArrange = $topArrange;
+		o.widgetID = $widgetID;
 		o.src = $src;
-		_sources.push(o);
+		o.parentWidgetID = $parentWidgetID || "stage";
+		o.xrate = $xrate || 0;
+		o.yrate = $yrate || 0;
+		o.align = $align || "C";
+		o.xpadding = $xpadding || 10;
+		o.ypadding = $ypadding || 10;
+		o.scaleEnable = $scaleEnable;
+		o.topArrange = $topArrange || 0;
 		
-		if(!currentLoadWidgetObj)	_loadUI();
+		_sources.push(o);
 	}
 		
 		
-	public function unLoadWidget($src):void{
-		if (arguments.length) {
-			for(var p in arguments){
-				var src:String = arguments[p];
-				
-				for(var i:Number=0, c:Number = _sources.length; i<c; ++ i){
-					currentLoadWidgetObj = _sources[i];
-					if(currentLoadWidgetObj.src == src){
-						_sources.splice(i, 1);
-						-- i;
-					}
-				}
-				
-				if (currentLoadWidgetObj && currentLoadWidgetObj.src == src) 	LoadSourceManager.close(src, containers[currentLoadWidgetObj.topArrange]);
-			}
-			
-			var a:Array = widgetDic[src];
-			for(p in a){
-				var w:Widget = a[p];
-				delWidget(w.widgetID, w);
-			}
+	public function load():Void{
+		if(_sources.length){
+			currentLoadWidgetObj = _sources.shift();
+			_loadUI();
 		}
-		else{
-			if (currentLoadWidgetObj) LoadSourceManager.close(currentLoadWidgetObj.src, containers[currentLoadWidgetObj.topArrange]);
-			
-			delWidget(null, null);				
-			_sources.length = 0;
-		}
-		
-		currentLoadWidgetObj = null;
 	}
 		
 		
 	private function _loadUI():Void {
-		currentLoadWidgetObj = _sources.shift();
-		if (currentLoadWidgetObj) {
-			var c:MovieClip = containers[currentLoadWidgetObj.topArrange];
-			var d:Number = c.getNextHighestDepth();
-			c = c.createEmptyMovieClip("w" + d, d);
-			LoadSourceManager.load(currentLoadWidgetObj.src, c, "onLoadUI", this);
-		}
+		var c:MovieClip = containers[currentLoadWidgetObj.topArrange];
+		var d:Number = c.getNextHighestDepth();
+		c = c.createEmptyMovieClip("w" + d, d);
+		currentLoadWidgetObj.widget = c;
+		LoadSourceManager.load(currentLoadWidgetObj.src, c, "onLoadUI", this);
 	}
 		
 		
-	private function onLoadUI($widget:MovieClip):Void{
-		currentLoadWidgetObj.widget = $widget;
-		var id:String = $widget.widgetID;
-		$widget._name = id;
-		widgetDic[id] = currentLoadWidgetObj;
+	private function onLoadUI($widget:MovieClip):Void {
+		var w:Widget = $widget as Widget;
 		
-		$widget.addEventListener("dragStart", this, "onDragStart");
-		$widget.addEventListener("closeWidget", this, "onClose");
+		var id:String = w.widgetID;
+		widgetDic[targetPath(w)] = currentLoadWidgetObj;
+		widgetIdDic[id] = currentLoadWidgetObj;
 		
-		WidgetArrangeManager.addWidget(id, $widget);
+		w.addEventListener("dragStart", this, "onDragStart");
+		w.addEventListener("closeWidget", this, "onClose");
+		
+		WidgetArrangeManager.addArrange(currentLoadWidgetObj);
 		
 		currentLoadWidgetObj = null;
-		if(_sources.length)	_loadUI();
+		if (_sources.length) {
+			currentLoadWidgetObj = _sources.shift();
+			_loadUI();
+		}
+		else {
+			currentLoadWidgetObj = null;
+		}
+		
+		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback(id, targetPath(w), w);
 	}
 		
 		
-	public function delWidget($widgetID:String, $widget:MovieClip):void{
-		if($widgetID && $widget){
-			
-			$widget.destroy();
-			
-			$widget.removeEventListener("dragStart", this, "onDragStart");
-			$widget.removeEventListener("closeWidget", this, "onClose");
-			
-			delete widgetDic[$widgetID];
-			
-			$widget.removeMovieClip();
+	public function delWidgetBySrc($src:String):Void{
+		if (arguments.length) {
+			for(var i in arguments){
+				var src:String = arguments[i];
+				
+				if(currentLoadWidgetObj && currentLoadWidgetObj.src == src){
+					_delWidget(o);
+				}
+				
+				for(var j in _sources){
+					var o:LoadWidgetObject = _sources[j];
+					if(o.src == src){
+						_delWidget(o);
+					}
+				}
+			}
 		}
 		else{
-			for ($widgetID in widgetDic) {
-				var o = widgetDic[$widgetID];
+			_delWidget(null);
+		}
+	}
+		
+		
+	public function delWidgetByID($widgetID:String):Void{
+		if (arguments.length) {
+			for(var i in arguments){
+				var widgetID:String = arguments[i];
 				
-				$widget = o.widget;
+				if(currentLoadWidgetObj && currentLoadWidgetObj.widgetID == widgetID){
+					_delWidget(o);
+				}
 				
-				$widget.destroy();
+				for(var j in _sources){
+					var o:LoadWidgetObject = _sources[j];
+					if(o.widgetID == widgetID){
+						_delWidget(o);
+					}
+				}
 				
-				$widget.removeEventListener("dragStart", this, "onDragStart");
-				$widget.removeEventListener("closeWidget", this, "onClose");
+				for(j in widgetIdDic){
+					o = widgetIdDic[j];
+					if(o.widgetID == widgetID){
+						_delWidget(o);
+					}
+				}
+			}
+		}
+		else{
+			_delWidget(null);
+		}
+	}
+		
+		
+	public function delWidget($widget:Widget):Void{
+		if (arguments.length) {
+			for(var i in arguments){
+				var widget:Widget = arguments[i];
 				
-				$widget.removeMovieClip();
+				for(var j in widgetDic){
+					var o:LoadWidgetObject = widgetDic[j];
+					if(o.widget == widget){
+						_delWidget(o);
+					}
+				}
+			}
+		}
+		else{
+			_delWidget(null);
+		}
+	}
+		
+		
+	private function _delWidget($o:LoadWidgetObject):Void{
+		if($o){
+			if(currentLoadWidgetObj == $o){
+				LoadSourceManager.getInstance().close($o.src, $o.widget);
+				currentLoadWidgetObj = null;
+			}
+			else{
+				for(var i in _sources){
+					var o:LoadWidgetObject = _sources[i];
+					if(o == $o){
+						pool.object = o;
+						_sources.splice(i, 1);
+						return;
+					}
+				}
+				
+				for(i in widgetDic){
+					o = widgetDic[i];
+					if(o == $o){
+						var w:Widget = o.widget;
+						w.destroy();
+						w.removeEventListener("dragStart", this, "onDragStart");
+						w.removeEventListener("closeWidget", this, "onClose");
+						
+						pool.object = o;
+						
+						w.removeMovieClip();
+						
+						delete	widgetDic[i];
+						delete	widgetIdDic[o.widgetID];
+						return;
+					}
+				}
+			}
+		}
+		else{
+			if(currentLoadWidgetObj){
+				LoadSourceManager.getInstance().close(currentLoadWidgetObj.src, currentLoadWidgetObj.widget);
+				currentLoadWidgetObj = null;
+			}
+			
+			for(i in _sources){
+				o = _sources[i];
+				pool.object = o;
+			}
+			_sources.length = 0;
+			
+			for(i in widgetDic){
+				o = widgetDic[i];
+				w = o.widget;
+				w.destroy();
+				w.removeEventListener("dragStart", this, "onDragStart");
+				w.removeEventListener("closeWidget", this, "onClose");
+				
+				pool.object = o;
+				
+				w.removeMovieClip();
 			}
 			
 			widgetDic = {};
+			widgetIdDic = {};
 		}
 	}
 		
 		
-	public function open($widgetID:String):MovieClip {
-		var o = widgetDic[$widgetID];
+	public function openByID($widget:MovieClip):MovieClip {
+		if ($widget) {
+			var c:MovieClip = $widget._parent;
+			c.swapDepths($widget, c.getNextHighestDepth());
+			
+			$widget.open();
+			
+			focusEvt.widget = $widget;
+			dispatchEvent(focusEvt);
+		}			
 		
+		return	$widget;
+	}
+		
+		
+	public function openByID($widgetID:String):MovieClip {
 		var w:MovieClip = getWidget($widgetID);
 		if (w) {
-			var container:MovieClip = w._parent;
-			container.swapDepths(w, container.getNextHighestDepth());
+			var c:MovieClip = w._parent;
+			c.swapDepths(w, c.getNextHighestDepth());
 			
 			w.open();
 			
@@ -188,11 +287,20 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	}
 		
 		
-	public function close($widgetID:String):MovieClip {
+	public function close($widget:MovieClip):MovieClip {
+		if ($widget) {
+			$widget.close();
+		}
+		
+		return	$widget;
+	}
+		
+		
+	public function closeByID($widgetID:String):MovieClip {
 		var w:MovieClip = getWidget($widgetID);
 		if (w) {
 			w.close();
-		}
+		}			
 		
 		return	w;
 	}
@@ -204,7 +312,7 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	}
 		
 		
-	public function getFocusWidget(focusIdx:Number):MovieClip {
+	public function getFocusWidget(focusIdx:Number):Widget {
 		var p = FocusHandler.instance.getFocus(focusIdx);
 		while(p){
 			if(p as Widget){
@@ -219,8 +327,8 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	} 
 		
 		
-	public function getWidget($widgetID:String):MovieClip {
-		return	widgetDic[$widgetID];
+	public function getWidget($widgetID:String):Widget {
+		return	widgetIdDic[$widgetID];
 	}
 	
 	
@@ -233,10 +341,10 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 	}
 		
 		
-	private function onMouseDown($button:Number, $targetPath:String):Void {
+	private function _onMouseDown($button:Number, $targetPath:String):Void {
 		var w:MovieClip = targetPathToObject($targetPath);
-		var container:MovieClip = w._parent;
-		container.swapDepths(w, container.getNextHighestDepth());
+		var c:MovieClip = w._parent;
+		c.swapDepths(w, c.getNextHighestDepth());
 		
 		focusEvt.widget = w;
 		dispatchEvent(focusEvt);
@@ -247,14 +355,15 @@ class com.minarto.manager.widget.WidgetManager extends EventDispatcher {
 		dragWidget = $e.target;
 		dragWidget.startDrag(false);
 		
-		CLIK.stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp, true);
+		delete	onMouseDown;
+		onMouseUp = _onMouseUp;
 	}
 	
 	
-	private function onMouseUp($e):Void {
-		CLIK.stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp, true);
-		
+	private function _onMouseUp():Void {
 		dragWidget.stopDrag();
 		dragWidget = null;
+		delete	onMouseUp;
+		onMouseDown = _onMouseDown;
 	}
 }

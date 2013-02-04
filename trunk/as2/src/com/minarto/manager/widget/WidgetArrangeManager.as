@@ -39,37 +39,40 @@ class com.minarto.manager.widget.WidgetArrangeManager {
 	}
 	
 	
-	public static function arrange($widgetID:String):void{
-		if($widgetID == "stage")	$widgetID = null;
-		
-		if($widgetID){
-			var o = objectDic[$widgetID];
-			var d:MovieClip = widgetDic[$widgetID];
-			if(!o || !d)	return;
+	public static function arrange($widget:MovieClip):Void{
+		if ($widget) {
+			for (var i:Number in objectDic) {
+				var o:LoadWidgetObject = objectDic[i];
+				if (o.widget == $widget) {
+					break;
+				}
+			}
+			if (!o)	return;
 			
 			if(o.scaleEnable){
-				d._xscale = widgetScale * 100;
-				d._yscale = widgetScale * 100;
+				$widget._xscale = widgetScale * 100;
+				$widget._yscale = widgetScale * 100;
 			}
 			else{
-				d._xscale = staticScale * 100;
-				d._yscale = staticScale * 100;
+				$widget._xscale = staticScale * 100;
+				$widget._yscale = staticScale * 100;
 			}
 			
-			var p:MovieClip = widgetDic[o.parentWidgetID];
-			if(p){
-				if(o.parentWidgetID == "stage"){
-					var w:Number = Stage.width;
-					var h:Number = Stage.height;
-				}
-				else{
+			if (o.parentWidgetID == "stage") {
+				var w:Number = Stage.width;
+				var h:Number = Stage.height;
+			}
+			else {
+				var p:MovieClip = widgetDic[o.parentWidgetID];
+				if(p){
 					w = p._width;
 					h = p._height;
 				}
+				else{
+					return;
+				}
 			}
-			else{
-				return;
-			}
+			
 			
 			var xr:Number = w * o.xrate;
 			var yr:Number = h * o.yrate;
@@ -77,8 +80,8 @@ class com.minarto.manager.widget.WidgetArrangeManager {
 			var xp:Number = o.xpadding * staticScale;
 			var yp:Number = o.ypadding * staticScale;
 			
-			var dw:Number = d._width;
-			var dh:Number = d._height;
+			var dw:Number = $widget._width;
+			var dh:Number = $widget._height;
 			
 			switch(o.align){
 				case "T":
@@ -122,91 +125,40 @@ class com.minarto.manager.widget.WidgetArrangeManager {
 					ty = yr + yp - dh * 0.5;
 			}
 			
-			d._x = tx;
-			d._y = ty;
+			$widget._x = tx;
+			$widget._y = ty;
 			
 			var dic = childDic[$widgetID];
 			for($widgetID in dic){
 				arrange(dic[$widgetID]);
 			}
-			
-			if(o.onComplete && o.onCompleteScope)	o.onCompleteScope[o.onComplete](d);
 		}
 		else{
 			dic = childDic["stage"];
-			for($widgetID in dic){
-				arrange(dic[$widgetID]);
+			for (i in dic) {
+				$widget = dic[i];
+				arrange($widget);
 			}
 		}
 	}
 	
 	
-	public static function addWidget($widgetID:String, $widget:MovieClip):Void{
-		if(!$widgetID || !$widget)	return;
-		widgetDic[$widgetID] = $widget;
-		arrange($widgetID);
+	public static function addArrange($o:LoadWidgetObject):Void{
+		if(!$o)	return;
+		
+		var w:MovieClip = $o.widget;
+		objectDic[w] = $o;
+		widgetDic[$o.widgetID] = w;
+		
+		var dic:Array = childDic[$o.parentWidgetID] || (childDic[$o.parentWidgetID] = []);
+		dic.push(w);
+		
+		arrange(w);
 	}
 	
 	
-	public static function delWidget($widgetID:String):void{
-		if($widgetID){
-			delete	widgetDic[$widgetID];
-		}
-		else{
-			widgetDic = {};
-		}
-	}
-	
-	
-	public static function addArrange($widgetID:String, $parentWidgetID:String, $xrate:Number, $yrate:Number, $align:String, $xpadding:Number, $ypadding:Number, $scaleEnable:Boolean, $onComplete:String, $onCompleteScope:Object):Void{
-		if(!$widgetID)	return;
-		
-		delArrange($widgetID);
-		
-		$parentWidgetID = $parentWidgetID || "stage";
-		
-		var o = {};
-		objectDic[$widgetID] = o;
-		
-		o.parentWidgetID = $parentWidgetID;
-		o.xrate = $xrate || 0;
-		o.yrate = $yrate || 0;
-		o.align = $align;
-		o.xpadding = isNaN($xpadding) ? 10 : $xpadding;
-		o.ypadding = isNaN($ypadding) ? 10 : $ypadding;;
-		o.scaleEnable = $scaleEnable;
-		o.onComplete = $onComplete;
-		o.onCompleteScope = $onCompleteScope;
-		
-		o = childDic[$parentWidgetID];
-		if(!o){
-			o = {$widgetID:$widgetID};
-			childDic[$parentWidgetID] = o;
-		}
-		
-		arrange($widgetID);
-	}
-	
-	
-	public static function delArrange($widgetID:String):Void{
-		if($widgetID){
-			var o = objectDic[$widgetID];
-			if(o){
-				var id:String = o.parentWidgetID;
-				arrange(id);
-			}
-			
-			delete objectDic[$widgetID];
-			delete childDic[$widgetID];
-			
-			for(id in childDic){
-				o = objectDic[id];
-				delete	o[$widgetID];
-			}
-		}
-		else{
-			objectDic = {};
-			childDic = {};
-		}
+	public static function delArrange():Void{
+		objectDic = {};
+		childDic = {};
 	}
 }
