@@ -20,14 +20,14 @@ dynamic class com.minarto.utils.Dictionary {
 			}
 		}
 		
-		Dictionary.prototype.addDic = f;
+		this.__proto__.addDic = f;
 		
 		
 		f = function():Number {
 			return	id;
 		}
 		
-		Dictionary.prototype.__getDicID__ = f;
+		this.__proto__.__getDicID__ = f;
 	}
 		
 		
