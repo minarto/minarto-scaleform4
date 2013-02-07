@@ -1,19 +1,17 @@
 package com.minarto.manager.widget {
 	import com.minarto.controls.widget.Widget;
 	import com.minarto.events.CustomEvent;
-	import com.minarto.manager.LoadSourceManager;
+	import com.minarto.manager.*;
 	import com.scaleform.mmo.events.WidgetEvent;
 	
 	import de.polygonal.core.ObjectPool;
 	
 	import flash.display.*;
 	import flash.events.*;
-	import flash.external.ExternalInterface;
 	import flash.utils.*;
 	
 	import scaleform.clik.core.CLIK;
 	import scaleform.clik.events.DragEvent;
-	import scaleform.gfx.Extensions;
 	import scaleform.gfx.FocusManager;
 	
 	
@@ -25,7 +23,7 @@ package com.minarto.manager.widget {
 			dragWidget:Sprite, focusEvt:CustomEvent = new CustomEvent("focusWidget"), closeEvt:CustomEvent = new CustomEvent(WidgetEvent.CLOSE_WIDGET), completeEvt:Event = new Event(Event.COMPLETE),  
 			containers:* = {},
 			_sources:Array = [], pool:ObjectPool,
-			currentLoadWidgetObj:WidgetData, _loadID:uint, currentLoadingWidgetID:String, currentLoadingWidgetURL:String;
+			currentLoadWidgetObj:WidgetData, _loadID:uint, currentLoadingWidgetURL:String;
 		
 		
 		public function WidgetManager() {
@@ -39,13 +37,10 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public function loadWidget($widgetID:String, $src:String):void{
-			_sources.push($widgetID, $src);
+		public function loadWidget($src:String):void{
+			_sources.push($src);
 			if(!currentLoadingWidgetURL){
-				currentLoadingWidgetID = _sources[0];
-				currentLoadingWidgetURL = _sources[1];
-				_sources.splice(0, 2);
-				
+				currentLoadingWidgetURL = _sources.shift();
 				load();
 			}
 		}
@@ -62,7 +57,14 @@ package com.minarto.manager.widget {
 		
 		protected function onLoadUI($widget:DisplayObject):void{
 			if($widget){
-				widgetDic[currentLoadingWidgetID] = $widget;
+				if($widget.hasOwnProperty("widgetID")){
+					var widgetID:String = $widget["widgetID"];
+					widgetDic[widgetID] = $widget;
+				}
+				else{
+					DebugManager.error("widgetID", "Widget have not widgetID");
+					return;
+				}
 				
 				var s:Sprite = $widget as Widget;
 				if(s){
@@ -73,22 +75,16 @@ package com.minarto.manager.widget {
 				s = $widget as Sprite;
 				if(s)	s.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 				
-				var data:WidgetData = widgetDataDic[currentLoadingWidgetID];
+				var data:WidgetData = widgetDataDic[widgetID];
 				s = data ? containers[data.containerIndex] : containers[0];
 				if(s)	s.addChild($widget);
-				
-				if(Boolean(Extensions.CLIK_addedToStageCallback))	Extensions.CLIK_addedToStageCallback(currentLoadingWidgetID, CLIK.getTargetPathFor($widget as DisplayObjectContainer), $widget);
 			}
 			
 			if(_sources.length){
-				currentLoadingWidgetID = _sources[0];
-				currentLoadingWidgetURL = _sources[1];
-				_sources.splice(0, 2);
-				
+				currentLoadingWidgetURL = _sources.shift();
 				_loadID = setTimeout(load, 200);
 			}
 			else{
-				currentLoadingWidgetID = null;
 				currentLoadingWidgetURL = null;
 				
 				WidgetBridge.action(completeEvt);
@@ -98,33 +94,14 @@ package com.minarto.manager.widget {
 		
 		public function delWidgetByID($widgetID:String):void{
 			if($widgetID){
-				if(currentLoadingWidgetID == $widgetID){
-					clearTimeout(_loadID);
-					LoadSourceManager.unLoad(currentLoadingWidgetURL, onLoadUI);
-				}
-				
 				var d:DisplayObject = widgetDic[$widgetID];
 				if(d){
-					var w:* = d as Widget;
-					if(w){
-						d.removeEventListener(DragEvent.DRAG_START, onDragStart);
-						d.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
-					}
-					
-					w = d as InteractiveObject;
-					if(w)	w.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-					
+					d.removeEventListener(DragEvent.DRAG_START, onDragStart);
+					d.removeEventListener(WidgetEvent.CLOSE_WIDGET, onClose);
+					d.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 					
 					var c:DisplayObjectContainer = d.parent;
 					if(c)	c.removeChild(d);
-				}
-				else{
-					for(var i:uint = 0, j:uint = _sources.length; i<j; i+= 2){
-						if(_sources[i] == $widgetID){
-							_sources.splice(i, 2);
-							i -= 2;
-						}
-					}
 				}
 			}
 		}
