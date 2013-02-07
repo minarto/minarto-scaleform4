@@ -15,16 +15,15 @@ package com.minarto.data {
 		
 		public function Binding(){
 			if(_instance)	throw	new Error("don't create instance");
+			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", this);
+			trace("Binding.init");
 		}
 		
 		
 		/**
 		 * 초기화
 		 */
-		public static function init():void {
-			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", _instance);
-			trace("Binding.init");
-		}
+		public static function init():void {}
 		
 		
 		public static function action($e:Event):void{

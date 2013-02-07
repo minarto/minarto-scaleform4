@@ -19,7 +19,7 @@ package com.minarto.data {
 			_instance = this;
 			
 			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("ListBridge", this);
-			trace("ListBridge init");
+			trace("ListBridge");
 		}
 		
 		

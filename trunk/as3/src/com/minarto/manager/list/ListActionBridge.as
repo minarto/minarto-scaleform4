@@ -21,8 +21,8 @@ package com.minarto.manager.list {
 			_manager = $manager;
 			
 			if($manager){
-				for(var i:uint =0, c:uint = _reservations.length; i<c; i += 3){
-					$manager.addList(_reservations[i], _reservations[i + 1], _reservations[i + 2]);
+				for(var i:* in _reservations){
+					$manager.addList.apply($manager, _reservations[i]);
 				}
 				_reservations.length = 0;
 			}
@@ -36,7 +36,7 @@ package com.minarto.manager.list {
 				_manager.addList($key, $list, $param);
 			}
 			else{
-				_reservations.push($key, $list, $param);
+				_reservations.push(arguments);
 			}
 		}
 		
@@ -47,16 +47,18 @@ package com.minarto.manager.list {
 			if(_manager){
 				_manager.delList($list);
 			}
-			else{
-				if($list){
-					var i:int = _reservations.indexOf($list, 0);
-					if(i > - 1){
-						_reservations.splice(i - 1, 3);
+			else if($list){
+				var i:int = _reservations.length;
+				while(i --){
+					var a:Array = _reservations[i];
+					if(a[1] == $list){
+						_reservations.splice(i, 1);
+						return;
 					}
 				}
-				else{
-					_reservations.length = 0;
-				}
+			}
+			else{
+				_reservations.length = 0;
 			}
 		}
 	}

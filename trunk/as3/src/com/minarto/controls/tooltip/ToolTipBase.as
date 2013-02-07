@@ -10,6 +10,7 @@ package com.minarto.controls.tooltip {
 		
 		
 		public function setData($d:*) : void {
+			if(data == $d)	return;
 			delBind();
 			data = $d;
 			addBind();
@@ -17,31 +18,24 @@ package com.minarto.controls.tooltip {
 		
 		
 		protected function delBind():void{
-			if(data as String){
-				dataConvert();
-			}
-			else if(data){
-				//ListBinding.delDataBind(data, dataConvert, HashKeyManager.url);
+			if(data && !(data as String)){
+				//ListBinding.delDataBind(data, invalidate, HashKeyManager.url);
 			}
 		}
 		
 		
 		protected function addBind():void{
 			if(data as String){
-				dataConvert();
+				invalidate();
 			}
 			else if(data){
-				//ListBinding.addDataBind(data, dataConvert, HashKeyManager.url);
+				//ListBinding.addDataBind(data, invalidate, HashKeyManager.url);
 			}
-		}
-		
-		
-		protected function dataConvert():void{
 		}
 		
 		
 		override public function toString() : String {
-			return "barunson.libs.manager.tooltip.ToolTipBase";
+			return "com.minarto.controls.tooltip.ToolTipBase";
 		}
 	}
 }
