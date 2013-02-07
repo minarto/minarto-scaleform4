@@ -3,6 +3,7 @@ package com.minarto.controls.widget {
 	import flash.events.Event;
 	
 	import scaleform.clik.core.CLIK;
+	import scaleform.gfx.Extensions;
 	
 	
 	/**
@@ -44,6 +45,8 @@ package com.minarto.controls.widget {
 		protected function configUI($e:Event):void {
 			removeEventListener(Event.ADDED_TO_STAGE, configUI);
 			CLIK.initialize(stage, null);
+			
+			if(Boolean(Extensions.CLIK_addedToStageCallback))	Extensions.CLIK_addedToStageCallback(widgetID, CLIK.getTargetPathFor(this), this);
 		}
 	}
 }
