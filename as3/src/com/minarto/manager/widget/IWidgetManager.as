@@ -5,7 +5,7 @@ package com.minarto.manager.widget {
 		function setContainer($container:DisplayObjectContainer, $topArrange:uint=0):void;
 		
 		
-		function loadWidget($widgetID:String, $src:String):void;
+		function loadWidget($src:String):void;
 		
 		
 		function setWidgetData($widgetID:String, $data:WidgetData):void;

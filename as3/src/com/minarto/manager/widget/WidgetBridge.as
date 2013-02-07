@@ -31,8 +31,8 @@ package com.minarto.manager.widget {
 		}
 		
 		
-		public static function loadWidget($widgetID:String, $src:String):void{
-			_manager.loadWidget($widgetID, $src);
+		public static function loadWidget($src:String):void{
+			_manager.loadWidget($src);
 		}
 		
 		
