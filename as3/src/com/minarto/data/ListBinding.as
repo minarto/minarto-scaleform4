@@ -2,8 +2,6 @@
  * 
  */
 package com.minarto.data {
-	import com.minarto.utils.GPool;
-	
 	import de.polygonal.core.ObjectPool;
 	
 	import flash.events.Event;
@@ -16,7 +14,7 @@ package com.minarto.data {
 	
 	
 	public class ListBinding {
-		private static var _listDic:* = {}, _listBindingDic:* = {},
+		private static var _listDic:* = {}, _listBindingDic:* = {}, _pool:ObjectPool,
 			_dataListKey:Dictionary = new Dictionary(true),	//	아이템이 포함된 리스트의 키를 반환
 			_dataBindingDic:Dictionary = new Dictionary(true),	//	모든 아이템의 바인딩 데이터
 			_bridge:ListBridge;
@@ -36,7 +34,13 @@ package com.minarto.data {
 			if(!$key)	return;
 			
 			var dataProvider:DataProvider = _listDic[$key];
-			if(!dataProvider)	_listDic[$key] = dataProvider = GPool.getPool(DataProvider).object;
+			if(!dataProvider){
+				if(!_pool){
+					_pool = new ObjectPool(true);
+					_pool.allocate(10, DataProvider);
+				}
+				_listDic[$key] = dataProvider = _pool.object;
+			}
 			
 			var dic:Dictionary = _listBindingDic[$key] || (_listBindingDic[$key] = new Dictionary(true));
 			if($listOrScope as CoreList){
@@ -114,8 +118,11 @@ package com.minarto.data {
 					dataProvider.setSource($a);
 				}
 				else{
-					var p:ObjectPool = GPool.getPool(DataProvider);
-					dataProvider = p.object;
+					if(!_pool){
+						_pool = new ObjectPool(true);
+						_pool.allocate(10, DataProvider);
+					}
+					dataProvider = _pool.object;
 					dataProvider.setSource($a);
 					_listDic[$key] = dataProvider;
 				}
