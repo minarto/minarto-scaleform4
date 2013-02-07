@@ -8,17 +8,16 @@ class com.minarto.data.Binding extends EventDispatcher {
 	
 	
 	public function Binding() {
-		if(_instance)	throw	new Error("don't create instance");
+		if (_instance)	throw	new Error("don't create instance");
+		if(ExternalInterface.available)	ExternalInterface.call("Binding", this);
+		trace("Binding.init");
 	}
 	
 	
 	/**
 	 * 초기화
 	 */
-	public static function init():Void {
-		if(ExternalInterface.available)	ExternalInterface.call("Binding", _instance);
-		trace("Binding.init");
-	}
+	public static function init():Void {}
 		
 		
 	public static function setValue($key:String, $value):Void {
