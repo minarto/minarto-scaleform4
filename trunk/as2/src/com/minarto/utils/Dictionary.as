@@ -28,19 +28,16 @@ dynamic class com.minarto.utils.Dictionary {
 		
 		$dic.setValue = function($target, $value):Void {
 			if ($target) {
-				var dic = $target.__dictionary__ || ($target.__dictionary__ = { } );
-				dic[id] || (dic[id] = ++ c);
-				this[dic[id]] = $value;
+				$target = $target.__dictionary__ || ($target.__dictionary__ = { } );
+				$target[id] || ($target[id] = ++ c);
+				this[$target[id]] = $value;
 			}
 		};
 		
 		
 		$dic.getValue = function($target) {
-			if ($target) {
-				var dic = $target.__dictionary__;
-				return	dic ? this[dic[id]] : dic;
-			}
-			return	$target;
+			$target = $target ? $target.__dictionary__ : $target;
+			return	$target ? this[$target[id]] : $target;
 		};
 		
 		return	$dic;
