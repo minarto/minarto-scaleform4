@@ -5,43 +5,44 @@
  * use class after Binding.init
  */
 dynamic class com.minarto.utils.Dictionary {
-	private static var __id = { }, __count:Number = 0;
+	private static var __count:Number = 0;
 	
 	
 	public function Dictionary() {
-		var c:Number = 0;
+		create(this);
+	}
+	
+	
+	public function setValue($target, $value):Void {}
+	
+	
+	public function getValue($target) {}
+	
+	
+	public static function create($dic) {
+		$dic || ($dic = {});
+		
 		var id:Number = ++ __count;
 		
-		var f:Function = function($target, $value):Void {
+		var c:Number = 0;
+		
+		$dic.setValue = function($target, $value):Void {
 			if ($target) {
-				var d = $target.__dictionary__ || ($target.__dictionary__ = {});
-				if (!d[id]) 	d[id] = ++ c;
-				this[c] = $value;
+				var dic = $target.__dictionary__ || ($target.__dictionary__ = { } );
+				dic[id] || (dic[id] = ++ c);
+				this[dic[id]] = $value;
 			}
-		}
-		
-		this.__proto__.addDic = f;
+		};
 		
 		
-		f = function():Number {
-			return	id;
-		}
+		$dic.getValue = function($target) {
+			if ($target) {
+				var dic = $target ? $target.__dictionary__ : $target;
+				return	dic ? this[dic[id]] : dic;
+			}
+			return	$target;
+		};
 		
-		this.__proto__.__getDicID__ = f;
+		return	$dic;
 	}
-		
-		
-	public function addDic($target, $value):Void {}
-	
-	
-	public function getDic($target) {
-		if ($target) {
-			var d = $target.__dictionary__;
-			return	d ? this[d[__getDicID__()]] : d;
-		}
-		return	d;
-	}
-	
-	
-	private function __getDicID__() {}
 }
