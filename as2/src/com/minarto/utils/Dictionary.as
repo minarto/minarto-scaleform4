@@ -37,7 +37,7 @@ dynamic class com.minarto.utils.Dictionary {
 		
 		$dic.getValue = function($target) {
 			if ($target) {
-				var dic = $target ? $target.__dictionary__ : $target;
+				var dic = $target.__dictionary__;
 				return	dic ? this[dic[id]] : dic;
 			}
 			return	$target;
