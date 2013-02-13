@@ -32,10 +32,5 @@ package com.minarto.controls.tooltip {
 				//ListBinding.addDataBind(data, invalidate, HashKeyManager.url);
 			}
 		}
-		
-		
-		override public function toString() : String {
-			return "com.minarto.controls.tooltip.ToolTipBase";
-		}
 	}
 }

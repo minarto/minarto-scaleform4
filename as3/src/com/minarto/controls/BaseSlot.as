@@ -60,11 +60,6 @@ package com.minarto.controls {
 		}
 		
 		
-		override public function toString() : String {
-			return "com.minarto.controls.slot.BaseSlot";
-		}
-		
-		
 		protected function onImageLoadComplete($bd:BitmapData):void {
 		}
 	}

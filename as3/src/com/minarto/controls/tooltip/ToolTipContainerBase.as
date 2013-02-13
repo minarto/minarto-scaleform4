@@ -104,10 +104,5 @@ package com.minarto.controls.tooltip {
 			visible = false;
 			clearTimeout(delayID);
 		}
-		
-		
-		override public function toString() : String {
-			return "barunson.libs.manager.tooltip.ToolTipContainerBase";
-		}
 	}
 }

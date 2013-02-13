@@ -34,11 +34,7 @@ package com.minarto.controls.widget {
 		
 		
 		public function destroy():void{
-		}
-		
-		
-		override public function toString() : String {
-			return "com.minarto.controls.widget.Widget";
+			removeEventListener(Event.ADDED_TO_STAGE, configUI);
 		}
 		
 		
