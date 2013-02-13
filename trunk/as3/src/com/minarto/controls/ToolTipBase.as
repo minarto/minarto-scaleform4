@@ -17,31 +17,19 @@ package com.minarto.controls {
 		
 		
 		protected function delBind():void{
-			if(data as String){
-				dataConvert();
-			}
-			else if(data){
-				//ListBinding.delDataBind(data, dataConvert, HashKeyManager.url);
+			if(data && !(data as String)){
+				//ListBinding.delDataBind(data, invalidate, HashKeyManager.url);
 			}
 		}
 		
 		
 		protected function addBind():void{
 			if(data as String){
-				dataConvert();
+				invalidate();
 			}
 			else if(data){
-				//ListBinding.addDataBind(data, dataConvert, HashKeyManager.url);
+				//ListBinding.addDataBind(data, invalidate, HashKeyManager.url);
 			}
-		}
-		
-		
-		protected function dataConvert():void{
-		}
-		
-		
-		override public function toString() : String {
-			return "com.minarto.controls.ToolTipBase";
 		}
 	}
 }

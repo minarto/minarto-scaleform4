@@ -7,10 +7,6 @@ package com.minarto.events {
 	public class CustomEvent extends Event {
 		public var param:*;
 		
-		override public function toString() : String {
-			return "com.minarto.events.CustomEvent";
-		}
-		
 		
 		public function CustomEvent($type:String, $param:*=null, $bubbles : Boolean = false, $cancelable : Boolean = false) {
 			super($type, $bubbles, $cancelable);
