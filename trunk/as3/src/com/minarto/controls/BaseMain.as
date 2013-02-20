@@ -22,6 +22,8 @@ package com.minarto.controls {
 		public function BaseMain() {
 			CLIK.initialize(stage, null);
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
+			
+			Binding.init();
 		}
 		
 		
