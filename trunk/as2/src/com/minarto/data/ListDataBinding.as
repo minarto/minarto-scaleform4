@@ -16,9 +16,9 @@ class com.minarto.data.ListDataBinding {
 	private function bindHandler($p, $old, $new, $binds) {
 		if ($old === $new)	return	$old;
 		
-		for (var i in $binds) {
-			var o = $binds[i];
-			o.scope[o.handler]($new);
+		for ($p in $binds) {
+			$old = $binds[$p];
+			$old.scope[$old.handler]($new);
 		}
 		
 		return	$new;
