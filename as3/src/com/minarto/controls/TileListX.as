@@ -31,8 +31,8 @@ package com.minarto.controls {
 		override protected function populateData(data:Array):void {
 			var d:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns);
 			var listData:ListData = new ListData(0);
-			for (var i:uint = 0, c:uint = _renderers.length; i < c; ++i) {
-				var r:IListItemRenderer = getRendererAt(i);
+			for (var i:* in _renderers) {
+				var r:IListItemRenderer = _renderers[i];
 				var index:uint = d + i;
 				var item:* = data[i];
 				listData.label = itemToLabel(item);
