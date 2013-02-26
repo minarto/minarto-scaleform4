@@ -1,9 +1,9 @@
 package com.minarto.manager.tooltip {
 	public interface IToolTipManager {
-		function regist(...$button):void;
-		function unRegist(...$button):void;
+		function regist(...$buttons):void;
+		function unRegist(...$buttons):void;
 		
-		function addToolTip(...$d):void;
+		function addToolTip(...$datas):void;
 		function delToolTip():void;
 	}
 }

@@ -18,7 +18,6 @@ package com.minarto.manager {
 		
 		public function DebugManager(){
 			if(_instance)	throw	new Error("don't create instance");
-			_instance = this;
 		}
 		
 		

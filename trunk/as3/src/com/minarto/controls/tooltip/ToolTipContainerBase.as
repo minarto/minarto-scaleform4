@@ -24,21 +24,21 @@ package com.minarto.controls.tooltip {
 		}
 		
 		
-		public function regist(...$button):void{
-			for(var p:* in $button){
-				var b:InteractiveObject = $button[p];
+		public function regist(...$buttons):void{
+			for(var p:* in $buttons){
+				var b:InteractiveObject = $buttons[p];
 				b.addEventListener(MouseEvent.ROLL_OVER, hnRollOver);
 				b.addEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 				
-				btnDic[$button] = $button;
+				btnDic[b] = b;
 			}
 		}
 		
 		
-		public function unRegist(...$button) : void {
-			if($button.length){
-				for(var p:* in $button){
-					var b:InteractiveObject = $button[p];
+		public function unRegist(...$buttons) : void {
+			if($buttons.length){
+				for(var p:* in $buttons){
+					var b:InteractiveObject = $buttons[p];
 					b.removeEventListener(MouseEvent.ROLL_OVER, hnRollOver);
 					b.removeEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 					
@@ -74,12 +74,11 @@ package com.minarto.controls.tooltip {
 		}
 		
 		
-		public function addToolTip(...$d):void{
+		public function addToolTip(...$datas):void{
 			delToolTip();
 			
-			var c:uint = $d.length;
-			if(c){
-				for(var i:uint = 0; i<c; ++ i){
+			if($datas.length){
+				for(var i:* in $datas){
 					switch(i){
 						case 1 :
 							var t:ToolTipBase = toolTip1;
@@ -88,7 +87,7 @@ package com.minarto.controls.tooltip {
 							t = toolTip;
 					}
 					
-					t.setData($d);
+					t.setData($datas[i]);
 					t.visible = true;
 				}
 				visible = true;

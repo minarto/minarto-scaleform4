@@ -25,47 +25,19 @@ wwww.designvox.com 에 있는 as2용 코드를 as3 용으로 바꿈
 
 package {
 	public class JSON {
-		public static function stringify(arg:*):String {
+		public static function stringify($v:*):String {
 			var c:*, i:*, l:String, s:String = '', v:*;
 			
-			switch (typeof arg) {
-				case 'object':
-					if (arg) {
-						if (arg as Array) {
-							for (i = 0; i < arg.length; ++i) {
-								v = stringify(arg[i]);
-								if (s) {
-									s += ',';
-								}
-								s += v;
-							}
-							return '[' + s + ']';
-						} else if (typeof arg.toString != 'undefined') {
-							for (i in arg) {
-								v = arg[i];
-								if (typeof v != 'undefined' && typeof v != 'function') {
-									v = stringify(v);
-									if (s) {
-										s += ',';
-									}
-									s += stringify(i) + ':' + v;
-								}
-							}
-							return '{' + s + '}';
-						}
-					}
-					return 'null';
-				case 'number':
-					return isFinite(arg) ? String(arg) : 'null';
+			switch (typeof $v) {
+				case "number":
+					return isFinite($v) ? "" + $v : "null";
 				case 'string':
-					l = arg.length;
+					l = $v.length;
 					s = '"';
-					for (i = 0; i < l; i += 1) {
-						c = arg.charAt(i);
-						if (c >= ' ') {
-							if (c == '\\' || c == '"') {
-								s += '\\';
-							}
+					for (i = 0; i < l; ++i) {
+						c = $v.charAt(i);
+						if (c >= " ") {
+							if (c == '\\' || c == '"') s += '\\';
 							s += c;
 						} else {
 							switch (c) {
@@ -86,36 +58,62 @@ package {
 									break;
 								default:
 									c = c.charCodeAt();
-									s += '\\u00' + Math.floor(c / 16).toString(16) +
-									(c % 16).toString(16);
+									s += '\\u00' + int(c / 16).toString(16) + (c % 16).toString(16);
 							}
 						}
 					}
 					return s + '"';
 				case 'boolean':
-					return String(arg);
+					return "" + $v;
+				case 'object':
+					if ($v) {
+						if ($v as Array) {
+							l = $v.length;
+							for (i = 0; i < l; ++i) {
+								v = stringify($v[i]);
+								if (s) {
+									s += ',';
+								}
+								s += v;
+							}
+							return '[' + s + ']';
+						} else if (typeof $v.toString != 'undefined') {
+							for (i in $v) {
+								v = $v[i];
+								if (typeof v != 'undefined' && typeof v != 'function') {
+									v = stringify(v);
+									if (s) {
+										s += ',';
+									}
+									s += stringify(i) + ':' + v;
+								}
+							}
+							return '{' + s + '}';
+						}
+					}
+					return 'null';
 				default:
 					return 'null';
 			}
 		}
 		
-		public static function parse(text:String):* {
+		
+		public static function parse($text:String):* {
 			var at:uint = 0;
 			var ch:String = ' ';
 			var _value:Function;
 			
-			var _error:Function = function (m:String):void {
+			var _error:Function = function ($m:String):void {
 				throw {
 					name: 'JSONError',
-					message: m,
+					message: $m,
 					at: at - 1,
-						text: text
+					text: $text
 				};
 			}
 			
 			var _next:Function = function():String {
-				ch = text.charAt(at);
-				at += 1;
+				ch = $text.charAt(at ++);
 				return ch;
 			}
 			
@@ -182,7 +180,7 @@ package {
 									break;
 								case 'u':
 									u = 0;
-									for (i = 0; i < 4; i += 1) {
+									for (i = 0; i < 4; ++ i) {
 										t = parseInt(_next(), 16);
 										if (!isFinite(t)) {
 											outer = true;
@@ -208,6 +206,7 @@ package {
 				
 				return	null;
 			}
+			
 			
 			var _array:Function = function():Array {
 				var a:Array = [];
@@ -303,8 +302,7 @@ package {
 						}
 						break;
 					case 'f':
-						if (_next() == 'a' && _next() == 'l' && _next() == 's' &&
-							_next() == 'e') {
+						if (_next() == 'a' && _next() == 'l' && _next() == 's' && _next() == 'e') {
 							_next();
 							return false;
 						}

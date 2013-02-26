@@ -25,19 +25,19 @@ package com.minarto.manager.tooltip {
 		}
 		
 		
-		public static function regist(...$button):void{
+		public static function regist(...$buttons):void{
 			if(_manager){
-				_manager.regist.apply(null, $button);
+				_manager.regist.apply(null, $buttons);
 			}
 			else{
-				_reservations.push.apply(null, $button);
+				_reservations.push.apply(null, $buttons);
 			}
 		}
 		
 		
-		public static function unRegist(...$button) : void {
+		public static function unRegist(...$buttons) : void {
 			if(_manager){
-				_manager.unRegist.apply(null, $button);
+				_manager.unRegist.apply(null, $buttons);
 			}
 			else{
 				_reservations.length = 0;
