@@ -12,10 +12,9 @@ package com.minarto.controls {
 			var i:uint = 0;
 			var newRenderers:Vector.<IListItemRenderer> = new <IListItemRenderer>[];
 			
-			var clip:IListItemRenderer = parent.getChildByName($v + (i++)) as IListItemRenderer;
-			while (clip) {
+			var clip:IListItemRenderer;
+			while (clip = parent.getChildByName($v + (i++)) as IListItemRenderer) {
 				newRenderers.push(clip);
-				clip = parent.getChildByName($v + (i++)) as IListItemRenderer;
 			}
 			
 			if (newRenderers.length) {
@@ -25,6 +24,26 @@ package com.minarto.controls {
 				if (componentInspectorSetting) return;
 				itemRendererList = null;
 			}
+		}
+		
+		
+		override public function set itemRendererList($v:Vector.<IListItemRenderer>):void {
+			if (_usingExternalRenderers) {
+				for (var i:* in _renderers) {
+					cleanUpRenderer(getRendererAt(i));
+				}
+			}
+			
+			_usingExternalRenderers = $v ? $v.length : false;
+			_renderers = $v;
+			
+			if (_usingExternalRenderers) {
+				for (i in $v) {
+					setupRenderer(getRendererAt(i));
+				}
+				_totalRenderers = $v.length;
+			}
+			invalidateRenderers();
 		}
 		
 		
