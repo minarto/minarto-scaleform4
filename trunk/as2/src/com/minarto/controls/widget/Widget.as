@@ -56,9 +56,4 @@ class com.minarto.controls.widget.Widget extends MovieClip {
 	
 	public function destroy():Void{
 	}
-	
-	
-	public function toString() : String {
-		return "com.minarto.controls.widget.Widget";
-	}
 }

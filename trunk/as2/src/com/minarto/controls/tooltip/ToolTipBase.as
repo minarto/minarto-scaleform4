@@ -15,7 +15,8 @@ class com.minarto.controls.tooltip.ToolTipBase extends UIComponent {
 	}
 		
 		
-	public function setData($d:*) : Void {
+	public function setData($d) : Void {
+		if(data == $d)	return;
 		delBind();
 		data = $d;
 		addBind();
@@ -23,30 +24,18 @@ class com.minarto.controls.tooltip.ToolTipBase extends UIComponent {
 	
 	
 	private function delBind():Void{
-		if(data as String){
-			dataConvert();
-		}
-		else if(data){
-			//ListBinding.delDataBind(data, dataConvert, HashKeyManager.url);
+		if(data && !(data as String)){
+			//ListBinding.delDataBind(data, invalidate, HashKeyManager.url);
 		}
 	}
 	
 	
 	private function addBind():Void{
 		if(data as String){
-			dataConvert();
+			invalidate();
 		}
 		else if(data){
-			//ListBinding.addDataBind(data, dataConvert, HashKeyManager.url);
+			//ListBinding.addDataBind(data, invalidate, HashKeyManager.url);
 		}
-	}
-		
-		
-	private function dataConvert():Void{
-	}
-	
-	
-	public function toString() : String {
-		return "com.minarto.tooltip.ToolTipBase";
 	}
 }
