@@ -1,12 +1,11 @@
 ﻿import com.minarto.data.ListBinding;
+import com.minarto.manager.tooltip.ToolTipBinding;
 import gfx.controls.*;
+import com.minarto.controls.*;
 
 
-class com.minarto.controls.Slot extends ListItemRenderer {
-	public var content:MovieClip, isDrag:Boolean = true, isUse:Boolean = true;
-	
-	
-	private var tooltipEvt = { target:this };
+class com.minarto.controls.BaseSlot extends ListItemRenderer {
+	public var content:MovieClip;
 	
 	
 	private function configUI():Void {
@@ -21,6 +20,8 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 		constraints.removeElement(textField);
 		
 		watch("data", onChangeData);
+		
+		ToolTipBinding.regist(this);
 	}
 	
 	
@@ -32,7 +33,7 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 		
 	private function onChangeData($p, $old, $new):Void {
 		delBind($old);
-		setBind($new);
+		addBind($new);
 	}
 		
 		
@@ -41,32 +42,13 @@ class com.minarto.controls.Slot extends ListItemRenderer {
 	}
 	
 	
-	private function setBind($data):Void {
+	private function addBind($data):Void {
 		//ListBinding.addBind($data, this, "invalidate", "url");
 	}
 		
 		
-	public function toString() : String {
-		return "com.minarto.controls.Slot";
-	}
-	
-	
-	private function draw():void {
-		super.draw();
-		
-		if (data) {
-			tooltipEvt.type = "tooltipRegister";
-		}
-		else {
-			tooltipEvt.type = "tooltipUnregister";
-		}
-		
-		_root.dispatchEvent(tooltipEvt);
-	}
-		
-		
 	private function onImageLoadComplete():Void {
-		content.width = 64;
-		content.height = 64;
+		content._width = 64;
+		content._height = 64;
 	}
 }

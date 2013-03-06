@@ -12,7 +12,7 @@ class com.minarto.manager.LoadSourceManager {
 	}
 	
 	
-	public static function load($src:String, $target:MovieClip, $onComplete:String, $scope:Object):Void {
+	public static function load($src:String, $target:MovieClip, $onComplete:Function, $scope):Void {
 		if(arguments.length < 2)	return;
 		_reservations.push($src, $target, $onComplete, $scope);
 		_load();
