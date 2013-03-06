@@ -20,6 +20,7 @@ package com.minarto.controls {
 		
 		
 		public function BaseMain() {
+			Extensions.enabled = true;
 			CLIK.initialize(stage, null);
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
 			
