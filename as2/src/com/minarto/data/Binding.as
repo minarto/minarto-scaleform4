@@ -17,7 +17,9 @@ class com.minarto.data.Binding extends EventDispatcher {
 	/**
 	 * 초기화
 	 */
-	public static function init():Void {}
+	public static function init():Void {
+		delete	Binding.init;
+	}
 		
 		
 	public static function setValue($key:String, $value):Void {
@@ -52,8 +54,8 @@ class com.minarto.data.Binding extends EventDispatcher {
 		for (p in a){
 			o = a[p];
 			var obj = o.obj;
-			var key = o.key;
-			for (v in key) {
+			$key = o.handlerOrProperty;
+			for (v in $key) {
 				if (typeof(obj[v]) == "function") {
 					obj[v]($value);
 				}
@@ -76,7 +78,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 			}
 		}
 		if (!o) {
-			o = { obj:$scope, key: { }};
+			o = { obj:$scope, handlerOrProperty: { }};
 			a.push(o);
 		}
 		
