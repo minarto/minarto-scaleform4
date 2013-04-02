@@ -8,15 +8,8 @@ import gfx.events.*;
  * @author minarto
  */
 class com.minarto.controls.BaseMain extends MovieClip {
-	public var	addEventListener:Function, 
-				removeEventListener:Function,
-				hasEventListener:Function,
-				removeAllEventListeners:Function,
-				cleanUpEvents:Function,
-				dispatchEvent:Function;
-				
-				
-	private var onResize:Function;
+	public var	addEventListener:Function, removeEventListener:Function, hasEventListener:Function, removeAllEventListeners:Function, cleanUpEvents:Function, dispatchEvent:Function,
+				onResize:Function;
 	
 	
 	public function BaseMain($main:MovieClip) {
@@ -25,28 +18,30 @@ class com.minarto.controls.BaseMain extends MovieClip {
 		EventDispatcher.initialize(this);
 		
 		if ($main) {
-			$main.__proto__ = this;
+			$main.__proto__ = this.__proto__;
 			this = Object($main);
 		}
+		
+		onLoad = configUI;
 	}
 	
 	
-	private function onLoad():Void {
-		var e = { type:"reSize", target:this };
-		onResize = function():Void {
-			dispatchEvent(e);
-		}
-		Stage.addListener(this);
+	private function configUI() {
+		var e;
 		
-		Binding.init();
+		delete this.__proto__.configUI;
+		delete onLoad;
 		
-		configUI();
-		if (_global.CLIK_loadCallback) { _global.CLIK_loadCallback("main", targetPath(this), this); }
-	}
-	
-	
-	private function configUI():Void {
 		Stage.scaleMode = "noScale";
 		Stage.align = "TL";
+		Stage.addListener(this);
+		
+		e = { type:"resize", target:this };
+		onResize = function() {
+			dispatchEvent(e);
+		}
+		
+		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback("main", targetPath(this), this);
+		Binding.init();
 	}
 }
