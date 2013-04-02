@@ -3,114 +3,85 @@ import com.minarto.data.*;
 import gfx.events.EventDispatcher;
 
 
-class com.minarto.data.Binding extends EventDispatcher {
-	private static var _valueDic = { }, _bindingDic = { }, _instance:Binding = new Binding;
+class com.minarto.data.Binding {
+	private static var _valueDic = { }, _bindingDic = { };
 	
 	
-	public function Binding() {
-		if (_instance)	throw	new Error("don't create instance");
-		if(ExternalInterface.available)	ExternalInterface.call("Binding", this);
+	public static function init() {
+		EventDispatcher.initialize(Binding);
+		ExternalInterface.call("Binding", Binding);
 		trace("Binding.init");
-	}
-	
-	
-	/**
-	 * 초기화
-	 */
-	public static function init():Void {
-		delete	Binding.init;
+		delete Binding.init;
 	}
 		
 		
-	public static function setValue($key:String, $value):Void {
+	public static function set($key:String, $value) {
 		if($key){
-			_setValue($key, $value);
+			_set($key, $value);
 		}
 		else{
 			$value = undefined;
 			for($key in _valueDic){
-				_setValue($key, $value);
+				_set($key, $value);
 			}
 		}
 	}
 	
 	
 	
-	public static function action($e):Void{
-		_instance.dispatchEvent($e);
+	public static function action($e) {
+		Binding["dispatchEvent"]($e);
 	}
 		
 		
-	private static function _setValue($key:String, $value):Void {
-		var o, v, p;
+	private static function _set($key:String, $value) {
+		var arg, p, h;
 		
-		for(p in $value)	_setValue($key + "." + p, $value[p]);
+		for(p in $value)	_set($key + "." + p, $value[p]);
 		
-		v = _valueDic[$key];
-		if (v == $value) return;
+		if (_valueDic[$key] === $value) return;
 		_valueDic[$key] = $value;
 		
-		var a:Array = _bindingDic[$key];
-		for (p in a){
-			o = a[p];
-			var obj = o.obj;
-			$key = o.handlerOrProperty;
-			for (v in $key) {
-				if (typeof(obj[v]) == "function") {
-					obj[v]($value);
-				}
-				else {
-					obj[v] = $value;
-				}
-			}
+		h = _bindingDic[$key];
+		for (p in h){
+			arg = h[p];
+			arg[1].call(arg[2], $value);
 		}
 	}
 	
 	
-	public static function addBind($key:String, $handlerOrProperty:String, $scope):Void {
+	public static function add($key:String, $handler:Function, $scope) {
+		var h:Array, arg;
+		
 		if(!$key)	return;
 		
-		var a:Array = _bindingDic[$key] || (_bindingDic[$key] = []);
-		for (var i in a) {
-			var o = a[i];
-			if (o.obj == $scope) {
-				break;
+		h = _bindingDic[$key];
+		if (h) {
+			for ($key in h) {
+				arg = h[$key];
+				if (arg[1] === $handler && arg[2] === $scope) {
+					return;
+				}
 			}
+			h.push(arguments);
 		}
-		if (!o) {
-			o = { obj:$scope, handlerOrProperty: { }};
-			a.push(o);
-		}
-		
-		o.key[$handlerOrProperty] = $handlerOrProperty;
-	}
-		
-		
-	public static function addBindAndPlay($key:String, $handlerOrProperty:String, $scope):Void {
-		if(!$key)	return;
-		
-		addBind($key, $handlerOrProperty, $scope);
-		if($scope){
-			$scope[$handlerOrProperty] = _valueDic[$key];
-		}
-		else{
-			$handlerOrProperty(_valueDic[$key]);
+		else {
+			h = [arguments];
+			_bindingDic[$key] = h;
 		}
 	}
 		
 		
-	public static function delBind($key:String, $handlerOrProperty:String, $scope):Void {
+	public static function del($key:String, $handler:Function, $scope) {
+		var h:Array, arg;
+		
 		if($key){
-			var a:Array = _bindingDic[$key];
-			for (var i in a) {
-				var o = a[i];
-				if (o.obj == $scope) {
-					if ($handlerOrProperty) {
-						delete	o.key[$handlerOrProperty];
-					}
-					else {
-						a.splice(i, 1);
-					}
+			h = _bindingDic[$key];
+			for ($key in h) {
+				arg = h[$key];
+				if (arg[1] === $handler && arg[2] === $scope) {
+					h.splice(+$key, 1);
+					return;
 				}
 			}
 		}
@@ -120,7 +91,7 @@ class com.minarto.data.Binding extends EventDispatcher {
 	}
 		
 		
-	public static function getValue($key:String) {
+	public static function get($key:String) {
 		return	_valueDic[$key];
 	}
 }
