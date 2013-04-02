@@ -35,7 +35,7 @@ class com.minarto.data.Binding {
 		
 		
 	private static function _set($key:String, $value) {
-		var arg, p, h;
+		var arg:Array, p, h:Array;
 		
 		for(p in $value)	_set($key + "." + p, $value[p]);
 		
@@ -51,7 +51,7 @@ class com.minarto.data.Binding {
 	
 	
 	public static function add($key:String, $handler:Function, $scope) {
-		var h:Array, arg;
+		var h:Array, arg:Array;
 		
 		if(!$key)	return;
 		
@@ -71,9 +71,9 @@ class com.minarto.data.Binding {
 		}
 	}
 		
-		
+	
 	public static function del($key:String, $handler:Function, $scope) {
-		var h:Array, arg;
+		var h:Array, arg:Array;
 		
 		if($key){
 			h = _bindingDic[$key];
