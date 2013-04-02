@@ -7,53 +7,43 @@ import gfx.events.EventDispatcher;
  * @author minarto
  */
 class com.minarto.controls.widget.Widget extends MovieClip {
-	public var	addEventListener:Function, 
-				removeEventListener:Function,
-				hasEventListener:Function,
-				removeAllEventListeners:Function,
-				cleanUpEvents:Function,
-				dispatchEvent:Function,
-				
-				background:MovieClip;
-				
-				
-	private var widgetID:String;
+	public var	addEventListener:Function, removeEventListener:Function, hasEventListener:Function, removeAllEventListeners:Function, cleanUpEvents:Function, dispatchEvent:Function,
+				background:MovieClip, widgetID:String;
 	
 	
 	public function Widget($main:MovieClip) {
 		EventDispatcher.initialize(this);
 		
-		if ($main) {
-			$main.__proto__ = this;
-			this = Object($main);
-		}
+		$main.__proto__ = this.__proto__;
+		this = Object($main);
+		onLoad = configUI;
 	}
 	
 	
-	private function onLoad():Void {
-		configUI();
-	}
-	
-	
-	private function configUI():Void {
-	}
+	private function configUI() {
+		delete this.__proto__.configUI;
+		delete onLoad;
 		
-		
-	private function setTitle($s:String):Void {
-		if (background)	background.title = $s;
+		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback(widgetID, targetPath(this), this);
 	}
 		
 		
-	public function open():Void{
+	public function open(){
 		_visible = true;
 	}
 	
 	
-	public function close():Void{
+	public function close(){
 		_visible = false;
 	}
 	
 	
-	public function destroy():Void{
+	public function destroy() {
+		removeAllEventListeners();
+	}
+		
+		
+	private function setTitle($title:String):Void {
+		if (background)	background.title = $title;
 	}
 }
