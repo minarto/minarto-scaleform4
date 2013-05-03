@@ -1,60 +1,64 @@
-﻿import com.minarto.utils.*;
+﻿import com.minarto.utils.Util;
+
 
 class com.minarto.utils.ObjectPool {
-	private var _dic:Array = [],
-				_constructor:Function, _currSize:Number = 0;
+	public var get:Function, set:Function, constructor:Function;
 	
 	
-	public function ObjectPool($size:Number, $constructor:Function) {
-		allocate($size, $constructor);
+	public function ObjectPool($constructor:Function, $minSize:Number, $initFunc:Function) {
+		init($constructor, $minSize, $initFunc);
 	}
 	
 	
-	public function allocate($size:Number, $constructor:Function):Void {
-		deconstruct();
+	public function init($constructor:Function, $minSize:Number, $initFunc:Function):Void {
+		var dic:Array, initFunc:Function, const:Function;
 		
-		_constructor = $constructor;
+		dic = [];
 		
-		while ($size --) {
-			_currSize = _dic.push(new $constructor);
+		get = function() {
+			return	dic.pop() || new const;
 		}
-	}
-	
-	
-	public get function object() {
-		if (_dic.length) {
-			return	_dic.pop();
+		
+		set = function($obj) {
+			$obj = const($obj);
+			if ($obj) {
+				if (initFunc)	initFunc.call($obj);
+				dic.push($obj);
+			}
+			else {
+				throw	Util.error("ObjectPool", "constructor error - " + $obj);
+			}
 		}
-		else {
-			return	new _constructor;
+		
+		init = function($constructor, $minSize, $initFunc) {
+			dic.length = $minSize = $minSize || 1;
+			constructor = const = $constructor;
+			initFunc = $initFunc;
+		
+			while ($minSize --) dic[$minSize] = new $constructor;
 		}
+		
+		init($constructor, $minSize, $initFunc);
 	}
 	
 	
-	public get function object($obj):Void {
-		_currSize = _dic.push($obj);
-	}
-	
-	
-	public function deconstruct():Void {
-		purge();
-		_constructor = null;
-	}
-	
-	
-	public function get size():Number {
-		return _currSize;
-	}
-	
-	
-	public function initialze(func:String, args:Array):Void {
-		for (var i in _dic) {
-			_dic[i][func].apply(n.data, args);
+	public static function getPool($constructor:Function, $minSize:Number, $initFunc:Function):ObjectPool {
+		var dic:Array = [];
+		
+		getPool = function($constructor:Function, $minSize:Number, $initFunc:Function):ObjectPool {
+			var p:ObjectPool, i;
+			
+			for (i in dic) {
+				p = dic[i];
+				if (p.constructor === $constructor)	return	p;
+			}
+			
+			p = new ObjectPool($constructor, $minSize, $initFunc);
+			dic.push(p);
+			
+			return	p;
 		}
-	}
-	
-	
-	public function purge():Void {
-		_dic.length = _currSize = 0;
+		
+		return	getPool($constructor, $minSize, $initFunc);
 	}
 }
