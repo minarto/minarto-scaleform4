@@ -8,7 +8,7 @@ class com.minarto.data.Binding {
 	
 	public static function init($delegateObj):Void {
 		if ($delegateObj) {
-			$delegateObj.setValue = setValue;
+			$delegateObj.setValue = set;
 			action = function() {
 				$delegateObj.dispatchEvent.call($delegateObj, arguments[0]);
 			};
@@ -27,10 +27,36 @@ class com.minarto.data.Binding {
 	}
 	
 	
+	public static function dateInit($key:String, $interval:Number):Void {
+		var keys;
+		
+		keys = { };
+		
+		dateInit = function($key, $interval) {
+			var f:Function;
+			
+			clearInterval(keys[$key]);
+			
+			if ($interval) {
+				f = function() {
+					set($key, new Date);
+				};
+				
+				
+				keys[$key] = setInterval(f, $interval);
+				
+				f();
+			}
+		};
+		
+		dateInit($key, $interval);
+	}
+	
+	
 	public static function action($e) {}
 		
 		
-	public static function setValue($key:String, $value):Void {
+	public static function set($key:String, $value):Void {
 		if($key)	_set($key, $value);
 		else{
 			$value = undefined;
@@ -49,7 +75,7 @@ class com.minarto.data.Binding {
 		
 		h = _bindingDic[$key];
 		for (i = 0, p = h ? h.length : 0; i < p; ++ i) {
-			arg = h[p];
+			arg = h[i];
 			arg[1].call(arg[2], $value);
 		}
 	}
@@ -100,7 +126,7 @@ class com.minarto.data.Binding {
 	}
 		
 		
-	public static function getValue($key:String) {
+	public static function get($key:String) {
 		return	_valueDic[$key];
 	}
 }
