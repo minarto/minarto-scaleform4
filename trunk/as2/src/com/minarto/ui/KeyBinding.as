@@ -4,26 +4,28 @@ import gfx.managers.FocusHandler;
 
 
 class com.minarto.ui.KeyBinding {
-	private static var _keyDic = { }, _downDic = {}, _upDic = {}, onKeyDown:Function, onKeyUp:Function;
+	private static var onKeyDown:Function, onKeyUp:Function;
 	
 	
 	public static function init($delegateObj):Void {
-		if ($delegateObj)	$delegateObj.setKey = setKey;
+		_init();
+		
+		if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
 		else				ExternalInterface.call("KeyBinding", KeyBinding);
 		
 		trace("KeyBinding.init");
 		
-		delete KeyBinding.init;
+		delete init;
 	}
 	
 	
-	public static function setKey($bindingKey:String, $keyCode:Number, $combi:Number):Void {
-		var combi = {};
+	private static function _init() {
+		var combi = {}, keyDic = { }, downDic = {}, upDic = {};
 		
 		Key.addListener(KeyBinding);
 		
 		onKeyDown = function() {
-			var k:Number, h:Array, i, arg, c:Number;
+			var k:Number, a:Array, i, arg;
 			
 			arg = FocusHandler.instance.getFocus();
 			if (arg instanceof TextField || arg instanceof TextInput || arg instanceof TextArea) return;
@@ -36,23 +38,23 @@ class com.minarto.ui.KeyBinding {
 			}
 			
 			for (i in combi) {
-				h = _downDic[_keyDic[i + "," + k]];
-				for (i = 0, c = h ? h.length : 0; i < c; ++ i) {
-					arg = h[i];
-					arg[2].call(arg[3]);
+				a = downDic[keyDic[i + "," + k]];
+				for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
+					arg = a[i];
+					arg[2].apply(arg[3], arg[4]);
 				}
 				return;
 			}
 			
-			h = _downDic[_keyDic[k]];
-			for (i = 0, c = h ? h.length : 0; i < c; ++ i) {
-				arg = h[i];
-				arg[2].call(arg[3]);
+			a = downDic[keyDic[k]];
+			for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
+				arg = a[i];
+				arg[2].apply(arg[3], arg[4]);
 			}
 		}
 		
 		onKeyUp = function() {
-			var k:Number, h:Array, i, arg, c:Number;
+			var k:Number, a:Array, i, arg;
 			
 			arg = FocusHandler.instance.getFocus();
 			if (arg instanceof TextField || arg instanceof TextInput || arg instanceof TextArea) return;
@@ -65,90 +67,110 @@ class com.minarto.ui.KeyBinding {
 			}
 			
 			for (i in combi) {
-				h = _upDic[_keyDic[i + "," + k]];
-				for (i = 0, c = h ? h.length : 0; i < c; ++ i) {
-					arg = h[i];
-					arg[2].call(arg[3]);
+				a = upDic[keyDic[i + "," + k]];
+				for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
+					arg = a[i];
+					arg[2].apply(arg[3], arg[4]);
 				}
 				return;
 			}
 			
-			h = _upDic[_keyDic[k]];
-			for (i = 0, c = h ? h.length : 0; i < c; ++ i) {
-				arg = h[i];
-				arg[2].call(arg[3]);
+			a = upDic[keyDic[k]];
+			for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
+				arg = a[i];
+				arg[2].apply(arg[3], arg[4]);
 			}
 		}
 		
 		
-		setKey = function($bindingKey:String, $keyCode:Number, $combi:Number) {
-			if ($bindingKey)	_keyDic[$combi ? $combi + "," + $keyCode : $keyCode] = $bindingKey;
-			else				_keyDic = { };
+		has = function($bindingKey:String, $isDown, $handler:Function, $scope) {
+			var a:Array = $isDown ? downDic[$bindingKey] : upDic[$bindingKey];
+			for ($bindingKey in a) {
+				$isDown = a[$bindingKey];
+				if ($isDown[2] === $handler && $isDown[3] == $scope) return	$isDown;
+			}
+			
+			return	0;
+		}
+		
+		
+		set = function($bindingKey:String, $key, $combi:Number) {
+			if ($bindingKey) {
+				if (typeof($key) === "string")	$key = $key.toUpperCase().charCodeAt(0);
+				keyDic[$combi ? $combi + "," + $key : $key] = $bindingKey;
+			}
+			else				keyDic = { };
 		};
-		setKey($bindingKey, $keyCode, $combi);
-	}
-	
-	
-	public static function has($bindingKey:String, $isDown, $handler:Function, $scope):Boolean {
-		var h:Array, i, arg;
 		
-		h = $isDown ? _downDic[$bindingKey] : _upDic[$bindingKey];
-
-		for (i in h) {
-			arg = h[i];
-			if (arg[2] === $handler && arg[3] == $scope) return	true;
-		}
 		
-		return	false;
-	}
-	
-	
-	public static function add($bindingKey:String, $isDown, $handler:Function, $scope):Void {
-		var h:Array, i, arg;
-		
-		if ($isDown) {
-			h = _downDic[$bindingKey];
-			if (!h) {
-				_downDic[$bindingKey] = h = [arguments];
-				return;
+		add = function($bindingKey:String, $isDown, $handler:Function, $scope) {
+			var arg, a:Array;
+			
+			arguments[4] = arguments.slice(4, arguments.length);
+			
+			arg = $isDown ? downDic : upDic;
+			a = arg[$bindingKey];
+			if (a) {
+				for ($bindingKey in a) {
+					arg = a[$bindingKey];
+					if (arg[2] === $handler && arg[3] == $scope) {
+						a[$bindingKey] = arguments;
+						return;
+					}
+				}
+				a.push(arguments);
 			}
-		}
-		else {
-			h = _upDic[$bindingKey];
-			if (!h) {
-				_upDic[$bindingKey] = h = [arguments];
-				return;
-			}
-		}
+			else	arg[$bindingKey] = a = [arguments];
+		};
 		
-		for (i in h) {
-			arg = h[i];
-			if (arg[2] === $handler && arg[3] == $scope) return;
-		}
-		h.push(arguments);
-	}
-	
-	
-	public static function del($bindingKey:String, $isDown, $handler:Function, $scope):Void {
-		var h:Array, i, arg;
 		
-		if ($bindingKey) {
-			h = $isDown ? _downDic[$bindingKey] : _upDic[$bindingKey];
-			for (i in h) {
-				arg = h[i];
-				if (arg[2] === $handler && arg[3] == $scope) {
-					h.splice(i, 1);
-					if (!h.length) {
-						if ($isDown)	delete	_downDic[$bindingKey];
-						else			delete	_upDic[$bindingKey];
-					}					
-					return;
+		del = function($bindingKey:String, $isDown, $handler:Function, $scope):Void {
+			var a:Array, i, arg;
+			
+			if ($bindingKey) {
+				a = $isDown ? downDic[$bindingKey] : upDic[$bindingKey];
+				for (i in a) {
+					arg = a[i];
+					if (arg[2] === $handler && arg[3] == $scope) {
+						a.splice(i, 1);
+						if (!a.length) {
+							if ($isDown)	delete	downDic[$bindingKey];
+							else			delete	upDic[$bindingKey];
+						}					
+						return;
+					}
 				}
 			}
-		}
-		else {
-			if ($isDown)	_downDic = {};
-			else			_upDic = {};
-		}
+			else {
+				downDic = {};
+				upDic = {};
+			}
+		};
+		
+		delete	_init;
+	}
+	
+	
+	public static function set($bindingKey:String, $key, $combi:Number):Void {
+		_init();
+		set.apply(KeyBinding, arguments);
+	}
+	
+	
+	public static function has($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Boolean {
+		_init();
+		return	has.apply(KeyBinding, arguments);
+	}
+	
+	
+	public static function add($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Void {
+		_init();
+		add.apply(KeyBinding, arguments);
+	}
+	
+	
+	public static function del($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Void {
+		_init();
+		del.apply(KeyBinding, arguments);
 	}
 }

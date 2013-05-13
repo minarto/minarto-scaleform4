@@ -1,5 +1,5 @@
 ﻿class com.minarto.events.EventDispatcher {
-	public static function initialize($target):Void {
+	public static function init($target):Void {
 		$target.__events__ = { };
 		_global.ASSetPropFlags($target, "__events__", 1);
 		$target.dispatchEvent = EventDispatcher.prototype.dispatchEvent;
