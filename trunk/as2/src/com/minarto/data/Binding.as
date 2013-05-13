@@ -7,8 +7,8 @@ class com.minarto.data.Binding {
 		_init();
 		
 		if ($delegateObj) {
-			$delegateObj.setValue = Binding.set;
-			$delegateObj.setArg = Binding.setArg;
+			$delegateObj.setValue = set;
+			$delegateObj.setArg = setArg;
 		}
 		else ExternalInterface.call("Binding", Binding);
 		
@@ -40,7 +40,31 @@ class com.minarto.data.Binding {
 	
 	
 	private static function _init():Void {
-		var valueDic = { }, bindingDic = { };
+		var valueDic = { }, bindingDic = { }, _set:Function;
+		
+		
+		_set = function ($key, $value) {
+			var p, a:Array, arg, arg2;
+		
+			for(p in $value)	arguments.calee($key + "." + p, $value[p]);
+			
+			if (valueDic[$key] === $value) return;
+			valueDic[$key] = $value;
+			
+			a = bindingDic[$key];
+			for (p = 0, $key = a ? a.length : 0; p < $key; ++ p) {
+				arg = a[p];
+				arg2 = arg[3];
+				arg2[0] = $value;
+				arg[1].apply(arg[2], arg2);
+			}
+		}
+		
+		
+		set = function ($key:String, $value) {
+			if($key)	_set($key, $value);
+			else	for($key in valueDic)	_set($key, $key);
+		}
 		
 		setArg = function ($key) {
 			var v:Array, a:Array, i:Number, arg, arg2:Array;
@@ -58,30 +82,6 @@ class com.minarto.data.Binding {
 				}
 			}
 			else	Binding.set();
-		}
-		
-		
-		set = function ($key:String, $value) {
-			if($key)	_set($key, $value);
-			else	for($key in valueDic)	_set($key, $key);
-		}
-		
-		
-		_set = function ($key, $value) {
-			var p, a:Array, arg, arg2;
-		
-			for(p in $value)	_set($key + "." + p, $value[p]);
-			
-			if (valueDic[$key] === $value) return;
-			valueDic[$key] = $value;
-			
-			a = bindingDic[$key];
-			for (p = 0, $key = a ? a.length : 0; p < $key; ++ p) {
-				arg = a[p];
-				arg2 = arg[3];
-				arg2[0] = $value;
-				arg[1].apply(arg[2], arg2);
-			}
 		}
 		
 		
@@ -153,12 +153,6 @@ class com.minarto.data.Binding {
 	public static function set($key:String, $value):Void {
 		_init();
 		set.apply(Binding, arguments);
-	}
-		
-		
-	private static function _set($key:String, $value) {
-		_init();
-		_set.apply(Binding, arguments);
 	}
 	
 	
