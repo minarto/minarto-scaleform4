@@ -40,14 +40,10 @@ class com.minarto.utils.Util {
 	
 	
 	public static function locale($msg:String):String {
-		var dic;
-		
-		dic = { };
+		var dic = { };
 		
 		locale = function($msg) {
-			var r:String;
-			
-			r = dic[$msg];
+			var r:String = dic[$msg];
 			if(!r){
 				r = "" + ExternalInterface.call("locale", $msg);
 				if(r)	dic[$msg] = r;
