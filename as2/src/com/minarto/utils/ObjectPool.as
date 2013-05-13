@@ -2,59 +2,75 @@
 
 
 class com.minarto.utils.ObjectPool {
-	public var get:Function, set:Function, constructor:Function;
+	public var constructor:Function;
 	
 	
-	public function ObjectPool($constructor:Function, $minSize:Number, $initFunc:Function) {
-		init($constructor, $minSize, $initFunc);
+	public function ObjectPool($constructor:Function, $minSize:Number) {
+		init($constructor, $minSize);
 	}
 	
 	
-	public function init($constructor:Function, $minSize:Number, $initFunc:Function):Void {
+	private function _init():Void {
 		var dic:Array = [];
 		
 		get = function() {
-			return	dic.pop() || new $constructor;
+			return	dic.pop() || new constructor;
 		}
 		
 		set = function($obj) {
-			$obj = $constructor($obj);
-			if ($obj) {
-				if ($initFunc)	$initFunc.call($obj);
-				dic.push($obj);
-			}
+			$obj = constructor($obj);
+			if ($obj)	dic.push($obj);
 			else throw	Util.error("ObjectPool", "constructor error - " + $obj);
 		}
 		
-		init = function($$constructor, $$minSize, $$initFunc) {
-			dic.length = $minSize = $$minSize = $$minSize || 1;
-			constructor = $constructor = $$constructor;
-			$initFunc = $$initFunc;
-		
-			while ($$minSize --) dic[$$minSize] = new $$constructor;
+		init = function($constructor, $minSize) {
+			dic.length = 0;
+			constructor = $constructor;
+			while ($minSize --) dic.push(new $constructor);
 		}
 		
-		init($constructor, $minSize, $initFunc);
+		delete	_init;
 	}
 	
 	
-	public static function getPool($constructor:Function, $minSize:Number, $initFunc:Function):ObjectPool {
+	public function init($constructor:Function, $minSize:Number):Void {
+		_init();
+		init.apply(this, arguments);
+	}
+	
+	
+	public function get():Void {
+		_init();
+		return	get.call(this);
+	}
+	
+	
+	public function set($obj):Void {
+		_init();
+		set.call(this, $obj);
+	}
+	
+	
+	public static function getPool($constructor:Function, $minSize:Number):ObjectPool {
 		var dic:Array = [];
 		
-		getPool = function($$constructor:Function) {
+		getPool = function($$constructor:Function, $$minSize:Number) {
 			var p:ObjectPool, i;
 			
 			for (i in dic) {
 				p = dic[i];
-				if (p.constructor === $$constructor)	return	p;
+				if (p.constructor === $$constructor) {
+					if ($$minSize)	p.init($$constructor, $$minSize);
+					return	p;
+				}
 			}
 			
-			p = new ObjectPool($$constructor, arguments[1], arguments[2]);
+			p = new ObjectPool($$constructor, $$minSize);
 			dic.push(p);
 			
 			return	p;
 		}
 		
-		return	getPool($constructor, $minSize, $initFunc);
+		return	getPool($constructor, $minSize);
 	}
 }
