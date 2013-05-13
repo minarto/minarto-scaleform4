@@ -3,23 +3,14 @@ import com.minarto.events.EventDispatcher;
 
 
 class com.minarto.data.Binding {
-	private static var _valueDic = { }, _bindingDic = { };
-	
-	
 	public static function init($delegateObj):Void {
+		_init();
+		
 		if ($delegateObj) {
-			$delegateObj.setValue = set;
-			action = function() {
-				$delegateObj.dispatchEvent.call($delegateObj, arguments[0]);
-			};
+			$delegateObj.setValue = Binding.set;
+			$delegateObj.setArg = Binding.setArg;
 		}
-		else {
-			EventDispatcher.initialize(Binding);
-			action = function() {
-				Binding["dispatchEvent"].call(Binding, arguments[0]);
-			};
-			ExternalInterface.call("Binding", Binding);
-		}
+		else ExternalInterface.call("Binding", Binding);
 		
 		trace("Binding.init");
 		
@@ -28,105 +19,169 @@ class com.minarto.data.Binding {
 	
 	
 	public static function dateInit($key:String, $interval:Number):Void {
-		var keys;
+		var keys = { };
 		
-		keys = { };
+		_init();
 		
-		dateInit = function($key, $interval) {
-			var f:Function;
+		dateInit = function($$key, $$interval) {
+			clearInterval(keys[$$key]);
 			
-			clearInterval(keys[$key]);
-			
-			if ($interval) {
-				f = function() {
-					set($key, new Date);
-				};
+			if ($$interval) {
+				Binding.set($$key, new Date);
 				
-				
-				keys[$key] = setInterval(f, $interval);
-				
-				f();
+				keys[$$key] = setInterval(function() {
+					Binding.set($$key, new Date);
+				}, $$interval * 1000);
 			}
 		};
 		
-		dateInit($key, $interval);
+		dateInit.apply(Binding, arguments);
 	}
 	
 	
-	public static function action($e) {}
+	private static function _init():Void {
+		var valueDic = { }, bindingDic = { };
+		
+		setArg = function ($key) {
+			var v:Array, a:Array, i:Number, arg, arg2:Array;
+			
+			if ($key) {
+				v = arguments.slice(1, arguments.length);
+				valueDic[$key] = v;
+				
+				a = bindingDic[$key];
+				for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
+					arg = a[i];
+					arg2 = arg[3];
+					arg2 = v.concat(arg2.slice(1, arg2.length));
+					arg[1].apply(arg[2], arg2);
+				}
+			}
+			else	Binding.set();
+		}
+		
+		
+		set = function ($key:String, $value) {
+			if($key)	_set($key, $value);
+			else	for($key in valueDic)	_set($key, $key);
+		}
+		
+		
+		_set = function ($key, $value) {
+			var p, a:Array, arg, arg2;
+		
+			for(p in $value)	_set($key + "." + p, $value[p]);
+			
+			if (valueDic[$key] === $value) return;
+			valueDic[$key] = $value;
+			
+			a = bindingDic[$key];
+			for (p = 0, $key = a ? a.length : 0; p < $key; ++ p) {
+				arg = a[p];
+				arg2 = arg[3];
+				arg2[0] = $value;
+				arg[1].apply(arg[2], arg2);
+			}
+		}
+		
+		
+		has = function ($key:String, $handler:Function, $scope) {
+			var a:Array, arg;
+			
+			a = bindingDic[$key];
+			for ($key in a) {
+				arg = a[$key];
+				if (arg[1] === $handler && arg[2] == $scope) return	arg;
+			}
+			return	0;
+		}
+		
+		
+		add = function ($key:String, $handler:Function, $scope) {
+			var a:Array, arg;
+		
+			arguments[3] = arguments.slice(2, arguments.length);
+			
+			a = bindingDic[$key];
+			if (a) {
+				for ($key in a) {
+					arg = a[$key];
+					if (arg[1] === $handler && arg[2] == $scope) {
+						a[$key] = arguments;
+						return;
+					}
+				}
+				a.push(arguments);
+			}
+			else bindingDic[$key] = a = [arguments];
+		}
+		
+		
+		del = function ($key:String, $handler:Function, $scope) {
+			var a:Array, arg, i;
+		
+			if($key){
+				a = bindingDic[$key];
+				for (i in a) {
+					arg = a[i];
+					if (arg[1] === $handler && arg[2] == $scope) {
+						a.splice(i, 1);
+						if(!a.length)	delete	bindingDic[$key];
+						return;
+					}
+				}
+			}
+			else	bindingDic = {};
+		}
+		
+		
+		get = function($key:String) {
+			return	valueDic[$key];
+		}
+		
+		
+		delete _init;
+	}
+		
+		
+	public static function setArg($key:String):Void {
+		_init();
+		setArg.apply(Binding, arguments);
+	}
 		
 		
 	public static function set($key:String, $value):Void {
-		if($key)	_set($key, $value);
-		else{
-			$value = undefined;
-			for($key in _valueDic)	_set($key, $value);
-		}
+		_init();
+		set.apply(Binding, arguments);
 	}
 		
 		
 	private static function _set($key:String, $value) {
-		var arg, p, h:Array, i:Number;
-		
-		for(p in $value)	_set($key + "." + p, $value[p]);
-		
-		if (_valueDic[$key] === $value) return;
-		_valueDic[$key] = $value;
-		
-		h = _bindingDic[$key];
-		for (i = 0, p = h ? h.length : 0; i < p; ++ i) {
-			arg = h[i];
-			arg[1].call(arg[2], $value);
-		}
+		_init();
+		_set.apply(Binding, arguments);
 	}
 	
 	
 	public static function has($key:String, $handler:Function, $scope):Boolean {
-		var h:Array, arg, i;
-		
-		h = _bindingDic[$key];
-		for (i in h) {
-			arg = h[i];
-			if (arg[1] === $handler && arg[2] == $scope) return	true;
-		}
-		return	false;
+		_init();
+		return	has.apply(Binding, arguments);
 	}
 	
 	
 	public static function add($key:String, $handler:Function, $scope):Void {
-		var h:Array, arg, i;
-		
-		h = _bindingDic[$key];
-		if (h) {
-			for (i in h) {
-				arg = h[i];
-				if (arg[1] === $handler && arg[2] == $scope) return;
-			}
-			h.push(arguments);
-		}
-		else _bindingDic[$key] = h = [arguments];
+		_init();
+		add.apply(Binding, arguments);
 	}
 		
 	
 	public static function del($key:String, $handler:Function, $scope):Void {
-		var h:Array, arg, i;
-		
-		if($key){
-			h = _bindingDic[$key];
-			for (i in h) {
-				arg = h[i];
-				if (arg[1] === $handler && arg[2] == $scope) {
-					h.splice(i, 1);
-					if(!h.length)	delete	_bindingDic[$key];
-					return;
-				}
-			}
-		}
-		else	_bindingDic = {};
+		_init();
+		del.apply(Binding, arguments);
 	}
 		
 		
 	public static function get($key:String) {
-		return	_valueDic[$key];
+		_init();
+		return	get.apply(Binding, arguments);
 	}
 }
