@@ -9,7 +9,7 @@ import gfx.events.EventTypes;
  * @author minarto
  */
 class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent implements IToolTipManager {
-	private var target:MovieClip, btnDic:Array = [], delay:Number = 300, delayID:Number;
+	private var target:MovieClip, btnDic = {}, delay:Number = 300, delayID:Number;
 	
 	public var toolTip:ToolTipBase, toolTip1:ToolTipBase;
 		
@@ -25,33 +25,32 @@ class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent impl
 	
 	public function regist($button:UIComponent):Void{
 		for(var i in arguments){
-			var b:UIComponent = arguments[i];
-			b.addEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
-			b.addEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
+			$button = arguments[i];
+			$button.addEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
+			$button.addEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
+			btnDic[targetPath($button)] = $button;
 		}
-		
-		btnDic.push.apply(btnDic, arguments);
 	}
 	
 	
 	public function unRegist($button:UIComponent) : Void {
 		if($button){
 			for(var i in arguments){
-				var b:UIComponent = arguments[i];
-				b.removeEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
-				b.removeEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
+				$button = arguments[i];
+				$button.removeEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
+				$button.removeEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
 				
-				btnDic.splice(i, 1);
+				delete	btnDic[targetPath($button)];
 			}
 		}
 		else{
 			for(i in btnDic){
-				b = btnDic[i];
-				b.removeEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
-				b.removeEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
+				$button = btnDic[i];
+				$button.removeEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
+				$button.removeEventListener(EventTypes.ROLL_OUT, this, "hnRollOut");
 			}
 			
-			btnDic.length = 0;
+			btnDic = {};
 		}
 	}
 	
@@ -87,10 +86,10 @@ class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent impl
 						t = toolTip;
 				}
 				
-				t.setData($d);
+				t.setData(arguments[i]);
 				t._visible = true;
 			}
-			this._visible = true;
+			_visible = true;
 		}
 		else{
 			toolTip._visible = false;
@@ -100,7 +99,7 @@ class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent impl
 	
 	
 	public function delToolTip():Void{
-		this._visible = false;
+		_visible = false;
 		clearTimeout(delayID);
 	}
 }

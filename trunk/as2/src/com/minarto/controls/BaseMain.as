@@ -1,6 +1,6 @@
-﻿import com.minarto.controls.*;
-import com.minarto.data.Binding;
-import gfx.events.*;
+﻿import com.minarto.data.Binding;
+import com.minarto.ui.KeyBinding;
+import gfx.events.EventDispatcher;
 
 
 /**
@@ -8,40 +8,54 @@ import gfx.events.*;
  * @author minarto
  */
 class com.minarto.controls.BaseMain extends MovieClip {
-	public var	addEventListener:Function, removeEventListener:Function, hasEventListener:Function, removeAllEventListeners:Function, cleanUpEvents:Function, dispatchEvent:Function,
-				onResize:Function;
+	public var	addEventListener:Function, removeEventListener:Function, hasEventListener:Function, removeAllEventListeners:Function, cleanUpEvents:Function, dispatchEvent:Function;
 	
 	
-	public function BaseMain($main:MovieClip) {
-		_global.gfxExtensions = true;
+	/**
+	 * Binding.set 위임
+	 * 
+	 * @param	$key
+	 * @param	$value
+	 */
+	public function setValue($key:String, $value):Void{};
+	
+	
+	/**
+	 * Binding.setArg 위임
+	 * 
+	 * @param	$key
+	 */
+	public function setArg($key:String):Void { };
+	
+	
+	/**
+	 * KeyBinding.set 위임
+	 * 
+	 * @param	$bindingKey
+	 * @param	$keyCode
+	 * @param	$combi
+	 */
+	public function setKey($bindingKey:String, $keyCode, $combi:Number):Void {};
+	
+	
+	public function BaseMain($main) {
+		_global.gfxExtensions = 1;
 		
+		$main.__proto__ = this.__proto__;
+		this = $main;
 		EventDispatcher.initialize(this);
 		
-		if ($main) {
-			$main.__proto__ = this.__proto__;
-			this = Object($main);
-		}
-		
-		onLoad = configUI;
+		Binding.init(this);
+		KeyBinding.init(this);
 	}
 	
 	
-	private function configUI() {
-		var e;
-		
-		delete this.__proto__.configUI;
+	private function onLoad() {
 		delete onLoad;
 		
 		Stage.scaleMode = "noScale";
 		Stage.align = "TL";
-		Stage.addListener(this);
-		
-		e = { type:"resize", target:this };
-		onResize = function() {
-			dispatchEvent(e);
-		}
 		
 		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback("main", targetPath(this), this);
-		Binding.init();
 	}
 }
