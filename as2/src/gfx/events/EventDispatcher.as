@@ -165,6 +165,4 @@ class gfx.events.EventDispatcher {
 	private function cleanUpEvents():Void {
 		removeAllEventListeners();
 	}
-	
-
 }
