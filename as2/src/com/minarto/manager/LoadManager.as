@@ -10,21 +10,19 @@ class com.minarto.manager.LoadManager {
 	 * 함수 초기화
 	 */
 	private static function _init() {
-		var reservations:Array, loader:MovieClipLoader, item, _load:Function;
-		
-		reservations = [];
-		loader = new MovieClipLoader;
-		loader.addListener(LoadManager);
+		var reservations:Array = [], loader:MovieClipLoader = new MovieClipLoader, item, _load:Function;
 		
 		_load = function() {
 			item = reservations.shift();
-			if (item) loader.loadClip(item[1], item[0]);
+			if (item) {
+				loader.addListener(LoadManager);
+				loader.loadClip(item[1], item[0]);
+			}
+			else	loader.removeListener(LoadManager);
 		}
 		
 		onLoadInit = function() {
-			var f:Function, arg;
-			
-			f = item[2];
+			var f:Function= item[2], arg;
 			
 			if (f) {
 				arg = item.slice(5, item.length);
@@ -36,9 +34,8 @@ class com.minarto.manager.LoadManager {
 		}
 		
 		onLoadError = function() {
-			var f:Function, arg;
+			var f:Function = item[4], arg;
 			
-			f = item[4];
 			if (f) {
 				arg = item.slice(5, item.length);
 				arg[0] = arguments[0];
@@ -50,16 +47,42 @@ class com.minarto.manager.LoadManager {
 			_load();
 		}
 			
-		clear = function() {
-			reservations.length = 0;
-			if (item) {
-				loader.unloadClip(item[0]);
-				item = null;
+		clear = function($target:MovieClip) {
+			if ($target) {
+				$target.unloadMovie();
+				
+				if (item) {
+					if (item[0] == $target)	_load();
+					else {
+						for (var i in reservations) {
+							if (reservations[i][0] == $target) {
+								reservations.splice(i, 1);
+								break;
+							}
+						}
+					}
+				}
 			}
+			else	reservations.length = 0;
 		}
 		
-		load = function() {
-			reservations.push(arguments); 
+		load = function($target:MovieClip) {
+			if (item) {
+				if (item[0] == $target) {
+					$target.unloadMovie();
+					item = null;
+				}
+				else {
+					for (var i in reservations) {
+						if (reservations[i][0] == $target) {
+							reservations.splice(i, 1);
+							break;
+						}
+					}
+				}
+			}
+			
+			reservations.push(arguments);
 			if (!item) _load();
 		}
 		
@@ -70,9 +93,9 @@ class com.minarto.manager.LoadManager {
 	/**
 	 * 모든 예약된 로드 취소
 	 */
-	public static function clear():Void {
+	public static function clear($target:MovieClip):Void {
 		_init();
-		clear.apply(LoadManager, arguments);
+		clear($target);
 	}
 	
 	
