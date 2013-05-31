@@ -14,10 +14,7 @@ class com.minarto.manager.LoadManager {
 		
 		_load = function() {
 			item = reservations.shift();
-			if (item) {
-				loader.addListener(LoadManager);
-				loader.loadClip(item[1], item[0]);
-			}
+			if (item)	loader.loadClip(item[1], item[0]);
 			else	loader.removeListener(LoadManager);
 		}
 		
@@ -47,7 +44,7 @@ class com.minarto.manager.LoadManager {
 			_load();
 		}
 			
-		clear = function($target:MovieClip) {
+		unLoad = function($target:MovieClip) {
 			if ($target) {
 				$target.unloadMovie();
 				
@@ -83,7 +80,10 @@ class com.minarto.manager.LoadManager {
 			}
 			
 			reservations.push(arguments);
-			if (!item) _load();
+			if (!item) {
+				loader.addListener(LoadManager);
+				_load();
+			}
 		}
 		
 		delete	_init;
@@ -93,9 +93,9 @@ class com.minarto.manager.LoadManager {
 	/**
 	 * 모든 예약된 로드 취소
 	 */
-	public static function clear($target:MovieClip):Void {
+	public static function unLoad($target:MovieClip):Void {
 		_init();
-		clear($target);
+		unLoad($target);
 	}
 	
 	
