@@ -121,7 +121,7 @@ package com.minarto.data {
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
-		 * @param $handler	바인딩 핸들러 또는 속성
+		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
 		public static function del($key:String, $handler:Function):void {
