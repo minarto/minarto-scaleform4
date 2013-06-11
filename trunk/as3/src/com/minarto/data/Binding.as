@@ -11,6 +11,12 @@ package com.minarto.data {
 		private static var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
 		
 		
+		/**
+		 * 초기화 및 위임
+		 *  
+		 * @param $delegateObj	위임 객체
+		 *  
+		 */		
 		public static function init($delegateObj:*):void{
 			if ($delegateObj)	$delegateObj.setValue = set;
 			else ExternalInterface.call("Binding", Binding);
@@ -19,6 +25,13 @@ package com.minarto.data {
 		}
 		
 		
+		/**
+		 * 시간 관리
+		 *  
+		 * @param $key
+		 * @param $interval
+		 * 
+		 */		
 		public static function dateInit($key:String, $interval:Number=NaN):void {
 			var o:* = dateKey[$key], timer:Timer, f:Function;
 			
