@@ -39,12 +39,13 @@ class com.minarto.data.Binding {
 		var valueDic = { }, bindingDic = { };
 		
 		
-		set = function ($key) {
+		set = function ($key, $value) {
 			var arg:Array, a:Array, arg:Array, item, i:Number;
 			
-			arg = arguments.slice(1, arguments.length);
+			if (valueDic[$key] == $value)	return;
 			valueDic[$key] = arg;
 			
+			arg = arguments.slice(1, arguments.length);
 			a = bindingDic[$key];
 			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
 				item = a[i];
