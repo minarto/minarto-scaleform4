@@ -1,15 +1,11 @@
 ﻿import flash.external.ExternalInterface;
-import com.minarto.events.EventDispatcher;
 
 
 class com.minarto.data.Binding {
 	public static function init($delegateObj):Void {
 		_init();
 		
-		if ($delegateObj) {
-			$delegateObj.setValue = set;
-			$delegateObj.setArg = setArg;
-		}
+		if ($delegateObj)	$delegateObj.setValue = set;
 		else ExternalInterface.call("Binding", Binding);
 		
 		trace("Binding.init");
@@ -35,78 +31,49 @@ class com.minarto.data.Binding {
 			}
 		};
 		
-		dateInit.apply(Binding, arguments);
+		dateInit($key, $interval);
 	}
 	
 	
 	private static function _init():Void {
-		var valueDic = { }, bindingDic = { }, _set:Function;
+		var valueDic = { }, bindingDic = { };
 		
 		
-		_set = function ($key, $value) {
-			var p, a:Array, arg, arg2;
-		
-			for(p in $value)	arguments.calee($key + "." + p, $value[p]);
+		set = function ($key) {
+			var arg:Array, a:Array, arg:Array, item, i:Number;
 			
-			if (valueDic[$key] === $value) return;
-			valueDic[$key] = $value;
+			arg = arguments.slice(1, arguments.length);
+			valueDic[$key] = arg;
 			
 			a = bindingDic[$key];
-			for (p = 0, $key = a ? a.length : 0; p < $key; ++ p) {
-				arg = a[p];
-				arg2 = arg[3];
-				arg2[0] = $value;
-				arg[1].apply(arg[2], arg2);
+			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
+				item = a[i];
+				item[1].apply(item[2], arg.concat(item[3]));
 			}
-		}
-		
-		
-		set = function ($key:String, $value) {
-			if($key)	_set($key, $value);
-			else	for($key in valueDic)	_set($key, $key);
-		}
-		
-		setArg = function ($key) {
-			var v:Array, a:Array, i:Number, arg, arg2:Array;
-			
-			if ($key) {
-				v = arguments.slice(1, arguments.length);
-				valueDic[$key] = v;
-				
-				a = bindingDic[$key];
-				for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
-					arg = a[i];
-					arg2 = arg[3];
-					arg2 = v.concat(arg2.slice(1, arg2.length));
-					arg[1].apply(arg[2], arg2);
-				}
-			}
-			else	Binding.set();
 		}
 		
 		
 		has = function ($key:String, $handler:Function, $scope) {
-			var a:Array, arg;
+			var a:Array = bindingDic[$key], item;
 			
-			a = bindingDic[$key];
 			for ($key in a) {
-				arg = a[$key];
-				if (arg[1] === $handler && arg[2] == $scope) return	arg;
+				item = a[$key];
+				if (item[1] == $handler && item[2] == $scope) return	1;
 			}
 			return	0;
 		}
 		
 		
 		add = function ($key:String, $handler:Function, $scope) {
-			var a:Array, arg;
+			var a:Array = bindingDic[$key], item;
 		
 			arguments[3] = arguments.slice(2, arguments.length);
+			arguments[0] = get($key);
 			
-			a = bindingDic[$key];
 			if (a) {
 				for ($key in a) {
-					arg = a[$key];
-					if (arg[1] === $handler && arg[2] == $scope) {
+					item = a[$key];
+					if (item[1] == $handler && item[2] == $scope) {
 						a[$key] = arguments;
 						return;
 					}
@@ -118,13 +85,13 @@ class com.minarto.data.Binding {
 		
 		
 		del = function ($key:String, $handler:Function, $scope) {
-			var a:Array, arg, i;
+			var a:Array, i, item;
 		
 			if($key){
 				a = bindingDic[$key];
 				for (i in a) {
-					arg = a[i];
-					if (arg[1] === $handler && arg[2] == $scope) {
+					item = a[i];
+					if (item[1] == $handler && item[2] == $scope) {
 						a.splice(i, 1);
 						if(!a.length)	delete	bindingDic[$key];
 						return;
@@ -135,8 +102,8 @@ class com.minarto.data.Binding {
 		}
 		
 		
-		get = function($key:String) {
-			return	valueDic[$key];
+		get = function() {
+			return	valueDic[arguments[0]];
 		}
 		
 		
@@ -144,21 +111,15 @@ class com.minarto.data.Binding {
 	}
 		
 		
-	public static function setArg($key:String):Void {
-		_init();
-		setArg.apply(Binding, arguments);
-	}
-		
-		
 	public static function set($key:String, $value):Void {
 		_init();
-		set.apply(Binding, arguments);
+		set($key, $value);
 	}
 	
 	
 	public static function has($key:String, $handler:Function, $scope):Boolean {
 		_init();
-		return	has.apply(Binding, arguments);
+		return	has($key, $handler, $scope);
 	}
 	
 	
@@ -170,12 +131,12 @@ class com.minarto.data.Binding {
 	
 	public static function del($key:String, $handler:Function, $scope):Void {
 		_init();
-		del.apply(Binding, arguments);
+		del($key, $handler, $scope);
 	}
 		
 		
 	public static function get($key:String) {
 		_init();
-		return	get.apply(Binding, arguments);
+		return	get($key);
 	}
 }
