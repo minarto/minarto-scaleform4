@@ -142,13 +142,11 @@ package com.minarto.data {
 			
 			if($key){
 				a = bindingDic[$key];
-				if(a){
-					for (i in a) {
-						if (a[i].handler == $handler){
-							a.splice(i, 1);
-							if(!a.length)	delete	bindingDic[$key];
-							return;
-						}
+				for (i in a) {
+					if (a[i].handler == $handler){
+						a.splice(i, 1);
+						if(!a.length)	delete	bindingDic[$key];
+						return;
 					}
 				}
 			}
