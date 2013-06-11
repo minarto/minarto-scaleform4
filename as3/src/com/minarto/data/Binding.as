@@ -2,70 +2,118 @@
  * 
  */
 package com.minarto.data {
-	import flash.events.*;
+	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
-	import flash.utils.Dictionary;
-	
-	import scaleform.gfx.Extensions;
+	import flash.utils.Timer;
 	
 	
-	public class Binding extends EventDispatcher {
-		private static var _valueDic:* = {}, _bindingDic:* = {}, _instance:Binding = new Binding;
+	public class Binding {
+		private static var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
 		
 		
-		public function Binding(){
-			if(_instance)	throw	new Error("don't create instance");
-			if(ExternalInterface.available && Extensions.isScaleform)	ExternalInterface.call("Binding", this);
+		public static function init($delegateObj:*):void{
+			if ($delegateObj)	$delegateObj.setValue = set;
+			else ExternalInterface.call("Binding", Binding);
+			
 			trace("Binding.init");
 		}
 		
 		
+		public static function dateInit($key:String, $interval:Number=NaN):void {
+			var o:* = dateKey[$key], timer:Timer, f:Function;
+			
+			if(o){
+				timer = o.timer;
+				timer.stop();
+				if($interval){
+					timer.delay = $interval * 1000;
+					timer.reset();
+					timer.start();
+				}
+				else{
+					timer.removeEventListener(TimerEvent.TIMER, o.func);
+					delete	dateKey[$key];
+				}
+			}
+			else if($interval){
+				timer = new Timer($interval * 1000);
+				
+				f = function($$e:*):void{
+					set($key, new Date);
+				};
+				
+				f($interval);
+				
+				timer.addEventListener(TimerEvent.TIMER, f);
+				timer.start();
+				
+				dateKey[$key] = o = {timer:timer, func:f};
+			}
+		}
+		
+		
 		/**
-		 * 초기화
+		 * 값 설정 
+		 * @param $key	바인딩 키
+		 * @param $value	바인딩 값
 		 */
-		public static function init():void {}
+		public static function set($key:String, $value:*):void {
+			var a:Array, i:Number, l:Number, item:*, arg:Array;
+			
+			if($value == valueDic[$key])	return;
+			
+			valueDic[$key] = $value;
+			
+			a = bindingDic[$key];
+			if(a){
+				for (i = 0, l = a.length; i < l; ++ i) {
+					item = a[i];
+					arg = item.arg;
+					arg[0] = $value;
+					item.handler.apply(null, arg);
+				}
+			}
+		}
 		
 		
-		public static function action($e:Event):void{
-			_instance.dispatchEvent($e);
+		/**
+		 * 바인딩 여부
+		 */				
+		public static function has($key:String, $handler:Function):Boolean {
+			var a:Array = bindingDic[$key];
+			
+			for ($key in a) if (a[$key].handler == $handler) return	true;
+			return	false;
 		}
 		
 		
 		/**
 		 * 바인딩 
-		 * @param $key	바인딩 키
-		 * @param $handlerOrProperty	바인딩 핸들러 또는 속성
-		 * @param $scope	바인딩 속성 사용시 해당 객체
-		 * 
+		 * @param $key		바인딩 키
+		 * @param $handler	바인딩 핸들러
+		 * @param $args		바인딩 추가 인자
 		 */				
-		public static function addBind($key:String, $handlerOrProperty:*, $scope:Object=null):void {
-			var dic:Dictionary = _bindingDic[$key] || (_bindingDic[$key] = new Dictionary(true));
-			if($scope){
-				var f:* = dic[$scope] || (dic[$scope] = {});
-				f[$handlerOrProperty] = $handlerOrProperty;
-			}
-			else{
-				dic[$handlerOrProperty] = $handlerOrProperty;
-			}
-		}
-		
-		
-		/**
-		 * 바인딩을 걸고 실행 
-		 * @param $key
-		 * @param $handlerOrProperty
-		 * @param $scope
-		 * 
-		 */		
-		public static function addBindAndPlay($key:String, $handlerOrProperty:*, $scope:Object=null):void {
-			if(!$key)	return;
+		public static function add($key:String, $handler:Function, ...$args):void {
+			var a:Array, i:*, item:*;
 			
-			addBind($key, $handlerOrProperty, $scope);
-			if($scope){
-				$scope[$handlerOrProperty] = _valueDic[$key];
+			a = bindingDic[$key];
+			$args.unshift(get($key));
+			
+			if(a){
+				for (i in a){
+					item = a[i];
+					if (item.handler == $handler){
+						item.arg = $args;
+						return;
+					}
+					
+				}
+				item = {handler:$handler, arg:$args};
+				a.push(item);
 			}
 			else{
-				$handlerOrProperty(_valueDic[$key]);
+				item = {handler:$handler, arg:$args};
+				bindingDic[$key] = a = [item];
 			}
 		}
 		
@@ -73,70 +121,25 @@ package com.minarto.data {
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
-		 * @param $handlerOrProperty	바인딩 핸들러 또는 속성
-		 * @param $scope	바인딩 속성 사용시 해당 객체
+		 * @param $handler	바인딩 핸들러 또는 속성
 		 * 
 		 */			
-		public static function delBind($key:String, $handlerOrProperty:*, $scope:Object=null):void {
+		public static function del($key:String, $handler:Function):void {
+			var a:Array, i:*;
+			
 			if($key){
-				var dic:Dictionary = _bindingDic[$key];
-				if(dic){
-					var f:* = dic[$scope];
-					if(f){
-						if($handlerOrProperty){
-							delete f[$handlerOrProperty];
-						}
-						else{
-							delete	dic[$scope];
+				a = bindingDic[$key];
+				if(a){
+					for (i in a) {
+						if (a[i].handler == $handler){
+							a.splice(i, 1);
+							if(!a.length)	delete	bindingDic[$key];
+							return;
 						}
 					}
 				}
 			}
-			else{
-				_bindingDic = {};
-			}
-		}
-		
-		
-		/**
-		 * 값 설정 
-		 * @param $key	바인딩 키. null로 설정하면 모든 바인딩 값을 초기화 한다
-		 * @param $value	바인딩 값
-		 */			
-		public static function setValue($key:String, $value:*):void {
-			if($key){
-				_setValue($key, $value);
-			}
-			else{
-				$value = undefined;
-				for($key in _valueDic){
-					_setValue($key, $value);
-				}
-			}
-		}
-		
-		
-		private static function _setValue($key:String, $value:*):void {
-			var f:*, v:*, p:*;
-			
-			for(p in $value)	_setValue($key + "." + p, $value[p]);
-			
-			v = _valueDic[$key];
-			if (v == $value) return;
-			_valueDic[$key] = $value;
-			
-			var dic:Dictionary = _bindingDic[$key];
-			for (p in dic){
-				f = dic[p];
-				if(f as Function){
-					f($value);
-				}
-				else{
-					for (v in f){
-						f[v] = $value;
-					}
-				}
-			}
+			else	bindingDic = {};
 		}
 		
 		
@@ -146,8 +149,8 @@ package com.minarto.data {
 		 * @return 바인딩 값
 		 * 
 		 */		
-		public static function getValue($key:String):* {
-			return	_valueDic[$key];
+		public static function get($key:String):* {
+			return	valueDic[$key];
 		}
 	}
 }
