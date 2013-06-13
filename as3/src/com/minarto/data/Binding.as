@@ -152,7 +152,7 @@ package com.minarto.data {
 				bindingDic[$key] = a = [item];
 			}
 			
-			$handler($args);
+			$handler.apply(null, $args);
 		}
 		
 		
