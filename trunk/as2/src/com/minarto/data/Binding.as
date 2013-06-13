@@ -84,6 +84,12 @@ class com.minarto.data.Binding {
 		}
 		
 		
+		addNPlay = function ($key:String, $handler:Function, $scope) {
+			add.apply(bindingDic, arguments);
+			$handler.apply($scope, arguments);
+		}
+		
+		
 		del = function ($key:String, $handler:Function, $scope) {
 			var a:Array, i, item;
 		
@@ -126,6 +132,12 @@ class com.minarto.data.Binding {
 	public static function add($key:String, $handler:Function, $scope):Void {
 		_init();
 		add.apply(Binding, arguments);
+	}
+	
+	
+	public static function addNPlay($key:String, $handler:Function, $scope):Void {
+		_init();
+		addNPlay.apply(Binding, arguments);
 	}
 		
 	
