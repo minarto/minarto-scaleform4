@@ -103,7 +103,7 @@ class com.minarto.data.Binding {
 			}
 			else bindingDic[$key] = a = [arguments];
 			
-			$handler.apply(Binding, arguments);
+			$handler.apply($scope, arguments);
 		}
 		
 		
