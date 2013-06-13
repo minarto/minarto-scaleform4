@@ -85,8 +85,25 @@ class com.minarto.data.Binding {
 		
 		
 		addNPlay = function ($key:String, $handler:Function, $scope) {
-			add.apply(bindingDic, arguments);
-			$handler.apply($scope, arguments);
+			var a:Array = bindingDic[$key], arg:Array, item;
+		
+			arguments[3] = arg = arguments.slice(2, arguments.length);
+			arg[0] = get($key);
+			arguments.length = 4;
+			
+			if (a) {
+				for ($key in a) {
+					item = a[$key];
+					if (item[1] == $handler && item[2] == $scope) {
+						a[$key] = arguments;
+						return;
+					}
+				}
+				a.push(arguments);
+			}
+			else bindingDic[$key] = a = [arguments];
+			
+			$handler.apply(Binding, arguments);
 		}
 		
 		
