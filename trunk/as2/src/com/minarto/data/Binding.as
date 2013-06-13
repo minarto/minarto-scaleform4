@@ -38,13 +38,12 @@ class com.minarto.data.Binding {
 		
 		
 		set = function ($key, $value) {
-			var arg:Array, a:Array, arg:Array, item, i:Number;
+			var i:Number, a:Array, item, arg:Array;
 			
 			if (valueDic[$key] == $value)	return;
 			valueDic[$key] = $value;
 			
-			a = bindingDic[$key];
-			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
+			for (i = 0, a = bindingDic[$key], $key = a ? a.length : 0; i < $key; ++ i) {
 				item = a[i];
 				arg = item[3];
 				arg[0] = $value;
@@ -65,10 +64,11 @@ class com.minarto.data.Binding {
 		
 		
 		add = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], item;
+			var a:Array = bindingDic[$key], arg:Array, item;
 		
-			arguments[3] = arguments.slice(2, arguments.length);
-			arguments[0] = get($key);
+			arguments[3] = arg = arguments.slice(2, arguments.length);
+			arg[0] = get($key);
+			arguments.length = 4;
 			
 			if (a) {
 				for ($key in a) {
