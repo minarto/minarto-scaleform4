@@ -8,8 +8,6 @@ class com.minarto.data.Binding {
 		if ($delegateObj)	$delegateObj.setValue = set;
 		else ExternalInterface.call("Binding", Binding);
 		
-		trace("Binding.init");
-		
 		delete Binding.init;
 	}
 	
@@ -43,13 +41,14 @@ class com.minarto.data.Binding {
 			var arg:Array, a:Array, arg:Array, item, i:Number;
 			
 			if (valueDic[$key] == $value)	return;
-			valueDic[$key] = arg;
+			valueDic[$key] = $value;
 			
-			arg = arguments.slice(1, arguments.length);
 			a = bindingDic[$key];
 			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
 				item = a[i];
-				item[1].apply(item[2], arg.concat(item[3]));
+				arg = item[3];
+				arg[0] = $value;
+				item[1].apply(item[2], arg);
 			}
 		}
 		
