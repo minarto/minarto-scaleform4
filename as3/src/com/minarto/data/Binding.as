@@ -20,8 +20,6 @@ package com.minarto.data {
 		public static function init($delegateObj:*):void{
 			if ($delegateObj)	$delegateObj.setValue = set;
 			else ExternalInterface.call("Binding", Binding);
-			
-			trace("Binding.init");
 		}
 		
 		
@@ -78,13 +76,11 @@ package com.minarto.data {
 			valueDic[$key] = $value;
 			
 			a = bindingDic[$key];
-			if(a){
-				for (i = 0, l = a.length; i < l; ++ i) {
-					item = a[i];
-					arg = item.arg;
-					arg[0] = $value;
-					item.handler.apply(null, arg);
-				}
+			for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+				item = a[i];
+				arg = item.arg;
+				arg[0] = $value;
+				item.handler.apply(null, arg);
 			}
 		}
 		
@@ -107,9 +103,8 @@ package com.minarto.data {
 		 * @param $args		바인딩 추가 인자
 		 */				
 		public static function add($key:String, $handler:Function, ...$args):void {
-			var a:Array, i:*, item:*;
+			var a:Array = bindingDic[$key], i:*, item:*;
 			
-			a = bindingDic[$key];
 			$args.unshift(get($key));
 			
 			if(a){
@@ -119,7 +114,6 @@ package com.minarto.data {
 						item.arg = $args;
 						return;
 					}
-					
 				}
 				item = {handler:$handler, arg:$args};
 				a.push(item);
@@ -128,6 +122,37 @@ package com.minarto.data {
 				item = {handler:$handler, arg:$args};
 				bindingDic[$key] = a = [item];
 			}
+		}
+		
+		
+		/**
+		 * 바인딩 
+		 * @param $key		바인딩 키
+		 * @param $handler	바인딩 핸들러
+		 * @param $args		바인딩 추가 인자
+		 */				
+		public static function addNPlay($key:String, $handler:Function, ...$args):void {
+			var a:Array = bindingDic[$key], i:*, item:*;
+			
+			$args.unshift(get($key));
+			
+			if(a){
+				for (i in a){
+					item = a[i];
+					if (item.handler == $handler){
+						item.arg = $args;
+						return;
+					}
+				}
+				item = {handler:$handler, arg:$args};
+				a.push(item);
+			}
+			else{
+				item = {handler:$handler, arg:$args};
+				bindingDic[$key] = a = [item];
+			}
+			
+			$handler($args);
 		}
 		
 		
