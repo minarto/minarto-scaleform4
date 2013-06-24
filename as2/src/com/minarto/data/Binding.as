@@ -66,44 +66,44 @@ class com.minarto.data.Binding {
 		add = function ($key:String, $handler:Function, $scope) {
 			var a:Array = bindingDic[$key], arg:Array, item;
 		
-			arguments[3] = arg = arguments.slice(2, arguments.length);
+			arg = arguments.slice(2, arguments.length);
 			arg[0] = get($key);
-			arguments.length = 4;
+			arg.length = 4;
 			
 			if (a) {
 				for ($key in a) {
 					item = a[$key];
 					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arguments;
+						a[$key] = arg;
 						return;
 					}
 				}
-				a.push(arguments);
+				a.push(arg);
 			}
-			else bindingDic[$key] = a = [arguments];
+			else bindingDic[$key] = a = [arg];
 		}
 		
 		
 		addNPlay = function ($key:String, $handler:Function, $scope) {
 			var a:Array = bindingDic[$key], arg:Array, item;
 		
-			arguments[3] = arg = arguments.slice(2, arguments.length);
+			arg = arguments.slice(2, arguments.length);
 			arg[0] = get($key);
-			arguments.length = 4;
+			arg.length = 4;
 			
 			if (a) {
 				for ($key in a) {
 					item = a[$key];
 					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arguments;
+						a[$key] = arg;
 						return;
 					}
 				}
-				a.push(arguments);
+				a.push(arg);
 			}
-			else bindingDic[$key] = a = [arguments];
+			else bindingDic[$key] = a = [arg];
 			
-			$handler.apply($scope, arguments);
+			$handler.apply($scope, arg);
 		}
 		
 		
