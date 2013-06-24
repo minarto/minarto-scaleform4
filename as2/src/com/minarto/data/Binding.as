@@ -68,7 +68,6 @@ class com.minarto.data.Binding {
 		
 			arg = arguments.slice(2, arguments.length);
 			arg[0] = get($key);
-			arg.length = 4;
 			
 			if (a) {
 				for ($key in a) {
@@ -89,7 +88,6 @@ class com.minarto.data.Binding {
 		
 			arg = arguments.slice(2, arguments.length);
 			arg[0] = get($key);
-			arg.length = 4;
 			
 			if (a) {
 				for ($key in a) {
