@@ -64,10 +64,9 @@ class com.minarto.data.Binding {
 		
 		
 		add = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], arg:Array, item;
+			var a:Array = bindingDic[$key], arg:Array = arguments.slice(2, arguments.length), item;
 		
-			arg = arguments.slice(2, arguments.length);
-			arg[0] = get($key);
+			arg[0] = valueDic[$key];
 			
 			if (a) {
 				for ($key in a) {
@@ -84,10 +83,9 @@ class com.minarto.data.Binding {
 		
 		
 		addNPlay = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], arg:Array, item;
+			var a:Array = bindingDic[$key], arg:Array = arguments.slice(2, arguments.length), item;
 		
-			arg = arguments.slice(2, arguments.length);
-			arg[0] = get($key);
+			arg[0] = valueDic[$key];
 			
 			if (a) {
 				for ($key in a) {
