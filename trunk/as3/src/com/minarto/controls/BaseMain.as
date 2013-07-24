@@ -2,7 +2,6 @@ package com.minarto.controls {
 	import com.minarto.data.*;
 	import com.minarto.manager.*;
 	import com.minarto.manager.tooltip.*;
-	import com.minarto.manager.widget.*;
 	
 	import flash.display.*;
 	import flash.events.Event;
@@ -16,7 +15,7 @@ package com.minarto.controls {
 	 * @author KIMMINHWAN
 	 */
 	public class BaseMain extends Sprite {
-		public var toolTipContainer:IToolTipManager;
+		public var toolTipManager:IToolTipContainer;
 		
 		
 		public function BaseMain() {
@@ -24,7 +23,7 @@ package com.minarto.controls {
 			CLIK.initialize(stage, null);
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
 			
-			Binding.init();
+			Binding.init(this);
 		}
 		
 		
@@ -40,17 +39,15 @@ package com.minarto.controls {
 			stage.align = StageAlign.TOP_LEFT;
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			
-			ToolTipBinding.init(toolTipContainer);
+			toolTipManager.del();
 			
 			if(Boolean(Extensions.CLIK_addedToStageCallback))	Extensions.CLIK_addedToStageCallback("main", CLIK.getTargetPathFor(this), this);
 		}
 		
 		
 		protected function setMode($mode:String):void {
-			ListBinding.delListBind(null);
-			ListBinding.delDataBind(null, null);
-			WidgetBridge.delWidgetAll();
-			Binding.delBind(null, null);
+			WidgetManager.del();
+			Binding.del();
 			
 			System.gc();
 		}

@@ -14,17 +14,17 @@
 		}
 		
 		
-		public static function getPool($c:Class):ObjectPool {
+		public static function get($c:Class):ObjectPool {
 			return	_dic[$c] || _createPool($c, 1);
 		}
 		
 		
-		public static function addPool($c:Class, $size:uint):ObjectPool {
+		public static function add($c:Class, $size:uint):ObjectPool {
 			return	_dic[$c] || _createPool($c, $size);
 		}
 		
 		
-		public static function delPool($c:Class):void {
+		public static function del($c:Class):void {
 			var p:ObjectPool = _dic[$c];
 			if (p) p.deconstruct();
 			delete _dic[$c];
