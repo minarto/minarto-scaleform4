@@ -14,43 +14,42 @@ package com.minarto.manager {
 		
 		
 		public static function load($src:String, $onComplete:Function):void{
-			var bd:BitmapData = dic[$src];
+			var bd:BitmapData = dic[$src], a:Array;
+			
 			if(bd){
 				$onComplete(bd);
 			}
 			else{
-				var a:Array = funDic[$src];
+				a = funDic[$src];
 				if(a){
 					a.push($onComplete);
 				}
 				else{
-					a = [];
-					a.push($onComplete);
-					funDic[$src] = a;
-				}
-				
-				var f:Function = function($bm:Bitmap):void {
-					if($bm){
-						var bd:BitmapData = $bm.bitmapData;
-						dic[$src] = bd;
-						GPool.getPool(Bitmap).object = $bm;
-						
-						for(var i:uint = 0, c:uint = a.length; i<c; ++ i){
-							a[i](bd);
-						}
-					}
+					funDic[$src] = a = [$onComplete];
 					
-					delete	funDic[$src];
+					LoadManager.load(Extensions.isScaleform ? "img://" + $src : $src, function($bm:Bitmap):void {
+						var bd:BitmapData, i:uint, l:uint;
+						
+						if($bm){
+							bd = $bm.bitmapData;
+							dic[$src] = bd;
+							GPool.get(Bitmap).object = $bm;
+							
+							for(i = 0, l = a.length; i<l; ++ i)	a[i](bd);
+						}
+						
+						delete	funDic[$src];
+					});
 				}
-				
-				LoadSourceManager.load(Extensions.isScaleform ? "img://" + $src : $src, f);
 			}
 		}
 		
 		
-		public static function clear($src:String=null):void {
+		public static function destroy($src:String=null):void {
+			var bd:BitmapData;
+			
 			if ($src){
-				var bd:BitmapData = dic[$src];
+				bd = dic[$src];
 				if(bd){
 					bd.dispose();
 					delete dic[$src];

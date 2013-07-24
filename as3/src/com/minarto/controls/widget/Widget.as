@@ -10,16 +10,11 @@ package com.minarto.controls.widget {
 	 * @author KIMMINHWAN
 	 */
 	public class Widget extends Sprite {
-		public var background:MovieClip, widgetID:String;
+		public var background:DisplayObject, widgetID:String;
 		
 		
 		public function Widget(){
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
-		}
-		
-		
-		protected function setTitle($s:String):void {
-			if (background)	background.title = $s;
 		}
 		
 		

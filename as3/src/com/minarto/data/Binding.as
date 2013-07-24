@@ -69,30 +69,16 @@ package com.minarto.data {
 		 * @param $value	바인딩 값
 		 */
 		public static function set($key:String, $value:*):void {
-			var a:Array, i:Number, l:Number, item:*, arg:Array;
-			
-			if($value == valueDic[$key])	return;
+			var a:Array = bindingDic[$key], i:Number, l:Number = a ? a.length : 0, item:*, arg:Array;
 			
 			valueDic[$key] = $value;
 			
-			a = bindingDic[$key];
-			for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+			for (i = 0; i < l; ++ i) {
 				item = a[i];
 				arg = item.arg;
 				arg[0] = $value;
 				item.handler.apply(null, arg);
 			}
-		}
-		
-		
-		/**
-		 * 바인딩 여부
-		 */				
-		public static function has($key:String, $handler:Function):Boolean {
-			var a:Array = bindingDic[$key];
-			
-			for ($key in a) if (a[$key].handler == $handler) return	true;
-			return	false;
 		}
 		
 		
@@ -162,7 +148,7 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public static function del($key:String, $handler:Function):void {
+		public static function del($key:String=null, $handler:Function=null):void {
 			var a:Array, i:*;
 			
 			if($key){

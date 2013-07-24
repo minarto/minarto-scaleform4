@@ -19,7 +19,7 @@ package com.minarto.utils {
 			var dic:Dictionary = _dic[i] || (_dic[i] = new Dictionary(true));
 			dic[$handler] =  $handler;
 			
-			Binding.addBind("date", _onDate);
+			Binding.add("date", _onDate);
 		}
 		
 		
@@ -41,20 +41,20 @@ package com.minarto.utils {
 		
 		
 		static public function addTimer($sec:Number, $handler:Function):void {
-			var d:Date = Binding.getValue("date");
+			var d:Date = Binding.get("date");
 			$sec = d.getTime() + $sec * 1000;
 			
 			var dic:Dictionary = _dic[$sec] || (_dic[$sec] = new Dictionary(true));
 			dic[$handler] =  $handler;
 			
-			Binding.addBind("date", _onDate);
+			Binding.add("date", _onDate);
 		}
 		
 		
 		static public function addRepeat($delay:Number, $handler:Function, $repeat:uint):void {
 			$delay = $delay * 1000;
 			
-			var d:Date = Binding.getValue("date");
+			var d:Date = Binding.get("date");
 			
 			var s:Number = d.getTime() + $delay;
 			while($repeat -- ){
@@ -63,7 +63,7 @@ package com.minarto.utils {
 				dic[$handler] =  $handler;
 			}
 			
-			Binding.addBind("date", Alarm, "_onDate");
+			Binding.add("date", _onDate);
 		}
 		
 		

@@ -1,21 +1,22 @@
 package com.minarto.controls.tooltip {
+	import com.minarto.manager.IToolTipContainer;
+	
 	import flash.display.*;
 	import flash.events.MouseEvent;
 	import flash.utils.*;
 	
 	import scaleform.gfx.InteractiveObjectEx;
-	import com.minarto.manager.tooltip.IToolTipManager;
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
-	public class ToolTipContainerBase extends Sprite implements IToolTipManager {
-		private var target:InteractiveObject, btnDic:Dictionary = new Dictionary(true), delay:uint = 300, delayID:uint;
+	public class SampleToolTipContainerBase extends Sprite implements IToolTipContainer {
+		private var target:InteractiveObject, dic:Dictionary = new Dictionary(true), delay:uint = 300, delayID:uint;
 		
 		public var toolTip:ToolTipBase, toolTip1:ToolTipBase;
 		
 		
-		public function ToolTipContainerBase() {
+		public function SampleToolTipContainerBase() {
 			InteractiveObjectEx.setHitTestDisable(this, true);
 			
 			visible = false;
@@ -24,35 +25,37 @@ package com.minarto.controls.tooltip {
 		}
 		
 		
-		public function regist(...$buttons):void{
-			for(var p:* in $buttons){
-				var b:InteractiveObject = $buttons[p];
+		public function add(...$btns):void{
+			var p:*, b:InteractiveObject;
+			
+			for(p in $btns){
+				b = $btns[p];
 				b.addEventListener(MouseEvent.ROLL_OVER, hnRollOver);
 				b.addEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 				
-				btnDic[b] = b;
+				dic[b] = b;
 			}
 		}
 		
 		
-		public function unRegist(...$buttons) : void {
-			if($buttons.length){
-				for(var p:* in $buttons){
-					var b:InteractiveObject = $buttons[p];
+		public function del(...$btns) : void {
+			if($btns.length){
+				for(var p:* in $btns){
+					var b:InteractiveObject = $btns[p];
 					b.removeEventListener(MouseEvent.ROLL_OVER, hnRollOver);
 					b.removeEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 					
-					delete	btnDic[b];
+					delete	dic[b];
 				}
 			}
 			else{
-				for(p in btnDic){
-					b = btnDic[p];
+				for(p in dic){
+					b = dic[p];
 					b.removeEventListener(MouseEvent.ROLL_OVER, hnRollOver);
 					b.removeEventListener(MouseEvent.ROLL_OUT, hnRollOut);
 				}
 				
-				btnDic = new Dictionary(true);
+				dic = new Dictionary(true);
 			}
 		}
 		

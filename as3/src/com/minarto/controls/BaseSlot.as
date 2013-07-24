@@ -1,5 +1,5 @@
 package com.minarto.controls {
-	import com.minarto.manager.tooltip.ToolTipBinding;
+	import com.minarto.manager.ToolTipManager;
 	
 	import flash.display.*;
 	
@@ -40,7 +40,7 @@ package com.minarto.controls {
 		
 		override protected function configUI():void{
 			super.configUI();
-			ToolTipBinding.regist(this);
+			ToolTipManager.add(this);
 		}
 		
 		
