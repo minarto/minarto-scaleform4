@@ -5,6 +5,7 @@ import flash.geom.Rectangle;
 class com.minarto.utils.Util {
 	public static var rectangle:Rectangle = new Rectangle;
 	
+	
 	public static var point = { x:0, y:0 };
 	
 	

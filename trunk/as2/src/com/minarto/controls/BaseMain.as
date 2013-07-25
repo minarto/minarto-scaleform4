@@ -1,4 +1,5 @@
 ﻿import com.minarto.data.Binding;
+import com.minarto.manager.widget.WidgetManager;
 import com.minarto.ui.KeyBinding;
 import gfx.events.EventDispatcher;
 
@@ -12,20 +13,18 @@ class com.minarto.controls.BaseMain extends MovieClip {
 	
 	
 	/**
+	 * stage resource
+	 */
+	public var container:MovieClip;
+	
+	
+	/**
 	 * Binding.set 위임
 	 * 
 	 * @param	$key
 	 * @param	$value
 	 */
 	public function setValue($key:String, $value):Void{};
-	
-	
-	/**
-	 * Binding.setArg 위임
-	 * 
-	 * @param	$key
-	 */
-	public function setArg($key:String):Void { };
 	
 	
 	/**
@@ -51,11 +50,22 @@ class com.minarto.controls.BaseMain extends MovieClip {
 	
 	
 	private function onLoad() {
-		delete onLoad;
-		
 		Stage.scaleMode = "noScale";
 		Stage.align = "TL";
 		
-		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback("main", targetPath(this), this);
+		Mouse.addListener(this);
+		WidgetManager.init(container);
+		
+		delete onLoad;
+	}
+	
+	
+	private function onMouseDown ():Void {
+		dispatchEvent({type:"mouseDown", controllerIdx:arguments[0], button:arguments[2]});
+	}
+	
+	
+	private function onMouseUp ():Void {
+		dispatchEvent({type:"mouseUp", controllerIdx:arguments[0], button:arguments[2]});
 	}
 }

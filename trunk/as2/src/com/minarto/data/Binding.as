@@ -17,15 +17,15 @@ class com.minarto.data.Binding {
 		
 		_init();
 		
-		dateInit = function($$key, $$interval) {
-			clearInterval(keys[$$key]);
+		dateInit = function($key, $interval) {
+			clearInterval(keys[$key]);
 			
-			if ($$interval) {
-				Binding.set($$key, new Date);
+			if ($interval) {
+				Binding.set($key, new Date);
 				
-				keys[$$key] = setInterval(function() {
-					Binding.set($$key, new Date);
-				}, $$interval * 1000);
+				keys[$key] = setInterval(function() {
+					Binding.set($key, new Date);
+				}, $interval * 1000);
 			}
 		};
 		
@@ -38,12 +38,11 @@ class com.minarto.data.Binding {
 		
 		
 		set = function ($key, $value) {
-			var i:Number, a:Array, item, arg:Array;
-			
-			if (valueDic[$key] == $value)	return;
+			var i:Number, a:Array = bindingDic[$key], item, arg:Array;
+
 			valueDic[$key] = $value;
 			
-			for (i = 0, a = bindingDic[$key], $key = a ? a.length : 0; i < $key; ++ i) {
+			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
 				item = a[i];
 				arg = item[3];
 				arg[0] = $value;
@@ -52,54 +51,50 @@ class com.minarto.data.Binding {
 		}
 		
 		
-		has = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], item;
-			
-			for ($key in a) {
-				item = a[$key];
-				if (item[1] == $handler && item[2] == $scope) return	1;
-			}
-			return	0;
-		}
-		
-		
 		add = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], arg:Array = arguments.slice(2, arguments.length), item;
+			var a:Array = arguments.slice(2), item;
 		
-			arg[0] = valueDic[$key];
+			a[0] = valueDic[$key];
+			arguments[3] = a;
+			
+			a = bindingDic[$key];
 			
 			if (a) {
 				for ($key in a) {
 					item = a[$key];
 					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arg;
+						a[$key] = arguments;
 						return;
 					}
 				}
-				a.push(arg);
+				a.push(arguments);
 			}
-			else bindingDic[$key] = a = [arg];
+			else bindingDic[$key] = a = [arguments];
 		}
 		
 		
 		addNPlay = function ($key:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$key], arg:Array = arguments.slice(2, arguments.length), item;
-		
-			arg[0] = valueDic[$key];
+			var a:Array = arguments.slice(2), item;
+			
+			a[0] = valueDic[$key];
+			arguments[3] = a;
+			
+			a = bindingDic[$key];
 			
 			if (a) {
 				for ($key in a) {
 					item = a[$key];
 					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arg;
+						a[$key] = arguments;
+						$handler.apply($scope, arguments[3]);
 						return;
 					}
 				}
-				a.push(arg);
+				a.push(arguments);
 			}
-			else bindingDic[$key] = a = [arg];
-			
-			$handler.apply($scope, arg);
+			else bindingDic[$key] = a = [arguments];
+
+			$handler.apply($scope, arguments[3]);
 		}
 		
 		
@@ -132,13 +127,7 @@ class com.minarto.data.Binding {
 		
 	public static function set($key:String, $value):Void {
 		_init();
-		set($key, $value);
-	}
-	
-	
-	public static function has($key:String, $handler:Function, $scope):Boolean {
-		_init();
-		return	has($key, $handler, $scope);
+		Binding.set($key, $value);
 	}
 	
 	
