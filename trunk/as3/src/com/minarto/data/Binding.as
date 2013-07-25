@@ -127,6 +127,7 @@ package com.minarto.data {
 					item = a[i];
 					if (item.handler == $handler){
 						item.arg = $args;
+						$handler.apply(null, $args);
 						return;
 					}
 				}

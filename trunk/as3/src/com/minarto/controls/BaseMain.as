@@ -1,7 +1,6 @@
 package com.minarto.controls {
 	import com.minarto.data.*;
 	import com.minarto.manager.*;
-	import com.minarto.manager.tooltip.*;
 	
 	import flash.display.*;
 	import flash.events.Event;
