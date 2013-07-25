@@ -54,7 +54,7 @@ class com.minarto.manager.LoadManager {
 						for (var i in reservations) {
 							if (reservations[i][0] == $target) {
 								reservations.splice(i, 1);
-								break;
+								return;
 							}
 						}
 					}

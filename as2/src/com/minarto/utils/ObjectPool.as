@@ -59,7 +59,7 @@ class com.minarto.utils.ObjectPool {
 			
 			for (i in dic) {
 				p = dic[i];
-				if (p.constructor === $$constructor) {
+				if (p.constructor == $$constructor) {
 					if ($$minSize)	p.init($$constructor, $$minSize);
 					return	p;
 				}

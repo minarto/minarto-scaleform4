@@ -4,122 +4,90 @@
  * use class after Binding.init
  */
 class com.minarto.utils.Alarm {
-	private static function _init() {
-		var alarmDic:Array = [];
+	var alarmDic = {}, alarmID:Number = 0;
 		
-		Binding.dateInit("AlarmInterval", 0.1);
-		
-		has = function($handler:Function, $scope) {
-			var i, o;
-			
-			for (i in alarmDic) {
-				o = alarmDic[i];
-				if ($handler === o.handler && $scope == o.scope) return	o;
-			}
-			return	0;
-		};
-		
+		Binding.dateInit("AlarmInterval", 0.1);		
 		
 		add = function($duration:Number, $handler:Function, $scope) {
-			var s:Number, arg:Array, f:Function, o;
+			var id:Number, s:Number, arg:Array, f:Function;
 			
+			id = alarmID ++;
 			s = Binding.get("AlarmInterval").getTime() + $duration * 1000;	//	start time
 			arg = arguments.slice(3, arguments.length);
 			
 			f = function() {
 				if (arguments[0].getTime() >= s) {
 					$handler.apply($scope, arg);
-					del($handler, $scope);
+					del(id);
 				}
 			}
 			
-			for ($duration in alarmDic) {
-				o = alarmDic[$duration];
-				if ($handler === o.handler && $scope == o.scope) {
-					Binding.del("AlarmInterval", o.func);
-					o.func = f;
-					Binding.add("AlarmInterval", f);
-					return;
-				}
-			}
-			
-			o = { handler:$handler, scope:$scope, func:f };
-			alarmDic.push(o);
+			alarmDic[id] = f;
 			Binding.add("AlarmInterval", f);
+			
+			return	id;
 		};
 		
 		
-		addRepeat = function($interval:Number, $count:Number, $handler:Function, $scope) {
-			var s:Number, arg:Array, f:Function, i, o;
+		addRepeat = function($interval:Number, $count:Number, $updateHandler:Function, $updateScope, $completeHandler:Function, $completeScope) {
+			var id:Number, s:Number, arg:Array, f:Function;
 			
+			id = alarmID ++;
 			$interval = $interval * 1000;
 			s = Binding.get("AlarmInterval").getTime() + $interval;	//	start time
-			arg = arguments.slice(4, arguments.length);
+			arg = arguments.slice(6, arguments.length);
 			
 			f = function() {
 				if (arguments[0].getTime() >= s) {
 					if ($count --) {
 						s += $interval;
-						$handler.apply($scope, arg);
-						if(!$count)	del($handler, $scope);
+						if($updateHandler)	$updateHandler.apply($updateScope, arg);
+						if (!$count) {
+							if($completeHandler)	$completeHandler.apply($completeScope, arg);
+							del(id);
+						}
 					}
 				}
 			}
 			
-			for (i in alarmDic) {
-				o = alarmDic[i];
-				if ($handler === o.handler && $scope == o.scope) {
-					Binding.del("AlarmInterval", o.func);
-					o.func = f;
-					Binding.add("AlarmInterval", f);
-					return;
-				}
-			}
-			
-			o = { handler:$handler, scope:$scope, func:f };
-			alarmDic.push(o);
+			alarmDic[id] = f;
 			Binding.add("AlarmInterval", f);
+			
+			return	id;
 		};
 		
-		del = function($handler:Function, $scope) {
-			var i, o;
-		
-			if ($handler) {
-				for (i in alarmDic) {
-					o = alarmDic[i];
-					if ($handler === o.handler && $scope == o.scope) {
-						Binding.del("AlarmInterval", o.func);
-						delete	alarmDic[i];
-					}
+		del = function($id:Number) {
+			if (!isNaN($id)) {
+				var f = alarmDic[$id];
+				if (f) {
+					Binding.del("AlarmInterval", f);
+					delete	alarmDic[$id];
 				}
+			}			
+			else {
+				alarmID = 0;
+				alarmDic = {};
 			}
-			else	alarmDic = [];
 		};
 		
 		delete	_init;
 	}
 	
 	
-	public static function has($handler:Function, $scope):Boolean {
+	public static function add($duration:Number, $handler:Function, $scope):Number {
 		_init();
-		return	has.apply(Alarm, arguments);
+		return	add.apply(Alarm, arguments);
 	}
 	
 	
-	public static function add($duration:Number, $handler:Function, $scope):Void {
+	public static function addRepeat($interval:Number, $count:Number, $updateHandler:Function, $updateScope, $completeHandler:Function, $completeScope):Number {
 		_init();
-		add.apply(Alarm, arguments);
+		return	addRepeat.apply(Alarm, arguments);
 	}
 	
 	
-	public static function addRepeat($interval:Number, $count:Number, $handler:Function, $scope):Void {
+	public static function del($id:Number):Void {
 		_init();
-		addRepeat.apply(Alarm, arguments);
-	}
-	
-	
-	public static function del($handler:Function, $scope):Void {
-		_init();
-		del.apply(Alarm, arguments);
+		del.call(Alarm, $id);
 	}
 }

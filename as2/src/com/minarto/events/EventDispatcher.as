@@ -70,7 +70,7 @@
 	
 	
 	public function hasEventListener($type:String):Boolean {
-		return	$type;
+		return	true;
 	}
 	
 	
