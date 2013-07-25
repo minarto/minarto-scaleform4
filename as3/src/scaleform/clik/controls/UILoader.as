@@ -10,15 +10,9 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.controls 
-{
-    import flash.display.DisplayObject;
-    import flash.display.MovieClip;
-    import flash.display.Loader;
-    import flash.display.LoaderInfo;
-    import flash.events.Event;
-    import flash.events.ProgressEvent;
-    import flash.events.IOErrorEvent;
+package scaleform.clik.controls {
+    import flash.display.*;
+    import flash.events.*;
     import flash.net.URLRequest;
     
     import scaleform.clik.constants.InvalidationType;
@@ -76,29 +70,13 @@ package scaleform.clik.controls
     
     // Protected Properties:
         /** @private */
-        protected var _source:String;
-        /** @private */
-        protected var _autoSize:Boolean = true;
-        /** @private */
-        protected var _maintainAspectRatio:Boolean = true;
-        /** @private */
-        protected var _loadOK:Boolean = false;
-        /** @private */
-        protected var _sizeRetries:Number = 0;
-        /** @private */
-        protected var _visiblilityBeforeLoad:Boolean = true;
-        /** @private */
-        protected var _isLoading:Boolean = false;
+        protected var _source:String, _autoSize:Boolean = true, _maintainAspectRatio:Boolean = true, _loadOK:Boolean, _sizeRetries:Number = 0, _visiblilityBeforeLoad:Boolean = true, _isLoading:Boolean;
         
     // UI Elements:
         /** @private */
         public var bg:DisplayObject;
         public var loader:Loader;
-        
-    // Initialization:
-        public function UILoader() {
-            super();
-        }
+		
         
     // Public Getter / Setters:
         /** Automatically scale the content to fit the container. */
@@ -114,7 +92,7 @@ package scaleform.clik.controls
         public function get source():String { return _source; }
         public function set source(value:String):void { 
             if (_source == value) { return; }
-            if ((value == "" || value == null) && loader.content == null) { 
+            if (!value && !loader.content) { 
                 unload();
             }
             else {
@@ -143,7 +121,7 @@ package scaleform.clik.controls
          * A read-only property that returns the percentage that the content is loaded. The percentage is normalized to a 0-100 range.
          */
         public function get percentLoaded():Number {
-            if (bytesTotal == 0 || _source == null) { return 0; }
+            if (!bytesTotal || !_source)	return 0;
             return bytesLoaded / bytesTotal * 100;
         }
         
@@ -162,10 +140,9 @@ package scaleform.clik.controls
             }
         }
         
-    // Public Methods:
         /** Unload the currently loaded content, or stop any pending or active load. */
         public function unload():void {
-            if (loader != null) { 
+            if (loader) { 
                 visible = _visiblilityBeforeLoad;
                 loader.unloadAndStop(true);
             }
@@ -174,33 +151,26 @@ package scaleform.clik.controls
             _sizeRetries = 0;
         }
         
-        /** @private */
-        override public function toString():String { 
-            return "[CLIK UILoader " + name + "]";
-        }
-        
-    // Protected Methods:
-        /** @private */
-        override protected function configUI():void {
-            super.configUI();
+
+		override protected function configUI():void {
             initSize();
-            if (bg != null) {
+            if (bg) {
                 removeChild(bg);
                 bg = null;
             }
-            if (loader == null && _source) { 
+            if (!loader && _source) { 
                 load(_source); 
             }
         }
         
         /** @private */
         protected function load(url:String):void {
-            if (url == "") { return; }
+            if (!url)	return;
             unload();
             _source = url;
             _visiblilityBeforeLoad = visible;
             visible = false;
-            if (loader == null) {
+            if (!loader) {
                 loader = new Loader();
                 loader.contentLoaderInfo.addEventListener( Event.OPEN, handleLoadOpen, false, 0, true );
                 loader.contentLoaderInfo.addEventListener( Event.INIT, handleLoadInit, false, 0, true );
@@ -213,9 +183,9 @@ package scaleform.clik.controls
             loader.load( new URLRequest(_source) );
         }
         
-        /** @private */
+
         override protected function draw():void {
-            if (!_loadOK) { return; }
+            if (!_loadOK)	return;
             if (isInvalid(InvalidationType.SIZE)) {
                 loader.scaleX = loader.scaleY = 1;
                 if (!_autoSize) { 
@@ -246,36 +216,35 @@ package scaleform.clik.controls
         }
         
         /** @private */
-        protected function handleLoadIOError( ioe:Event ):void {
+        protected function handleLoadIOError( $e:Event ):void {
             visible = _visiblilityBeforeLoad;
-            dispatchEvent( ioe );
+            dispatchEvent( $e );
         }
         
         /** @private */
-        protected function handleLoadOpen( e:Event ):void {
-            dispatchEvent( e );
+        protected function handleLoadOpen( $e:Event ):void {
+            dispatchEvent( $e );
         }
         
         /** @private */
-        protected function handleLoadInit( e:Event ):void {
-            dispatchEvent( e );
+        protected function handleLoadInit( $e:Event ):void {
+            dispatchEvent( $e );
         }
         
         /** @private */
-        protected function handleLoadProgress( pe:ProgressEvent ):void {
-            bytesLoaded = pe.bytesLoaded;
-            bytesTotal = pe.bytesTotal;
-            dispatchEvent( pe );
+        protected function handleLoadProgress( $e:ProgressEvent ):void {
+            bytesLoaded = $e.bytesLoaded;
+            bytesTotal = $e.bytesTotal;
+            dispatchEvent( $e );
         }
         
         /** @private */
-        protected function handleLoadComplete( e:Event ):void {
+        protected function handleLoadComplete( $e:Event ):void {
             _loadOK = true;
             _isLoading = false;
             invalidateSize();
             validateNow();
-            dispatchEvent( e );
-        }
-        
+            dispatchEvent( $e );
+        }        
     }
 }

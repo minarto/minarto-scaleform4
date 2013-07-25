@@ -3,34 +3,17 @@ package com.minarto.controls {
 	
 	import flash.display.*;
 	
-	import scaleform.clik.controls.Button;
-	import scaleform.clik.data.ListData;
-	import scaleform.clik.interfaces.IListItemRenderer;
+	import scaleform.clik.controls.ListItemRenderer;
 	
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
-	public class BaseSlot extends Button implements IListItemRenderer {
+	public class BaseSlot extends ListItemRenderer {
 		public var content:DisplayObject;
 		
-		protected var _index:uint, _selectable:Boolean = true;
 		
-		public function get index():uint { return _index; }
-		public function set index($v:uint):void { _index = $v; }
-		
-		
-		public function get selectable():Boolean { return _selectable; }
-		public function set selectable($v:Boolean):void { _selectable = $v; }
-		
-		
-		public function setListData($listData:ListData):void {
-			_index = $listData.index;
-			_selected = $listData.selected;
-		}
-		
-		
-		override public function set data($v:Object):void {
+		override public function set data($v:*):void {
 			if(_data == $v)	return;
 			delBind();
 			_data = $v;
@@ -44,7 +27,7 @@ package com.minarto.controls {
 		}
 		
 		
-		public function setData($data:Object):void {
+		override public function setData($data:*):void {
 			if(_data == $data)	return;
 			delBind();
 			_data = $data;

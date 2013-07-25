@@ -121,7 +121,7 @@ package scaleform.clik.controls {
         protected var _group:ButtonGroup;
         protected var _groupName:String;
         protected var _selected:Boolean = false;
-        protected var _data:Object;
+        protected var _data:*;
         protected var _autoRepeat:Boolean = false;
         protected var _autoSize:String = TextFieldAutoSize.NONE;
         protected var _pressedByKeyboard:Boolean = false;
@@ -131,7 +131,7 @@ package scaleform.clik.controls {
         protected var _owner:UIComponent = null;
         
         /** A list of frames that apply to a given state. The frames will be called in order, and the last existing frame will be displayed. */
-        protected var _stateMap:Object = {
+        protected var _stateMap:* = {
             up:["up"],
             over:["over"],
             down:["down"],
@@ -148,7 +148,7 @@ package scaleform.clik.controls {
         protected var _newFocusIndicatorFrame:String;
         protected var _repeatTimer:Timer;
         protected var _mouseDown:int = 0; // Determines if the mouse is in a press for each controller.
-        protected var _focusIndicatorLabelHash:Object;
+        protected var _focusIndicatorLabelHash:*;
         protected var _autoRepeatEvent:ButtonEvent;
         
     // UI Elements:
@@ -181,8 +181,8 @@ package scaleform.clik.controls {
     // Public getter / setters:
         /** Data related to the button. This property is particularly helpful when using butons in a ButtonGroup. */
         [Inspectable(type = "string", defaultValue = "")]
-        public function get data():Object { return _data; }
-        public function set data(value:Object):void {
+        public function get data():* { return _data; }
+        public function set data(value:*):void {
             _data = value;
         }
 
@@ -324,7 +324,7 @@ package scaleform.clik.controls {
         [Inspectable(defaultValue="")]
         public function get label():String { return _label; }
         public function set label(value:String):void {
-            if (_label == value) { return; }
+            if (_label == value)	return;
             _label = value;
             invalidateData();
         }
@@ -379,11 +379,8 @@ package scaleform.clik.controls {
         
     // Protected Methods:
         override protected function configUI():void {
-            if (!constraintsDisabled) {  
-                constraints.addElement("textField", textField, Constraints.ALL);
-            }
+            if (!constraintsDisabled)	constraints.addElement("textField", textField, Constraints.ALL);
             
-            super.configUI();
             tabEnabled = (_focusable && enabled && tabEnabled);
             mouseChildren = tabChildren = false;
             
@@ -456,7 +453,7 @@ package scaleform.clik.controls {
                 
                 // If the owner wasn't focused, check its .focusTarget (eg. ScrollingList in a DropDownMenu).
                 if (ownerFocused == 0) { 
-                    var ownerFocusTarget:Object = _owner.focusTarget;
+                    var ownerFocusTarget:* = _owner.focusTarget;
                     if (ownerFocusTarget != null) { 
                         ownerFocused = (ownerFocusTarget != 0)
                     }
@@ -495,9 +492,7 @@ package scaleform.clik.controls {
         }
         
         protected function updateText():void {
-            if (_label != null && textField != null) {
-                textField.text = _label;
-            }
+            if (textField)	textField.text = _label || "";
         }
         
         override protected function changeFocus():void {

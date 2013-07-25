@@ -6,16 +6,10 @@
     import flash.geom.Rectangle;
     import flash.utils.getDefinitionByName;
     
-    import scaleform.clik.constants.DirectionMode;
-    import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.constants.InputValue;
-    import scaleform.clik.constants.NavigationCode;
-    import scaleform.clik.constants.WrappingMode;
+    import scaleform.clik.constants.*;
     import scaleform.clik.controls.ScrollBar;
-    import scaleform.clik.data.ListData;
     import scaleform.clik.events.InputEvent;
-    import scaleform.clik.interfaces.IScrollBar;
-    import scaleform.clik.interfaces.IListItemRenderer;
+    import scaleform.clik.interfaces.*;
     import scaleform.clik.ui.InputDetails;
     import scaleform.clik.utils.Padding;
     
@@ -551,18 +545,17 @@
             }
         }
         
-        protected function populateData(data:Array):void {
-            var dl:uint = data.length;
-            var l:uint = _renderers.length;
-            for (var i:uint = 0; i < l; i++) {
-                
-                var renderer:IListItemRenderer = getRendererAt(i);
-                var index:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns) + i;
-                var listData:ListData = new ListData(index, itemToLabel(data[i]), _selectedIndex == index);
-                renderer.enabled = (i >= dl) ? false : true;
-                renderer.setListData(listData);
-                renderer.setData(data[i]);
-                renderer.validateNow();
+        protected function populateData($datas:Array):void {
+            var dl:uint = $datas.length, l:uint = _renderers.length, i:uint, r:IListItemRenderer, d:*, index:uint, _index:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns);
+			
+            for (i = 0; i < l; ++i) {
+                r = getRendererAt(i);
+				d = $datas[i];
+                index = _index + i;
+                r.enabled = (i < dl);
+                r.setListData(index, itemToLabel(d), selectedIndex == index); //LM: Consider passing renderer position also. (Support animation)
+                r.setData(d);
+                r.validateNow();
             }
         }
         

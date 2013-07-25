@@ -16,10 +16,8 @@ otherwise accompanies this software in either electronic or hard copy form.
  
 package scaleform.clik.controls {
     
-    import flash.display.DisplayObject;
-    import flash.display.Sprite;
-    import flash.events.Event;
-    import flash.events.MouseEvent;
+    import flash.display.*;
+    import flash.events.*;
     import flash.geom.Rectangle;
     import flash.utils.getDefinitionByName;
     import scaleform.gfx.MouseEventEx;
@@ -27,11 +25,8 @@ package scaleform.clik.controls {
     import scaleform.clik.constants.InvalidationType;
     import scaleform.clik.core.UIComponent;
     import scaleform.clik.data.DataProvider;
-    import scaleform.clik.events.InputEvent;
-    import scaleform.clik.events.ListEvent;
-    import scaleform.clik.events.ButtonEvent;
-    import scaleform.clik.interfaces.IDataProvider;
-    import scaleform.clik.interfaces.IListItemRenderer;
+    import scaleform.clik.events.*;
+    import scaleform.clik.interfaces.*;
         
     public class CoreList extends UIComponent {
         
@@ -261,7 +256,7 @@ package scaleform.clik.controls {
             scrollToIndex(_selectedIndex);
         }
         
-        public function itemToLabel(item:Object):String {
+        public function itemToLabel(item:*):String {
             if (item == null) { return ""; }
             if (_labelFunction != null) {
                 return _labelFunction(item);

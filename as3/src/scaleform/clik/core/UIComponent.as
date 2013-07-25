@@ -17,24 +17,18 @@ otherwise accompanies this software in either electronic or hard copy form.
 package scaleform.clik.core {
 
     import flash.display.MovieClip;
-    import flash.events.Event;
-    import flash.events.FocusEvent;
-    import flash.events.MouseEvent;
+    import flash.events.*;
     import flash.external.ExternalInterface;
     import flash.system.Capabilities;
     import flash.utils.getDefinitionByName;
     
-    import scaleform.gfx.FocusManager;
-    import scaleform.gfx.Extensions;
-    
-    import scaleform.clik.core.CLIK;
     import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.events.ComponentEvent;
-    import scaleform.clik.events.InputEvent;
-    import scaleform.clik.layout.Layout;
-    import scaleform.clik.layout.LayoutData;
+    import scaleform.clik.core.CLIK;
+    import scaleform.clik.events.*;
+    import scaleform.clik.layout.*;
     import scaleform.clik.managers.FocusHandler;
     import scaleform.clik.utils.Constraints;
+    import scaleform.gfx.*;
     
     [Event(name="show", type="scaleform.clik.events.ComponentEvent")]
     [Event(name="hide", type="scaleform.clik.events.ComponentEvent")]
@@ -47,7 +41,7 @@ package scaleform.clik.core {
         public var initialized:Boolean = false;
         
     // Private Properties:
-        protected var _invalidHash:Object;
+        protected var _invalidHash:*;
         protected var _invalid:Boolean = false;
         
         protected var _width:Number = 0; // internal width
@@ -60,7 +54,7 @@ package scaleform.clik.core {
         protected var _displayFocus:Boolean = false;
         protected var _mouseWheelEnabled:Boolean = true;
         protected var _inspector:Boolean = false;
-        protected var _labelHash:Object;
+        protected var _labelHash:*;
         
         protected var _layoutData:LayoutData;
         protected var _enableInitCallback:Boolean = false;
@@ -93,24 +87,21 @@ package scaleform.clik.core {
             invalidate();
         }
         
-        public static function generateLabelHash(target:MovieClip):Object {
-            var hash:Object = {};
-            if (!target) { return hash; }
-            var labels:Array = target.currentLabels;
-            var l:uint = labels.length;
-            for (var i:uint=0; i<l; i++) { hash[labels[i].name] = true; }
+        public static function generateLabelHash(target:MovieClip):* {
+            var hash:* = {}, labels:Array, i:*;
+            
+			if (!target)	return hash;
+			
+            labels = target.currentLabels;
+            for (i in labels)	hash[labels[i].name] = true;
             return hash;
         }
         
-        protected function addedToStage(event:Event):void {
+        protected function addedToStage($e:Event):void {
             removeEventListener(Event.ADDED_TO_STAGE, addedToStage, false);
-            if ( !CLIK.initialized ) {
-                CLIK.initialize(stage, this);
-            }
+            if ( !CLIK.initialized )	CLIK.initialize(stage, this);
             
-            if (_enableInitCallback && Extensions.CLIK_addedToStageCallback != null) {
-                CLIK.queueInitCallback(this);
-            }
+            if (_enableInitCallback && Boolean(Extensions.CLIK_addedToStageCallback))	CLIK.queueInitCallback(this);
         }
         
     // Public Getter / Setters:
@@ -135,13 +126,13 @@ package scaleform.clik.core {
         override public function get scaleX():Number { return _width/_originalWidth; }
         override public function set scaleX(value:Number):void {
             super.scaleX = value;
-            if (rotation == 0) { width = super.width; }
+            if (rotation == 0)	width = super.width;
         }
         
         override public function get scaleY():Number { return _height/_originalHeight; }
         override public function set scaleY(value:Number):void {
             super.scaleY = value;
-            if (rotation == 0) { height = super.height; }
+            if (rotation == 0)	height = super.height;
         }
         
         /**
@@ -150,12 +141,12 @@ package scaleform.clik.core {
          */
         [Inspectable(defaultValue="true")]
         override public function get enabled():Boolean { return super.enabled; }
-        override public function set enabled(value:Boolean):void {
-            if (value == super.enabled) { return; }
+        override public function set enabled($v:Boolean):void {
+            if ($v == super.enabled)	return;
             
-            super.enabled = value;
-            tabEnabled = (!enabled) ? false : _focusable;
-            mouseEnabled = value;
+            super.enabled = $v;
+            tabEnabled = (!$v) ? false : _focusable;
+            mouseEnabled = $v;
         }
         
         /**
@@ -218,9 +209,7 @@ package scaleform.clik.core {
                 }
             }
             else {
-                if (stage != null && _focused > 0) {
-                    stage.focus = this; 
-                }
+                if (stage && _focused > 0)	stage.focus = this; 
             }
             
             changeFocus();
