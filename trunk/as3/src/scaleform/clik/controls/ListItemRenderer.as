@@ -72,34 +72,16 @@ otherwise accompanies this software in either electronic or hard copy form.
 **************************************************************************/
     
 package scaleform.clik.controls {
-    
     import flash.events.FocusEvent;
     
     import scaleform.clik.core.UIComponent;
-    import scaleform.clik.data.ListData;
     import scaleform.clik.interfaces.IListItemRenderer;
     
     public class ListItemRenderer extends Button implements IListItemRenderer {
-        
-    // Constants:
-        
-    // Public Properties:
-        
-    // Protected Properties:
-        protected var _index:uint = 0; // Index of the ListItemRenderer
-        protected var _selectable:Boolean = true;
-        
-    // UI Elements:
-        
-    // Initialization:
-        public function ListItemRenderer() {
-            super();
-        }
+        protected var _index:uint = 0, _selectable:Boolean = true;
         
     // Public Getter / Setters:
         // Override for focusable since ListItemRenderers should never acquire focus.
-        /** @exclude */ 
-        override public function get focusable():Boolean { return _focusable; }
         override public function set focusable(value:Boolean):void { } 
         
         /** The index of this ListItemRenderer relative to its owner (generally, a subclass of CoreList). */
@@ -115,10 +97,10 @@ package scaleform.clik.controls {
          * Set the list data relevant to the ListItemRenderer. Each time the item changes, or is redrawn by the {@code owner}, the ListItemRenderer is updated using this method.
          * @param listData An object which contains information for this ListItemRenderer relative to the List (index, selected state, label).
          */
-        public function setListData(listData:ListData):void {
-            index = listData.index;
-            selected = listData.selected; // Maybe this should be .selected and then skip the setState below (since we set displayFocus).
-            label = listData.label || "";
+        public function setListData($index:uint, $label:String, $selected:Boolean):void {
+            index = $index;
+            selected = $selected; // Maybe this should be .selected and then skip the setState below (since we set displayFocus).
+            label = $label;
             // setState( "up" ); // Refresh the component, including the timeline state.
         }
         
@@ -126,16 +108,11 @@ package scaleform.clik.controls {
          * Sets data from the {@code dataProvider} to the renderer.
          * @param data The data associated with this ListItemRenderer.
          */
-        public function setData(data:Object):void {
-            this.data = data;
+        public function setData($data:*):void {
+            data = $data;
         }
+		
         
-        /** @exclude */
-        override public function toString():String {
-            return "[CLIK ListItemRenderer " + index + ", " + name + "]";
-        }
-        
-    // Protected Methods:
         override protected function configUI():void {
             super.configUI();
             focusTarget = owner; // The component sets the focusTarget to its owner instead of vice-versa.  This allows sub-classes to override this behaviour.

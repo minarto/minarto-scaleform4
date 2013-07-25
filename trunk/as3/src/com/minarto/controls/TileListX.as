@@ -1,7 +1,6 @@
 package com.minarto.controls {
 	import scaleform.clik.constants.DirectionMode;
 	import scaleform.clik.controls.TileList;
-	import scaleform.clik.data.ListData;
 	import scaleform.clik.interfaces.IListItemRenderer;
 	
 
@@ -44,23 +43,6 @@ package com.minarto.controls {
 				_totalRenderers = $v.length;
 			}
 			invalidateRenderers();
-		}
-		
-		
-		override protected function populateData(data:Array):void {
-			var d:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns);
-			var listData:ListData = new ListData(0);
-			for (var i:* in _renderers) {
-				var r:IListItemRenderer = _renderers[i];
-				var index:uint = d + i;
-				var item:* = data[i];
-				listData.label = itemToLabel(item);
-				listData.index = index;
-				listData.selected = _selectedIndex == index;
-				
-				r.setListData(listData);
-				r.setData(item);
-			}
 		}
 	}
 }

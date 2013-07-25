@@ -63,21 +63,15 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 package scaleform.clik.controls {
     
-    import flash.display.MovieClip;
-    import flash.display.DisplayObject;
-    import flash.events.Event;
-    import flash.events.MouseEvent;
+    import flash.display.*;
+    import flash.events.*;
     import flash.utils.getDefinitionByName;
     import flash.system.ApplicationDomain;
     
-    import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.constants.InputValue;
-    import scaleform.clik.constants.NavigationCode;
-    import scaleform.clik.constants.WrappingMode
+    import scaleform.clik.constants.*;
     import scaleform.clik.controls.Button;
     import scaleform.clik.data.DataProvider;
-    import scaleform.clik.events.InputEvent;
-    import scaleform.clik.events.ListEvent;
+    import scaleform.clik.events.*;
     import scaleform.clik.interfaces.IDataProvider;
     import scaleform.clik.managers.PopUpManager;
     import scaleform.clik.ui.InputDetails;
@@ -92,12 +86,12 @@ package scaleform.clik.controls {
     // Public Properties:
         /** Symbol name of the list component (ScrollingList or TileList) to use with the DropdownMenu component. */
         [Inspectable(type="String", defaultValue="DefaultScrollingList")]
-        public var dropdown:Object = "DefaultScrollingList";
+        public var dropdown:* = "DefaultScrollingList";
         [Inspectable(type="String", defaultValue="DefaultListItemRenderer")]
-        public var itemRenderer:Object = "DefaultListItemRenderer";
+        public var itemRenderer:* = "DefaultListItemRenderer";
         /** Symbol name of the dropdown list’s scroll bar. Created by the dropdown list instance. If value is empty, then the dropdown list will have no scroll bar. */
         [Inspectable(type="String")]
-        public var scrollBar:Object;
+        public var scrollBar:*;
         
         /** 
          * Determines how focus "wraps" when the end or beginning of the component is reached.
@@ -129,22 +123,11 @@ package scaleform.clik.controls {
         public var thumbOffsetBottom:Number;
         
     // Protected Properties:
-        protected var _selectedIndex:int = -1;
-        protected var _dataProvider:IDataProvider;
-        protected var _labelField:String = "label";
-        protected var _labelFunction:Function;
-        protected var _popup:MovieClip;
+        protected var _selectedIndex:int = -1, _dataProvider:IDataProvider, _labelField:String = "label", _labelFunction:Function, _popup:MovieClip;
         
     // UI Elements
-        private var _dropdownRef:MovieClip = null;
-        
-    // Initialization:
-        /**
-         * The constructor is called when a DropdownMenu or a sub-class of DropdownMenu is instantiated on stage or by using {@code attachMovie()} in ActionScript. This component can <b>not</b> be instantiated using {@code new} syntax. When creating new components that extend DropdownMenu, ensure that a {@code super()} call is made first in the constructor.
-         */
-        public function DropdownMenu() { 
-            super();
-        }
+        private var _dropdownRef:MovieClip;
+		
         
         override protected function initialize():void {
             dataProvider = new DataProvider(); // Default Data.
@@ -157,8 +140,8 @@ package scaleform.clik.controls {
         // ** Override inspectables from base class
         override public function get autoRepeat():Boolean { return false; }
         override public function set autoRepeat(value:Boolean):void  { }
-        override public function get data():Object { return null; }
-        override public function set data(value:Object):void { }
+        override public function get data():* { return null; }
+        override public function set data(value:*):void { }
         override public function get label():String { return ""; }
         override public function set label(value:String):void { }
         
@@ -233,17 +216,17 @@ package scaleform.clik.controls {
          * @see IDataProvider
          */
         public function get dataProvider():IDataProvider { return _dataProvider; }
-        public function set dataProvider(value:IDataProvider):void {
-            if (_dataProvider == value) { return; }
-            if (_dataProvider != null) {
-                _dataProvider.removeEventListener(Event.CHANGE, handleDataChange, false);
-            }
-            _dataProvider = value;
-			var len:uint = _dataProvider.length;
-			if (!menuRowsFixed && len > 0 && len < menuRowCount)
-				menuRowCount = len;
-            if (_dataProvider == null) { return; }
-            _dataProvider.addEventListener(Event.CHANGE, handleDataChange, false, 0, true);
+        public function set dataProvider($v:IDataProvider):void {
+			var l:uint;
+			
+            if (_dataProvider == $v)	return;
+            if (_dataProvider)	_dataProvider.removeEventListener(Event.CHANGE, handleDataChange, false);
+            _dataProvider = $v;
+			l = $v.length;
+			if (!menuRowsFixed && l > 0 && l < menuRowCount)
+				menuRowCount = l;
+            if (!$v)	return;
+			$v.addEventListener(Event.CHANGE, handleDataChange, false, 0, true);
             invalidateData();
         }
         
@@ -264,8 +247,8 @@ package scaleform.clik.controls {
          * @see #itemToLabel()
          */
         public function get labelFunction():Function { return _labelFunction; }
-        public function set labelFunction(value:Function):void {
-            _labelFunction = value;
+        public function set labelFunction($v:Function):void {
+            _labelFunction = $v;
             invalidateData();
         }
         
@@ -276,16 +259,11 @@ package scaleform.clik.controls {
          * @see #labelField
          * @see #labelFunction
          */
-        public function itemToLabel(item:Object):String {
-            if (item == null) { return ""; }
-            if (_labelFunction != null) {
-                return _labelFunction(item);
-            } else if ( item is String ) {
-				return item.toString();
-			}
-			else if (_labelField != null && item[_labelField] != null) {
-                return item[_labelField];
-            }
+        public function itemToLabel(item:*):String {
+            if (!item)	return "";
+            if (Boolean(_labelFunction))	return _labelFunction(item);
+            else if ( item is String )	return item.toString();
+			else if (_labelField && item[_labelField])	return item[_labelField];
             return item.toString();
         }
         
@@ -341,11 +319,6 @@ package scaleform.clik.controls {
             }
         }
         
-        /** @exclude */
-        override public function toString():String { 
-            return "[CLIK DropdownMenu " + name + "]";
-        }
-        
     // Protected Methods:
         override protected function draw():void {
             if (isInvalid(InvalidationType.SELECTED_INDEX) || isInvalid(InvalidationType.DATA)) {
@@ -374,18 +347,18 @@ package scaleform.clik.controls {
         }
         
         
-        protected function populateText(item:Object):void {
+        protected function populateText(item:*):void {
             updateLabel(item);
             dispatchEvent(new Event(Event.CHANGE));
         }
         
-        protected function updateLabel(item:Object):void {
+        protected function updateLabel(item:*):void {
             _label = itemToLabel(item);
         }
         
         protected function handleStageClick(event:MouseEvent):void {
-            if (this.contains(event.target as DisplayObject)) { return; }
-            if (this._dropdownRef.contains(event.target as DisplayObject)) { return; }
+            if (contains(event.target as DisplayObject)) { return; }
+            if (_dropdownRef.contains(event.target as DisplayObject))	return;
             close();
         }
         
@@ -399,10 +372,10 @@ package scaleform.clik.controls {
             }
 			
             if (dd) {
-                if (itemRenderer is String && itemRenderer != "") { dd.itemRenderer = getDefinitionByName(itemRenderer.toString()) as Class; }
+                if (itemRenderer is String && itemRenderer) { dd.itemRenderer = getDefinitionByName(itemRenderer.toString()) as Class; }
                 else if (itemRenderer is Class) { dd.itemRenderer = itemRenderer as Class; }
                 
-                if (scrollBar is String && scrollBar != "") { dd.scrollBar = getDefinitionByName(scrollBar.toString()) as Class; }
+                if (scrollBar is String && scrollBar) { dd.scrollBar = getDefinitionByName(scrollBar.toString()) as Class; }
                 else if (scrollBar is Class) { dd.scrollBar = scrollBar as Class; }
                 
                 dd.selectedIndex = _selectedIndex;
@@ -419,9 +392,7 @@ package scaleform.clik.controls {
                 dd.addEventListener(ListEvent.ITEM_CLICK, handleMenuItemClick, false, 0, true);
                 
                 _dropdownRef = dd;
-                PopUpManager.show(dd, x + menuOffset.left, 
-                    (menuDirection == "down") ? y + height + menuOffset.top : y - _dropdownRef.height + menuOffset.bottom,
-                    parent);
+                PopUpManager.show(dd, x + menuOffset.left, (menuDirection == "down") ? y + height + menuOffset.top : y - _dropdownRef.height + menuOffset.bottom, parent);
             }
         }
         

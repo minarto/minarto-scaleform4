@@ -55,23 +55,22 @@ package scaleform.clik.controls {
     import flash.text.TextField;
     import flash.text.TextFieldAutoSize;
     
-    import scaleform.gfx.FocusEventEx;
-    import scaleform.gfx.MouseEventEx;
-    
     import scaleform.clik.constants.ConstrainMode;
+    import scaleform.clik.constants.ControllerType;
+    import scaleform.clik.constants.InputValue;
     import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.core.UIComponent;
-    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.data.DataProvider;
     import scaleform.clik.events.ButtonEvent;
     import scaleform.clik.events.ComponentEvent;
-    import scaleform.clik.data.DataProvider;
+    import scaleform.clik.events.InputEvent;
     import scaleform.clik.interfaces.IDataProvider;
-    import scaleform.clik.constants.ControllerType;
     import scaleform.clik.ui.InputDetails;
-    import scaleform.clik.constants.InputValue;
-    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.utils.ConstrainedElement;
     import scaleform.clik.utils.Constraints;
+    import scaleform.gfx.FocusEventEx;
+    import scaleform.gfx.MouseEventEx;
     
     [Event(name = "change", type = "flash.events.Event")]
     
@@ -81,33 +80,17 @@ package scaleform.clik.controls {
         
     // Public Properties:
         /** True if constraints are disabled for the component. Setting the disableConstraintsproperty to {@code disableConstraints=true} will remove constraints from the textfield. This is useful for components with timeline based textfield size tweens, since constraints break them due to a Flash quirk. */
-        public var constraintsDisabled:Boolean = false;
+        public var constraintsDisabled:Boolean;
         
     // Protected Properties:
-        protected var _text:String;
-        protected var _autoSize:String = TextFieldAutoSize.NONE;
-        protected var isHtml:Boolean;
-        
-        protected var state:String = "default";
-        protected var _newFrame:String;
+        protected var _text:String, _autoSize:String = TextFieldAutoSize.NONE, isHtml:Boolean, state:String = "default", _newFrame:String;
         
     // UI Elements:
         /** A reference to the textField instance used to display the selected item's label. Note that when state changes are made, the textField instance may change, so changes made to it externally may be lost. */
         public var textField:TextField;
         
-    // Initialization:
-        public function Label() {
-            super();
-        }
-        
         override protected function preInitialize():void {
-            if (!constraintsDisabled) {
-                constraints = new Constraints(this, ConstrainMode.COUNTER_SCALE);
-            }
-        }
-        
-        override protected function initialize():void {
-            super.initialize();
+            if (!constraintsDisabled)	constraints = new Constraints(this, ConstrainMode.COUNTER_SCALE);
         }
         
     // Public getter / setters:
@@ -128,9 +111,7 @@ package scaleform.clik.controls {
         [Inspectable(name="text")]
         public function get text():String { return _text; }
         public function set text(value:String):void {
-            if (value == null) { 
-                value == ""; 
-            }
+            if (!value)	value == "";
             isHtml = false;
             _text = value;
             invalidateData();
@@ -143,9 +124,7 @@ package scaleform.clik.controls {
          */
         public function get htmlText():String { return _text; }
         public function set htmlText(value:String):void {
-            if (value == null) { 
-                value == ""; 
-            }
+			if (!value)	value == "";
             isHtml = true;
             _text = value;
             invalidateData();
@@ -158,7 +137,7 @@ package scaleform.clik.controls {
         [Inspectable(defaultValue="none", enumeration="none,left,right,center")]
         public function get autoSize():String { return _autoSize; }
         public function set autoSize(value:String):void {
-            if (value == _autoSize) { return; }
+            if (value == _autoSize)	return;
             _autoSize = value;
             invalidateData();
         }
@@ -186,49 +165,36 @@ package scaleform.clik.controls {
             invalidateData();
         }
         
-        /** @exclude */
-        override public function toString():String { 
-            return "[CLIK Label " + name + "]";
-        }
-        
-    // Protected Methods:
+
         override protected function configUI():void {
-            super.configUI();
-            if (!constraintsDisabled) {
-                constraints.addElement("textField", textField, Constraints.ALL);
-            }
+            if (!constraintsDisabled)	constraints.addElement("textField", textField, Constraints.ALL);
             
             focusable = false;
             // setState(defaultState, "default"); // NFM: Not sure if this is required for a Label.
         }
         
         protected function calculateWidth():Number {
-            if (constraints == null || textField == null) {
-                return actualWidth;
-            }
+			var element:ConstrainedElement;
+			
+            if (!constraints || !textField)	return actualWidth;
             
-            if (!constraintsDisabled) {
-                var element:ConstrainedElement = constraints.getElement("textField");
-            }
+            if (!constraintsDisabled)	element = constraints.getElement("textField");
             
-            var w:Number = Math.ceil(textField.textWidth + element.left + element.right + 5); // We add 5 pixels to accommodate Flash's poor measurement of anti-aliased fonts.
-            return w;
+            return Math.ceil(textField.textWidth + element.left + element.right + 5); // We add 5 pixels to accommodate Flash's poor measurement of anti-aliased fonts.
         }
         
         protected function alignForAutoSize():void {
-            if (!initialized || _autoSize == TextFieldAutoSize.NONE || textField == null) { return; }
+            if (!initialized || _autoSize == TextFieldAutoSize.NONE || !textField)	return;
             
             var oldWidth:Number = _width;
             var newWidth:Number = _width = calculateWidth();
             
             switch (_autoSize) {
                 case TextFieldAutoSize.RIGHT:
-                    var oldRight:Number = x + oldWidth;
-                    x = oldRight - newWidth;
+                    x += oldWidth - newWidth;
                     break;
                 case TextFieldAutoSize.CENTER:
-                    var oldCenter:Number = x + oldWidth * 0.5;
-                    x = oldCenter - newWidth * 0.5;
+                    x += oldWidth * 0.5 - newWidth * 0.5;
                     break;
             }
         }
@@ -263,18 +229,15 @@ package scaleform.clik.controls {
         }
         
         protected function updateText():void {
-            if (_text != null && textField != null) {
-                if (isHtml) {
-                    textField.htmlText = _text;
-                } else {
-                    textField.text = _text;
-                }
+            if (_text && textField) {
+                if (isHtml)	textField.htmlText = _text;
+                else	textField.text = _text;
             }
         }
         
         protected function updateAfterStateChange():void {
-            if (!initialized) { return; }
-            if (constraints != null && !constraintsDisabled) {
+            if (!initialized)	return;
+            if (constraints && !constraintsDisabled) {
                 constraints.updateElement("textField", textField); // Update references in Constraints 
             }
             
@@ -283,20 +246,21 @@ package scaleform.clik.controls {
         }
         
         protected function setState(...states:Array):void {
-            if (states.length == 1) {
-                var onlyState:String = states[0].toString();
-                if (state != onlyState && _labelHash[onlyState]) { 
-                    state = _newFrame = onlyState;
+			var l:uint = states.length, i:uint, _state:String;
+			
+            if (l == 1) {
+				_state = states[0].toString();
+                if (state != _state && _labelHash[_state]) { 
+                    state = _newFrame = _state;
                     invalidateState();
                 }
                 return;
             }
             
-            var l:uint = states.length;
-            for (var i:uint=0; i<l; i++) {
-                var thisState:String = states[i].toString();
-                if (_labelHash[thisState]) {
-                    state = _newFrame = thisState;
+            for (i=0; i<l; ++i) {
+				_state = states[i].toString();
+                if (_labelHash[_state]) {
+                    state = _newFrame = _state;
                     invalidateState();
                     break;
                 }

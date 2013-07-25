@@ -244,13 +244,13 @@ package scaleform.clik.controls {
         /**
          * The item at the {@code selectedIndex} in the DataProvider.
          */
-        public function get selectedItem():Object { return _dataProvider.requestItemAt(_selectedIndex); }
+        public function get selectedItem():* { return _dataProvider.requestItemAt(_selectedIndex); }
         
         /**
          * The {@code data} property of the {@code selectedItem}.
          * @see Button#data
          */
-        public function get data():Object { return selectedItem.data; }
+        public function get data():* { return selectedItem.data; }
         
         /**
          * The name of the field in the {@code dataProvider} model to be displayed as the label for itemRenderers.  A {@code labelFunction} will be used over a {@code labelField} if it is defined.
@@ -283,15 +283,11 @@ package scaleform.clik.controls {
          * @see #labelField
          * @see #labelFunction
          */
-        public function itemToLabel(item:Object):String {
-            if (item == null) { return ""; }
-            if (_labelFunction != null) {
-                return _labelFunction(item);
-            } else if (item is String) { 
-                return item as String;
-            } else if (_labelField != null && item[_labelField] != null) {
-                return item[_labelField];
-            }
+        public function itemToLabel(item:*):String {
+            if (!item) return "";
+            if (Boolean(_labelFunction))	return _labelFunction(item);
+            else if (item is String)	return item as String;
+            else if (_labelField && item[_labelField])	return item[_labelField];
             return item.toString();
         }
         
@@ -299,26 +295,25 @@ package scaleform.clik.controls {
         public function getButtonAt(index:int):Button {
             if (index >= 0 && index < _renderers.length) { 
                 return _renderers[index];
-            } else {
-                return null;
             }
+			else	return null;
         }
         
         /** @exclude */
-        override public function handleInput(event:InputEvent):void {
-            if (event.handled) { return; } // Already handled.
+        override public function handleInput($e:InputEvent):void {
+            if ($e.handled) { return; } // Already handled.
             
             // Pass on to selected renderer first
             var renderer:Button = _renderers[_selectedIndex] as Button;
-            if (renderer != null) {
-                renderer.handleInput(event); // Since we are just passing on the event, it won't bubble, and should properly stopPropagation.
-                if (event.handled) { return; }
+            if (renderer) {
+                renderer.handleInput($e); // Since we are just passing on the event, it won't bubble, and should properly stopPropagation.
+                if ($e.handled)	return;
             }
             
             // Only allow actions on key down, but still set handled=true when it would otherwise be handled.
-            var details:InputDetails = event.details;
+            var details:InputDetails = $e.details;
             var keyPress:Boolean = (details.value == InputValue.KEY_DOWN || details.value == InputValue.KEY_HOLD);
-            if (!keyPress) { return; }
+            if (!keyPress)	return;
             
             var indexChanged:Boolean = false;
             var newIndex:Number;
@@ -353,28 +348,19 @@ package scaleform.clik.controls {
             }
             
             if (indexChanged) {
-                newIndex = Math.max(0, Math.min(_dataProvider.length - 1, newIndex));
+                newIndex = Math.max(0, Math.min(_dataProvider ? _dataProvider.length - 1 : 0, newIndex));
                 if (newIndex != _selectedIndex) { 
                     selectedIndex = newIndex;
-                    event.handled = true;
+					$e.handled = true;
                 }
             }
         }
+		
         
-        /** @exclude */
-        override public function toString():String {
-            return "[CLIK ButtonBar " + name + "]";
-        }
-        
-    // Protected Methods:
         override protected function configUI():void {
-            super.configUI();
-            
             tabEnabled = (_focusable && enabled);
             
-            if (_group == null) {
-                _group = new ButtonGroup(name + "Group", this);
-            }
+            if (!_group)	_group = new ButtonGroup(name + "Group", this);
             _group.addEventListener(ButtonEvent.CLICK, handleButtonGroupChange, false, 0, true);
             
             if (container == null) {

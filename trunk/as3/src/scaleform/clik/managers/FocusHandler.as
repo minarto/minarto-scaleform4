@@ -15,46 +15,28 @@ otherwise accompanies this software in either electronic or hard copy form.
 **************************************************************************/
 package scaleform.clik.managers {
     
-    import flash.display.DisplayObject;
-    import flash.display.DisplayObjectContainer;
-    import flash.display.InteractiveObject;
-    import flash.display.MovieClip;
-    import flash.display.Sprite;
-    import flash.display.Stage;
-    import flash.events.Event;
-    import flash.events.FocusEvent;
-    import flash.events.KeyboardEvent;
-    import flash.events.MouseEvent;
+    import flash.display.*;
+    import flash.events.*;
     import flash.text.TextField;
     import flash.utils.Dictionary;
     
-    import scaleform.clik.constants.FocusMode;
-    import scaleform.clik.constants.InputValue;
-    import scaleform.clik.constants.NavigationCode;
-    import scaleform.clik.core.CLIK;
-    import scaleform.clik.core.UIComponent;
-    import scaleform.clik.events.FocusHandlerEvent;
-    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.constants.*;
+    import scaleform.clik.core.*;
+    import scaleform.clik.events.*;
     import scaleform.clik.ui.InputDetails;
-    import scaleform.clik.utils.WeakRefDictionary;
-    import scaleform.gfx.Extensions;
-    import scaleform.gfx.FocusEventEx;
-    import scaleform.gfx.FocusManager;
-    import scaleform.gfx.SystemEx;
+    import scaleform.gfx.*;
     
     [Event(name="input", type="gfx.events.InputEvent")]
     public class FocusHandler {
+        protected static var initialized:Boolean;
         
-        protected static var initialized:Boolean = false;
-        
-        public static var instance:FocusHandler;
+        public static var instance:FocusHandler = new FocusHandler;
         public static function getInstance():FocusHandler {
-            if (instance == null) { instance = new FocusHandler(); }
             return instance;
         }
         
         public static function init(stage:Stage, component:UIComponent):void {
-            if (initialized) { return; }
+            if (initialized)	return;
             var focusHandler:FocusHandler = FocusHandler.getInstance();
             focusHandler.stage = stage;
             
@@ -62,36 +44,14 @@ package scaleform.clik.managers {
             FocusManager.disableFocusKeys = true;
             initialized = true;
         }
-        
-    // Constants:
-        
-    // Public Properties:
-        
-    // Protected Properties:
-        
-        protected var _stage:Stage;
-        /** Dctionary of weak references to what holds focus within the CLIK FocusHandler framework. */
-        protected var currentFocusLookup:WeakRefDictionary;
-        /** Dctionary of weak references to what the FocusHandler believes "stage.focus" currently references. */
-        protected var actualFocusLookup:WeakRefDictionary;// NFM: This commonly will point to an InteractiveObject while stage.focus == null.
-        /** Internal boolean for tracking whether to prevent the stage from changing its focus. */
-        protected var preventStageFocusChanges:Boolean = false;
-        
-        // Tracks the state of the left mouse button. This is required in Flash Player to work around a bug where if a 
-        // Mouse is dragged on top of a TextField that TextField continously dispatches MOUSE_FOCUS_CHANGE events despite
-        // focus never moving. We track mouseDown so we know whether a MOUSE_FOCUS_CHANGE from a TextField in Flash Player
-        // is a "drag" (ignore) or a "click" (process).
-        protected var mouseDown:Boolean = false;
-        
-    // Initialization:
-        public function FocusHandler() {
-            currentFocusLookup = new WeakRefDictionary();
-            actualFocusLookup = new WeakRefDictionary();
-        }
+
+		
+		protected var _stage:Stage, currentFocusLookup:* = {}, actualFocusLookup:* = {}, preventStageFocusChanges:Boolean, mouseDown:Boolean;
+		
         
     // Public Getter / Setters:
         public function set stage(value:Stage):void {
-            if (_stage == null) { _stage = value; }
+            if (!_stage)	_stage = value;
             _stage.stageFocusRect = false;
             
             // Only track mouseDown if we're inside Flash Player (see mouseDown definition for more information).
@@ -111,7 +71,7 @@ package scaleform.clik.managers {
         }
         
     // Public Methods:
-        public function getFocus(index:uint):DisplayObject { return currentFocusLookup.getValue( index ) as DisplayObject; }
+        public function getFocus(index:uint):DisplayObject { return currentFocusLookup[index]; }
         public function setFocus(focus:DisplayObject, focusGroupIdx:uint = 0, mouseChange:Boolean = false):void {
             // trace("\n *** FocusHandler :: setFocus( " + focus + ", " + focusGroupIdx + " )");
             // if (focus == currentFocusLookup[index]) { return; } // NFM: This prevents some _stage.focus -> FocusHandler communication.
@@ -119,12 +79,12 @@ package scaleform.clik.managers {
             var focusComponent:UIComponent;
             
             // Determine Component focus
-            if (focus != null) { // New focus can be null if clicking on something that is not focus enabled.
+            if (focus) { // New focus can be null if clicking on something that is not focus enabled.
                 // Recursive lookup to find final focusTarget
                 while (true) {
                     focusComponent = focus as UIComponent;
-                    if (focusComponent == null) { break; }
-                    if (focusComponent.focusTarget != null) {
+                    if (!focusComponent)	break;
+                    if (focusComponent.focusTarget) {
                         focus = focusComponent.focusTarget;
                     } else {
                         break;
@@ -132,8 +92,8 @@ package scaleform.clik.managers {
                 }
             }
             
-            if (focusComponent != null) {
-                if ( focusComponent.focusable == false) { 
+            if (focusComponent) {
+                if ( !focusComponent.focusable) { 
                     focus = null; 
                 }
             }
@@ -152,30 +112,22 @@ package scaleform.clik.managers {
             }
             
             // Make focus change
-            var actualFocus:DisplayObject = actualFocusLookup.getValue( focusGroupIdx ) as DisplayObject;
-            var currentFocus:DisplayObject = currentFocusLookup.getValue( focusGroupIdx ) as DisplayObject;  //LM: DisplayObjects? Maybe UIComponents....
+            var actualFocus:DisplayObject = actualFocusLookup[focusGroupIdx];
+            var currentFocus:DisplayObject = currentFocusLookup[focusGroupIdx];  //LM: DisplayObjects? Maybe UIComponents....
             
             // If component focus has changed
             if (currentFocus != focus) {
                 // Turn off old focus
                 focusComponent = currentFocus as UIComponent;
-                if (focusComponent != null) { 
-                    focusComponent.focused = focusComponent.focused & ~(1 << focusGroupIdx);
-                }
-                if (currentFocus != null) {
-                    currentFocus.dispatchEvent( new FocusHandlerEvent(FocusHandlerEvent.FOCUS_OUT, true, false, focusGroupIdx) );
-                }
+                if (focusComponent)	focusComponent.focused = focusComponent.focused & ~(1 << focusGroupIdx);
+                if (currentFocus)	currentFocus.dispatchEvent( new FocusHandlerEvent(FocusHandlerEvent.FOCUS_OUT, true, false, focusGroupIdx) );
                 
                 // Turn on new focus.
                 currentFocus = focus;
-                currentFocusLookup.setValue( focusGroupIdx, focus );
+                currentFocusLookup[focusGroupIdx] = focus;
                 focusComponent = currentFocus as UIComponent;
-                if (focusComponent != null) {
-                    focusComponent.focused = focusComponent.focused | (1 << focusGroupIdx);
-                }
-                if (currentFocus != null) {
-                    currentFocus.dispatchEvent( new FocusHandlerEvent(FocusHandlerEvent.FOCUS_IN, true, false, focusGroupIdx) );
-                }
+                if (focusComponent)	focusComponent.focused = focusComponent.focused | (1 << focusGroupIdx);
+                if (currentFocus)	currentFocus.dispatchEvent( new FocusHandlerEvent(FocusHandlerEvent.FOCUS_IN, true, false, focusGroupIdx) );
             }
             
             /*
@@ -193,25 +145,16 @@ package scaleform.clik.managers {
                 // 
                 //      Focus may now point to something other than the original component. In the case of a textField, focus
                 //      and focusComponent may both be null, but the _stage.focus should still be set to the TextField if applicable.
-                if (focusParam is TextField && focusParam != focus && focus == null) {
-                    focus = focusParam;
-                }
+                if (focusParam is TextField && focusParam != focus && !focus)	focus = focusParam;
                 
                 preventStageFocusChanges = true;
                 
                 if (Extensions.isScaleform) { 
                     var controllerMask:Number = FocusManager.getControllerMaskByFocusGroup(focusGroupIdx); //.getControllerMaskByFocusGroup(index);
                     var numControllers:uint = Extensions.numControllers;
-                    for (var i:uint = 0; i < numControllers; i++) {
-                        var controllerValue:Boolean = ((controllerMask >> i) & 0x1) != 0;
-                        if ( controllerValue ) {
-                            setSystemFocus(focus as InteractiveObject, i);
-                        }
-                    }
+                    for (var i:uint = 0; i < numControllers; ++i)	if ( (controllerMask >> i) & 1 )	setSystemFocus(focus as InteractiveObject, i);
                 }
-                else {
-                    setSystemFocus(focus as InteractiveObject);
-                }
+                else	setSystemFocus(focus as InteractiveObject);
                 
                 _stage.addEventListener(Event.ENTER_FRAME, clearFocusPrevention, false, 0, true);
             }
@@ -219,21 +162,13 @@ package scaleform.clik.managers {
         
         // Abstracts _stage.focus = for Scaleform / Flash Player.
         protected function setSystemFocus(newFocus:InteractiveObject, controllerIdx:uint = 0):void {
-            if (Extensions.isScaleform) {
-                FocusManager.setFocus(newFocus, controllerIdx);
-            }
-            else {
-                _stage.focus = newFocus;
-            }
+            if (Extensions.isScaleform)	FocusManager.setFocus(newFocus, controllerIdx);
+            else	_stage.focus = newFocus;
         }
+		
         // Abstracts _stage.focus = for Scaleform / Flash Player.
         protected function getSystemFocus(controllerIdx:uint = 0):InteractiveObject {
-            if (Extensions.isScaleform) {
-                return FocusManager.getFocus(controllerIdx);
-            }
-            else {
-                return _stage.focus;
-            }
+            return Extensions.isScaleform ? FocusManager.getFocus(controllerIdx) : _stage.focus;
         }
         
         protected function clearFocusPrevention(e:Event):void {
@@ -243,8 +178,7 @@ package scaleform.clik.managers {
         
         //LM: Consider making handleInput a manual function
         public function input(details:InputDetails):void {
-            var event:InputEvent = new InputEvent(InputEvent.INPUT, details);
-            handleInput(event);
+            handleInput(new InputEvent(InputEvent.INPUT, details));
         }
             
         public function trackMouseDown( e:MouseEvent ):void {
@@ -266,22 +200,22 @@ package scaleform.clik.managers {
              */
             
              // Allow components to try and handle input
-            var component:InteractiveObject = currentFocusLookup.getValue( focusGroupIdx ) as InteractiveObject;
-            if (component == null) { component = _stage; } // If nothing is selected, dispatch input from the stage?
+            var component:InteractiveObject = currentFocusLookup[focusGroupIdx];
+            if (!component)	component = _stage;	// If nothing is selected, dispatch input from the stage?
             var newEvent:InputEvent = event.clone() as InputEvent; // We have to do this to be able to check handled property when a component calls event.handled. If we use preventDefault on the initial event, it will not work.
             
             var ok:Boolean = component.dispatchEvent(newEvent);
-            if (!ok || newEvent.handled) { return; }
+            if (!ok || newEvent.handled)	return;
             
             // Default focus logic
             if (event.details.value == InputValue.KEY_UP) { return; } // Only key-down events have a default behaviour
             var nav:String = event.details.navEquivalent;
-            if (nav == null) { return; } // Only navigation equivalents have a default behaviour.
+            if (!nav)	return;	// Only navigation equivalents have a default behaviour.
             
             // Get current stage-focused element
-            var focusedElement:InteractiveObject = currentFocusLookup.getValue( focusGroupIdx ) as InteractiveObject;
+            var focusedElement:InteractiveObject = currentFocusLookup[focusGroupIdx];
             // Get what we THINK is the stage-focused element
-            var actualFocus:InteractiveObject = actualFocusLookup.getValue( focusGroupIdx ) as InteractiveObject;
+            var actualFocus:InteractiveObject = actualFocusLookup[focusGroupIdx];
             var stageFocusedElement:InteractiveObject = getSystemFocus( focusGroupIdx );
             
             // TextField edge case
@@ -301,16 +235,12 @@ package scaleform.clik.managers {
             // NFM: If our focusedElement is null, check stage.focus and actualFocus to see if we have any reference
             //      to where focus should be. This could be removed if we don't want CLIK's null focus to start from 
             //      where ever the stage is currently focused... ultimately a small behavior choice.
-            if (focusedElement == null) { 
-                if (stageFocusedElement && stageFocusedElement is UIComponent) {
-                    focusedElement = stageFocusedElement as UIComponent;
-                }
+            if (!focusedElement) { 
+                if (stageFocusedElement && stageFocusedElement is UIComponent)	focusedElement = stageFocusedElement as UIComponent;
             }
             
-            if (focusedElement == null) { 
-                if (actualFocus && actualFocus is UIComponent) {
-                    focusedElement = actualFocus as UIComponent;
-                }
+            if (!focusedElement) { 
+                if (actualFocus && actualFocus is UIComponent)	focusedElement = actualFocus as UIComponent;
             }
             
             // If the focusedElement is still null, focus is "lost" and input should not change focus.
@@ -346,7 +276,7 @@ package scaleform.clik.managers {
             
             // LM:  Multiple calls to stage.focus may result in this call. 
             //      Consider using the focused setter where possible (see commented code below that wasn't working yet)
-            if (newFocus != null) {
+            if (newFocus) {
                 // NFM: KEY_FOCUS_CHANGE's necessity is still under review.
                 // focusedElement.dispatchEvent( new FocusEvent( FocusEvent.KEY_FOCUS_CHANGE, true, false, newFocus ) );
                 setFocus(newFocus, focusGroupIdx);
@@ -423,7 +353,7 @@ package scaleform.clik.managers {
             */
             
             // Storing stage focus
-            actualFocusLookup.setValue( focusGroupIdx, newFocus );
+            actualFocusLookup[focusGroupIdx] = newFocus;
             setFocus(newFocus, focusGroupIdx, (event.type == FocusEvent.MOUSE_FOCUS_CHANGE));
         }
         
@@ -450,7 +380,7 @@ package scaleform.clik.managers {
             var sfEvent:FocusEventEx = event as FocusEventEx;
             var controllerIdx:uint = sfEvent == null ? 0 : sfEvent.controllerIdx;
             var focusGroupIdx:uint = FocusManager.getControllerFocusGroup(controllerIdx); 
-            actualFocusLookup.setValue(focusGroupIdx, newFocus);
+            actualFocusLookup[focusGroupIdx] = newFocus;
             
             // In the case of a TextInput (or a similar component), we need to ensure that whenever focus is supposed to move
             // to the TextInput (regardless of how [mouse, keyboard, stage.focus, FocusHandler.setFocus, tab, arrow keys, etc..],
@@ -461,7 +391,7 @@ package scaleform.clik.managers {
             // the old currentFocus to a textField and the textField is a child of currentFocus, do not call setFocus() since
             // this is (hopefully!) just the TextInput ensuring that all focus references are pointing to the correct
             // targets.
-            var currentFocus:InteractiveObject = currentFocusLookup.getValue( focusGroupIdx ) as InteractiveObject;
+            var currentFocus:InteractiveObject = currentFocusLookup[focusGroupIdx];
             if (newFocus != null && newFocus is TextField && newFocus.parent != null && 
                 currentFocus == newFocus.parent && currentFocus == oldFocus) { 
                 return;
@@ -484,7 +414,7 @@ package scaleform.clik.managers {
         
         // @TODO: Selection.getCaretIndex(controllerIdx:Number) in AS2 needs AS3 support.
         protected function handleTextFieldInput(nav:String, controllerIdx:uint):Boolean {
-            var actualFocus:TextField = actualFocusLookup.getValue( controllerIdx ) as TextField;
+            var actualFocus:TextField = actualFocusLookup[controllerIdx];
             if (actualFocus == null) { return false; }
             
             var position:int = actualFocus.caretIndex; //Selection.getCaretIndex(controllerIdx); //LM: Might have to look this up differently.

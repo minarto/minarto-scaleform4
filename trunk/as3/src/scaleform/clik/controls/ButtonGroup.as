@@ -53,8 +53,8 @@ package scaleform.clik.controls {
     // Constants:
         public static var groups:Dictionary = new Dictionary(true);
         public static function getGroup(name:String, scope:DisplayObjectContainer):ButtonGroup {
-            var list:Object = groups[scope];
-            if (list == null) { list = groups[scope] = new Object(); }
+            var list:* = groups[scope];
+            if (!list)	groups[scope] = list = {};
             var group:ButtonGroup = list[name.toLowerCase()];
             if (group == null) { group = list[name.toLowerCase()] = new ButtonGroup(name, scope); }
             return group;
@@ -97,7 +97,7 @@ package scaleform.clik.controls {
         /**
          * The data for the selected Button.
          */
-        public function get data():Object { return selectedButton.data; }
+        public function get data():* { return selectedButton.data; }
         /**
          * The index of the Button in the ButtonGroup's children array.
          */
@@ -202,19 +202,14 @@ package scaleform.clik.controls {
             return _children.indexOf(button) > -1;
         }
         
-        /** @exclude */
-        override public function toString():String {
-            return "[CLIK ButtonGroup " + name + " (" + _children.length + ")]";
-        }
-        
     // Protected Methods:
         /**
          * The "selected" state of one of the buttons in the group has changed. If the button is selected,
          * it will become the new {@code selectedButton}. If it is not, the selectedButton in the group will be
          * set to {@code null}.
          */
-        protected function handleSelect(event:Event):void {
-            var button:Button = event.target as Button;
+        protected function handleSelect($e:Event):void {
+            var button:Button = $e.target as Button;
             if (button.selected) {
                 updateSelectedButton(button, true);
             } else {
@@ -225,13 +220,12 @@ package scaleform.clik.controls {
         /**
          * A button in the group has been clicked. The button will be set to the {@code selectedButton}.
          */
-        protected function handleClick(event:ButtonEvent):void {
-            dispatchEvent(event);
+        protected function handleClick($e:ButtonEvent):void {
+            dispatchEvent($e);
         }
         
-        protected function handleRemoved(event:Event):void {
-            removeButton(event.target as Button);
+        protected function handleRemoved($e:Event):void {
+            removeButton($e.target as Button);
         }
     }
-
 }

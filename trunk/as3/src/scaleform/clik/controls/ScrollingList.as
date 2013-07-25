@@ -64,21 +64,15 @@ otherwise accompanies this software in either electronic or hard copy form.
 package scaleform.clik.controls {
     
     import flash.display.DisplayObject;
-    import flash.events.Event;
-    import flash.events.MouseEvent;
+    import flash.events.*;
     import flash.geom.Rectangle;
     import flash.utils.getDefinitionByName;
     
-    import scaleform.clik.constants.WrappingMode;
+    import scaleform.clik.constants.*;
     import scaleform.clik.controls.ScrollBar;
-    import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.data.ListData;
     import scaleform.clik.events.InputEvent;
-    import scaleform.clik.interfaces.IScrollBar;
-    import scaleform.clik.interfaces.IListItemRenderer;
-    import scaleform.clik.constants.InputValue;
+    import scaleform.clik.interfaces.*;
     import scaleform.clik.ui.InputDetails;
-    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.utils.Padding;
     
     [Event(name="change", type="flash.events.Event")]
@@ -501,17 +495,18 @@ package scaleform.clik.controls {
             scrollPosition = _scrollBar.position;
         }
     
-        protected function populateData(data:Array):void {
-            var dl:uint = data.length;
-            var l:uint = _renderers.length;
-            for (var i:uint = 0; i < l; i++) {
-                var renderer:IListItemRenderer = getRendererAt(i);
-                var index:uint = _scrollPosition + i;
-                var listData:ListData = new ListData(index, itemToLabel(data[i]), _selectedIndex == index);
-                renderer.enabled = (i >= dl) ? false : true;
-                renderer.setListData(listData); //LM: Consider passing renderer position also. (Support animation)
-                renderer.setData(data[i]);
-                renderer.validateNow();
+        protected function populateData($datas:Array):void {
+            var dl:uint = $datas.length, l:uint = _renderers.length, i:uint, r:IListItemRenderer, d:*, index:uint;
+			
+            for (i = 0; i < l; ++i) {
+                r = getRendererAt(i);
+				d = $datas[i];
+				
+                index = _scrollPosition + i;
+                r.enabled = (i < dl);
+                r.setListData(index, itemToLabel(d), selectedIndex == index); //LM: Consider passing renderer position also. (Support animation)
+                r.setData(d);
+                r.validateNow();
             }
         }
         
