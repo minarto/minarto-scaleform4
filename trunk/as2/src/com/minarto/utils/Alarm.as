@@ -13,7 +13,7 @@ class com.minarto.utils.Alarm {
 			
 			id = alarmID ++;
 			s = Binding.get("AlarmInterval").getTime() + $duration * 1000;	//	start time
-			arg = arguments.slice(3, arguments.length);
+			arg = arguments.slice(3);
 			
 			f = function() {
 				if (arguments[0].getTime() >= s) {
@@ -35,7 +35,7 @@ class com.minarto.utils.Alarm {
 			id = alarmID ++;
 			$interval = $interval * 1000;
 			s = Binding.get("AlarmInterval").getTime() + $interval;	//	start time
-			arg = arguments.slice(6, arguments.length);
+			arg = arguments.slice(6);
 			
 			f = function() {
 				if (arguments[0].getTime() >= s) {

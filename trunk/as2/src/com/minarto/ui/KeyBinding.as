@@ -106,7 +106,7 @@ class com.minarto.ui.KeyBinding {
 		add = function($bindingKey:String, $isDown, $handler:Function, $scope) {
 			var arg, a:Array;
 			
-			arguments[4] = arguments.slice(4, arguments.length);
+			arguments[4] = arguments.slice(4);
 			
 			arg = $isDown ? downDic : upDic;
 			a = arg[$bindingKey];

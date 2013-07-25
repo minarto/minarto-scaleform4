@@ -150,7 +150,7 @@ class com.minarto.data.ListBinding {
 	
 	public static function addDataBind($data:Object, $scope, $handler:String, $property:String):Void {
 		if ($data) {
-			var ps:Array = arguments.slice(2, arguments.length);
+			var ps:Array = arguments.slice(2);
 			
 			for (var i in ps) {
 				$data.addBind(ps[i], $scope, $handler);
@@ -164,7 +164,7 @@ class com.minarto.data.ListBinding {
 	public static function delDataBind($data, $scope, $handler:String, $property:String):Void {
 		if ($scope || $handler) {
 			if ($data) {
-				var ps:Array = arguments.slice(2, arguments.length);
+				var ps:Array = arguments.slice(2);
 				
 				for (var i in ps) {
 					$data.delBind(ps[i], $scope, $handler);
