@@ -22,7 +22,7 @@ class com.minarto.manager.LoadManager {
 			var f:Function= item[2], arg;
 			
 			if (f) {
-				arg = item.slice(5, item.length);
+				arg = item.slice(5);
 				arg[0] = arguments[0];
 				f.apply(item[3], arg);
 			}
@@ -34,7 +34,7 @@ class com.minarto.manager.LoadManager {
 			var f:Function = item[4], arg;
 			
 			if (f) {
-				arg = item.slice(5, item.length);
+				arg = item.slice(5);
 				arg[0] = arguments[0];
 				f.apply(item[5], arg);
 			}

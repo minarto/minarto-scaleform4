@@ -26,7 +26,7 @@
 		$target.addEventListener = function($type:String, $handler:Function, $scope):Void {
 			var a:Array, i, arg:Array;
 			
-			arguments[3] = arguments.slice(2, arguments.length);
+			arguments[3] = arguments.slice(2);
 			
 			a = events[$type];
 			for (i in a) {
