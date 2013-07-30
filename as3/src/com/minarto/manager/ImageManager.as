@@ -1,5 +1,5 @@
 package com.minarto.manager {
-	import com.minarto.utils.GPool;
+	import com.minarto.utils.Utils;
 	
 	import flash.display.*;
 	
@@ -33,7 +33,7 @@ package com.minarto.manager {
 						if($bm){
 							bd = $bm.bitmapData;
 							dic[$src] = bd;
-							GPool.get(Bitmap).object = $bm;
+							Utils.getPool(Bitmap).object = $bm;
 							
 							for(i = 0, l = a.length; i<l; ++ i)	a[i](bd);
 						}

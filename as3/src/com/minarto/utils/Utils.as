@@ -1,6 +1,9 @@
 package com.minarto.utils {
+	import de.polygonal.core.ObjectPool;
+	
 	import flash.external.ExternalInterface;
 	import flash.geom.*;
+	import flash.utils.Dictionary;
 	
 
 	public class Utils 	{
@@ -52,6 +55,33 @@ package com.minarto.utils {
 			}
 			
 			return	r;
+		}
+		
+		private static var _poolDic:Dictionary = new Dictionary(true);
+		
+		
+		public static function getPool($c:Class, $size:int=-1):ObjectPool{
+			var p:ObjectPool = _poolDic[$c];
+			
+			if(!p){
+				if($size < 0){
+					p = new ObjectPool(true);
+					p.allocate(1, $c);
+				}
+				else{
+					p = new ObjectPool;
+					p.allocate($size, $c);
+				}
+				
+				_poolDic[$c] = p;
+			}			
+			
+			return	p;
+		}
+		
+		
+		public static function delPool($c:Class):void{
+			delete	_poolDic[$c];
 		}
 	}
 }

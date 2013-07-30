@@ -20,7 +20,7 @@ package com.minarto.manager {
 			
 			if(!$src)	return;
 			
-			i = GPool.get(LoadItem).object;
+			i = Utils.getPool(LoadItem).object;
 			i.src = $src;
 			i.onComplete = $onComplete;
 			i.onError = $onError;
@@ -66,7 +66,7 @@ package com.minarto.manager {
 		private static function _load():void {
 			var info:LoaderInfo = loader.contentLoaderInfo;
 			
-			if(item)	GPool.get(LoadItem).object = item;
+			if(item)	Utils.getPool(LoadItem).object = item;
 			item = reservations.shift();
 			if(item){
 				request.url = item.src;
