@@ -151,6 +151,6 @@ class com.minarto.data.Binding {
 		
 	public static function get($key:String) {
 		_init();
-		return	get($key);
+		return	Binding.get($key);
 	}
 }
