@@ -7,18 +7,6 @@ class com.minarto.ui.KeyBinding {
 	private static var onKeyDown:Function, onKeyUp:Function;
 	
 	
-	public static function init($delegateObj):Void {
-		_init();
-		
-		if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
-		else				ExternalInterface.call("KeyBinding", KeyBinding);
-		
-		trace("KeyBinding.init");
-		
-		delete init;
-	}
-	
-	
 	private static function _init() {
 		var combi = {}, keyDic = { }, downDic = {}, upDic = {};
 		
@@ -83,17 +71,6 @@ class com.minarto.ui.KeyBinding {
 		}
 		
 		
-		has = function($bindingKey:String, $isDown, $handler:Function, $scope) {
-			var a:Array = $isDown ? downDic[$bindingKey] : upDic[$bindingKey];
-			for ($bindingKey in a) {
-				$isDown = a[$bindingKey];
-				if ($isDown[2] === $handler && $isDown[3] == $scope) return	$isDown;
-			}
-			
-			return	0;
-		}
-		
-		
 		set = function($bindingKey:String, $key, $combi:Number) {
 			if ($bindingKey) {
 				if (typeof($key) === "string")	$key = $key.toUpperCase().charCodeAt(0);
@@ -151,15 +128,19 @@ class com.minarto.ui.KeyBinding {
 	}
 	
 	
-	public static function set($bindingKey:String, $key, $combi:Number):Void {
+	public static function init($delegateObj):Void {
 		_init();
-		set.apply(KeyBinding, arguments);
+		
+		if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
+		else				ExternalInterface.call("KeyBinding", KeyBinding);
+		
+		delete init;
 	}
 	
 	
-	public static function has($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Boolean {
+	public static function set($bindingKey:String, $key, $combi:Number):Void {
 		_init();
-		return	has.apply(KeyBinding, arguments);
+		set.apply(KeyBinding, arguments);
 	}
 	
 	

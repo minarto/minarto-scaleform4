@@ -1,4 +1,4 @@
-﻿import com.minarto.utils.Util;
+﻿import com.minarto.utils.Utils;
 
 
 class com.minarto.utils.ObjectPool {
@@ -6,11 +6,6 @@ class com.minarto.utils.ObjectPool {
 	
 	
 	public function ObjectPool($constructor:Function, $minSize:Number) {
-		init($constructor, $minSize);
-	}
-	
-	
-	private function _init():Void {
 		var dic:Array = [];
 		
 		get = function() {
@@ -18,54 +13,33 @@ class com.minarto.utils.ObjectPool {
 		}
 		
 		set = function($obj) {
-			$obj = constructor($obj);
-			if ($obj)	dic.push($obj);
-			else throw	Util.error("ObjectPool", "constructor error - " + $obj);
+			if (constructor($obj))	dic.push($obj);
+			else throw	Utils.error("ObjectPool", "constructor error:" + $obj);
 		}
 		
-		init = function($constructor, $minSize) {
-			dic.length = 0;
-			constructor = $constructor;
-			while ($minSize --) dic.push(new $constructor);
-		}
-		
-		delete	_init;
+		constructor = $constructor;
+		while ($minSize --) dic.push(new $constructor);
 	}
 	
 	
-	public function init($constructor:Function, $minSize:Number):Void {
-		_init();
-		init.apply(this, arguments);
-	}
+	public function get() {}
 	
 	
-	public function get():Void {
-		_init();
-		return	get.call(this);
-	}
-	
-	
-	public function set($obj):Void {
-		_init();
-		set.call(this, $obj);
-	}
+	public function set($obj):Void {}
 	
 	
 	public static function getPool($constructor:Function, $minSize:Number):ObjectPool {
 		var dic:Array = [];
 		
-		getPool = function($$constructor:Function, $$minSize:Number) {
+		getPool = function($constructor:Function, $minSize:Number) {
 			var p:ObjectPool, i;
 			
 			for (i in dic) {
 				p = dic[i];
-				if (p.constructor == $$constructor) {
-					if ($$minSize)	p.init($$constructor, $$minSize);
-					return	p;
-				}
+				if (p.constructor == $constructor)	return	p;
 			}
 			
-			p = new ObjectPool($$constructor, $$minSize);
+			p = new ObjectPool($constructor, $minSize);
 			dic.push(p);
 			
 			return	p;

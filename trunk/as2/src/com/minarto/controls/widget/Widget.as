@@ -7,14 +7,27 @@
  */
 class com.minarto.controls.widget.Widget extends MovieClip {
 	public var	addEventListener:Function, removeEventListener:Function, hasEventListener:Function, removeAllEventListeners:Function, cleanUpEvents:Function, dispatchEvent:Function,
-				background:MovieClip, widgetID:String;
+				background:MovieClip;
+				
+				
+	private var _widgetID;
 	
 	
-	public function Widget($main:MovieClip) {
+	public function get widgetID() {
+		return _widgetID;
+	}
+	public function set widgetID($v):Void {
+		if ($v == _widgetID)	return;
+		_widgetID = $v;
+		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback(widgetID, targetPath(this), this);
+	}
+	
+	
+	public function Widget($main) {
 		EventDispatcher.initialize(this);
 		
 		$main.__proto__ = this.__proto__;
-		this = Object($main);
+		this = $main;
 		onLoad = configUI;
 	}
 	
@@ -23,7 +36,7 @@ class com.minarto.controls.widget.Widget extends MovieClip {
 		delete this.__proto__.configUI;
 		delete onLoad;
 		
-		if (_global.CLIK_loadCallback) _global.CLIK_loadCallback(widgetID, targetPath(this), this);
+		if (_widgetID && _global.CLIK_loadCallback) _global.CLIK_loadCallback(_widgetID, targetPath(this), this);
 	}
 		
 		
@@ -39,10 +52,5 @@ class com.minarto.controls.widget.Widget extends MovieClip {
 	
 	public function destroy() {
 		removeAllEventListeners();
-	}
-		
-		
-	private function setTitle($title:String):Void {
-		if (background)	background.title = $title;
 	}
 }
