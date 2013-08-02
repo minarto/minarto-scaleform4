@@ -2,7 +2,7 @@
 import flash.geom.Rectangle;
 
 
-class com.minarto.utils.Util {
+class com.minarto.utils.Utils {
 	public static var rectangle:Rectangle = new Rectangle;
 	
 	

@@ -60,7 +60,14 @@ class com.minarto.manager.LoadManager {
 					}
 				}
 			}
-			else	reservations.length = 0;
+			else {
+				if (item) {
+					$target = item[0];
+					$target.unloadMovie();
+				}
+				reservations.length = 0;
+				loader.removeListener(LoadManager);
+			}
 		}
 		
 		load = function($target:MovieClip) {

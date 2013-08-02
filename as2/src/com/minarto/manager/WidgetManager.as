@@ -7,7 +7,7 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		
 		
 	private static function _init() {
-		var dic = { }, _onMouseUp:Function, dragWidget:MovieClip, container:MovieClip;
+		var dic = { }, _onMouseUp:Function, dragWidget:MovieClip, container:MovieClip, setHandler:Function;
 		
 		Mouse.addListener(WidgetManager);
 		
@@ -16,60 +16,79 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		}
 		
 		
-		load = function($src:String) {
-			var widget:MovieClip, d:Number = container.getNextHighestDepth(), onComplete:Function, f:Function = arguments[1], s = arguments[2];
-			
-			onComplete = function() {
-				widget.__src__ = $src;
-				if (f)	f.apply(s);
-			}
-			
-			widget = container.createEmptyMovieClip("m" + d, d);
-			
-			LoadManager.load(widget, $src, onComplete, WidgetManager);
-			dic[$src] = widget;
+		setHandler = function($widget:MovieClip) {
+			$widget.addEventListener(EventTypes.DRAG_BEGIN, this, "onDragStart");
+			$widget.addEventListener(EventTypes.HIDE, this, "onClose");
 		}
 		
 		
-		add = function($id, $widget:MovieClip) {
-			$widget.id = $id;
+		add = function($id, $widget, $onComplete:Function, $scope) {
+			var w:MovieClip, d:Number, f:Function;
 			
-			dic[$id] = $widget;
-			
-			if ($widget.addEventListener) {
-				$widget.addEventListener(EventTypes.DRAG_BEGIN, this, "onDragStart");
-				$widget.addEventListener("closeWidget", this, "onClose");
+			if (typeof($widget) == "movieclip") {
+				w = $widget;
+				w.widgetID = $id;
+				setHandler(w);
 			}
+			else if (typeof($widget) == "string") {
+				d = container.getNextHighestDepth();
+				
+				w = container.attachMovie($widget, "w" + d, d);
+				if (w) {
+					w.widgetID = $id;
+					setHandler(w);
+				}
+				else {
+					w = container.createEmptyMovieClip("w" + d, d);
+					
+					f = function() {
+						w.widgetID = $id;
+						setHandler(w);
+						if ($onComplete)	$onComplete.apply($scope);
+					}
+					LoadManager.load(w, $widget, f, WidgetManager, f, WidgetManager);
+				}
+			}
+			
+			dic[$id] = w;
+			
+			return	w;
 		}
 		
 		
 		del = function($id) {
-			var w:MovieClip, i, src:String;
+			var w:MovieClip;
 			
 			if ($id) {
-				for (i in arguments) {
-					w = dic[arguments[i]];
+				if (typeof($id) == "movieclip") {
+					w = $id;
+					
+					if(w.destroy)	w.destroy();
+					else if(w.removeAllEventListeners)	w.removeAllEventListeners();
+					w.unloadMovie();
+					w.removeMovieClip();
+					
+					delete	dic[w.widgetID];
+				}
+				else {
+					w = dic[$id];
 					if (w) {
-						$id = w.id;
-						src = w.__src__;
+						if(w.destroy)	w.destroy();
+						else if(w.removeAllEventListeners)	w.removeAllEventListeners();
+						w.unloadMovie();
+						w.removeMovieClip();
 						
 						delete	dic[$id];
-						delete	dic[src];
-						
-						if(w.removeAllEventListeners)	w.removeAllEventListeners();
-						LoadManager.unLoad(w);
-						w.removeMovieClip();
 					}
-				}
+				}				
 			}
 			else {
 				for ($id in dic) {
 					w = dic[$id];
-					if (w) {
-						if(w.removeAllEventListeners)	w.removeAllEventListeners();
-						LoadManager.unLoad(w);
-						w.removeMovieClip();
-					}					
+					
+					if(w.removeAllEventListeners)	w.removeAllEventListeners();
+					w.unloadMovie();
+					w.removeMovieClip();
 				}
 				dic = { };
 			}
@@ -116,8 +135,6 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		open = function() {
 			var w:MovieClip = dic[arguments[0]];
 			if (w) {
-				w._x = arguments[1];
-				w._y = arguments[2];
 				if (w.open)	w.open();
 				else	w._visible = true;
 			}
@@ -168,18 +185,9 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	/**
 	 * 
 	 */
-	public static function load($src:String, $onComplete:Function, $scope):Void {
+	public static function add($id, $widget, $onComplete:Function, $scope) {
 		_init();
-		load.apply(WidgetManager, arguments);
-	}
-	
-	
-	/**
-	 * 
-	 */
-	public static function add($id, $widget:MovieClip):Void {
-		_init();
-		add.apply(WidgetManager, arguments);
+		return	add.apply(WidgetManager, arguments);
 	}
 	
 	
@@ -195,14 +203,14 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	}
 	
 	
-	public static function open($id, $x:Number, $y:Number):Void {
+	public static function open($id):Void {
 		_init();
-		open.apply(WidgetManager, arguments);
+		open($id);
 	}
 	
 	
 	public static function close($id):Void {
 		_init();
-		close(WidgetManager, arguments);
+		close($id);
 	}
 }

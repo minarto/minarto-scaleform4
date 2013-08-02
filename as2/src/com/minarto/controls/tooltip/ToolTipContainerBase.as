@@ -23,7 +23,7 @@ class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent impl
 	}
 	
 	
-	public function regist($button:UIComponent):Void{
+	public function regist($button:MovieClip):Void{
 		for(var i in arguments){
 			$button = arguments[i];
 			$button.addEventListener(EventTypes.ROLL_OVER, this, "hnRollOver");
@@ -33,7 +33,7 @@ class com.minarto.controls.tooltip.ToolTipContainerBase extends UIComponent impl
 	}
 	
 	
-	public function unRegist($button:UIComponent) : Void {
+	public function unRegist($button:MovieClip) : Void {
 		if($button){
 			for(var i in arguments){
 				$button = arguments[i];
