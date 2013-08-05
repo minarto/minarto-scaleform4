@@ -67,14 +67,11 @@ agreement provided at the time of installation or download, or which
 otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
-
-import flash.external.ExternalInterface; 
 import gfx.core.UIComponent;
 import gfx.controls.ButtonGroup;
-import gfx.ui.InputDetails;
-import gfx.ui.NavigationCode;
+import gfx.events.EventTypes;
+import gfx.ui.*;
 import gfx.utils.Constraints;
-import gfx.utils.Delegate;
 import gfx.utils.Locale;
 
 [InspectableList("disabled", "disableFocus", "visible", "toggle", "labelID", "disableConstraints", "enableInitCallback", "autoSize", "soundMap")]
@@ -84,7 +81,7 @@ class gfx.controls.Button extends UIComponent {
 // Public Properties:
 	/** Data related to the button. This property is particularly helpful when using butons in a ButtonGroup. */
 	[Inspectable(type="String")]
-	public var data:Object;
+	public var data;
 	/** The mouse state of the button.  Mouse states can be "over", "down", "up", and "release". */
 	public var state:String = "up";
 	/** A button with a toggle value of {@code true} will change its selected state when the button is "clicked". */
@@ -98,26 +95,17 @@ class gfx.controls.Button extends UIComponent {
 	public var lockDragStateChange:Boolean = false;
 	/** Mapping between events and sound process */
 	[Inspectable(type="Object", defaultValue="theme:default,focusIn:focusIn,focusOut:focusOut,select:select,rollOver:rollOver,rollOut:rollOut,press:press,doubleClick:doubleClick,click:click")]
-	public var soundMap:Object = { theme:"default", focusIn:"focusIn", focusOut:"focusOut", select:"select", rollOver:"rollOver", rollOut:"rollOut", press:"press", doubleClick:"doubleClick", click:"click" };
+	public var soundMap = { theme:"default", focusIn:"focusIn", focusOut:"focusOut", select:"select", rollOver:"rollOver", rollOut:"rollOut", press:"press", doubleClick:"doubleClick", click:"click" };
 
 // Private Properties:	
-	private var _group:Object; // ButtonGroup, but can be set as a String as well.
-	private var _label:String;
-	private var _selected:Boolean = false;
-	private var _autoSize:String = "none";
-	private var _disableFocus:Boolean = false;
-	private var _disableConstraints:Boolean = false;
-	private var constraints:Constraints;
+	private var _group; // ButtonGroup, but can be set as a String as well.
+	private var _label:String, _selected:Boolean, _autoSize:String = "none", _disableFocus:Boolean, _disableConstraints:Boolean, constraints:Constraints;
 	[Inspectable(name="group", defaultValue="buttonGroup")]
 	private var inspectableGroupName:String;
 	private var doubleClickDuration:Number = 250; //LM: This could be public or public-static?
-	private var doubleClickInterval:Number;
-	private var buttonRepeatDuration:Number = 100;
-	private var buttonRepeatDelay:Number = 100;
-	private var buttonRepeatInterval:Number;
-	private var pressedByKeyboard:Boolean = false;
+	private var doubleClickInterval:Number, buttonRepeatDuration:Number = 100, buttonRepeatDelay:Number = 100, buttonRepeatInterval:Number, pressedByKeyboard:Boolean;
 	/** A list of frames that apply to a given state. The frames will be called in order, and the last existing frame will be displayed. */
-	private var stateMap:Object = {
+	private var stateMap = {
 		up:["up"],
 		over:["over"],
 		down:["down"],
@@ -156,9 +144,7 @@ class gfx.controls.Button extends UIComponent {
 	[Inspectable(name="label", defaultValue="")]
 	public function get labelID():String { return null; }
 	public function set labelID(value:String):Void {
-		if (value != "") {
-			label = Locale.getTranslatedString(value);
-		}
+		if (value)	label = Locale.getTranslatedString(value);
 	}
 	
 	/**
@@ -171,8 +157,8 @@ class gfx.controls.Button extends UIComponent {
 		// When the label changes, if autoSize is true, and there is a textField, we want to resize the component to fit the label.  
 		// The only exception is when the label is set during initialization.
         if (initialized) {
-            if (textField != null) { textField.text = _label; } // Set the text first
-            if (autoSize != "none") { sizeIsInvalid = true; }
+            if (textField)	textField.text = _label;
+            if (autoSize != "none")	sizeIsInvalid = true;
             updateAfterStateChange();            
         }        
 	}
@@ -221,7 +207,7 @@ class gfx.controls.Button extends UIComponent {
 
 		// The event is dispatched after the frame change so that listening objects can override the behavior.
 		if (dispatchEvent != null) { // Prevent the selected event from firing before the EventDispatcher is ready.
-			dispatchEventAndSound({type:"select", selected:_selected});
+			dispatchEventAndSound({type:EventTypes.SELECT, selected:_selected});
 		}
 		
 	}
@@ -240,8 +226,8 @@ class gfx.controls.Button extends UIComponent {
 	 * A reference to the {@link ButtonGroup} instance that the button belongs to. The group is usually created in the parent clip of the button, so buttons in the same MovieClip scope with the same name can behave as a group. ButtonGroups will only be created in the parent scope when automatically created.
 	 * @see ButtonGroup
 	 */
-	public function get group():Object { return _group; }
-	public function set group(value:Object):Void {
+	public function get group() { return _group; }
+	public function set group(value):Void {
 		var newGroup:ButtonGroup = ButtonGroup(value); // Note, this is a cast, a new group is not created.
 		if (typeof(value) == "string") {
 			newGroup = _parent["_buttonGroup_"+value];
@@ -311,11 +297,6 @@ class gfx.controls.Button extends UIComponent {
 				return true; // Even though the press may not have handled it (automatic=repeat presses), we want to indicate that we did, since the Button handles repeat, but it won't respond to multiple.
 		}
 		return false;
-	}	
-	
-	/** @exclude */
-	public function toString():String {
-		return "[Scaleform Button " + _name + "]";
 	}
 	
 	
@@ -386,7 +367,7 @@ class gfx.controls.Button extends UIComponent {
 			invalidate();
 			return 0;
 		}
-		var metrics:Object = constraints.getElement(textField).metrics;
+		var metrics = constraints.getElement(textField).metrics;
 		var w:Number = textField.textWidth + metrics.left + metrics.right + 5; // We add 5 pixels to accommodate Flash's poor measurement of anti-aliased fonts.
 		return w;
 	}
@@ -473,14 +454,14 @@ class gfx.controls.Button extends UIComponent {
 	private function handleMouseRollOver(controllerIdx:Number):Void {
 		if (_disabled) { return; }
 		if ((!_focused && !_displayFocus) || focusIndicator != null) { setState("over"); } // Otherwise it is focused, and has no focusIndicator, so do nothing.
-		dispatchEventAndSound({type:"rollOver", controllerIdx:controllerIdx});
+		dispatchEventAndSound({type:EventTypes.ROLL_OVER, controllerIdx:controllerIdx});
 	}
 	
 	// #state RollOut is only called by mouse interaction. Focus change happens in changeFocus.
 	private function handleMouseRollOut(controllerIdx:Number):Void {
 		if (_disabled) { return; }
 		if ((!_focused && !_displayFocus) || focusIndicator != null) { setState("out"); } // Otherwise it is focused, and has no focusIndicator, so do nothing.
-		dispatchEventAndSound({type:"rollOut", controllerIdx:controllerIdx});
+		dispatchEventAndSound({type:EventTypes.ROLL_OUT, controllerIdx:controllerIdx});
 	}
 	
 	// #state Press happens on mouse press, and keyboard press:
@@ -490,7 +471,7 @@ class gfx.controls.Button extends UIComponent {
 		if (_disabled) { return; }
 		if (!_disableFocus) { Selection.setFocus(this, controllerIdx); }
 		setState("down"); // Focus changes in the setState will override those in the changeFocus (above)
-		dispatchEventAndSound({type:"press", controllerIdx:controllerIdx, button:button});		
+		dispatchEventAndSound({type:EventTypes.PRESS, controllerIdx:controllerIdx, button:button});		
 		if (autoRepeat) {
 			buttonRepeatInterval = setInterval(this, "beginButtonRepeat", buttonRepeatDelay, controllerIdx, button);
 		}
@@ -500,7 +481,7 @@ class gfx.controls.Button extends UIComponent {
 		if (_disabled) { return; }
 		pressedByKeyboard = true;
 		setState(focusIndicator == null ? "down" : "kb_down");		
-		dispatchEventAndSound({type:"press", controllerIdx:controllerIdx});
+		dispatchEventAndSound({type:EventTypes.PRESS, controllerIdx:controllerIdx});
 	}
 	
 	// #state Release happens on mouse release (click) and keyboard release:
@@ -516,7 +497,7 @@ class gfx.controls.Button extends UIComponent {
 				doubleClickInterval = setInterval(this, "doubleClickExpired", doubleClickDuration);
 			} else {
 				doubleClickExpired();
-				dispatchEventAndSound({type:"doubleClick", controllerIdx:controllerIdx, button:button});
+				dispatchEventAndSound({type:EventTypes.DOUBLE_CLICK, controllerIdx:controllerIdx, button:button});
 				setState("release");
 				return;
 			}
@@ -538,7 +519,7 @@ class gfx.controls.Button extends UIComponent {
 	 */
 	private function handleClick(controllerIdx:Number, button:Number):Void {
 		if (toggle) { selected = !_selected; } // Will cause a state change.
-		dispatchEventAndSound({type:"click", controllerIdx:controllerIdx, button:button});		
+		dispatchEventAndSound({type:EventTypes.CLICK, controllerIdx:controllerIdx, button:button});		
 	}
 
 	// The cursor was dragged over into the button. This occurs only when the cursor was dragged out from the same button earlier.
@@ -590,7 +571,7 @@ class gfx.controls.Button extends UIComponent {
 			}
 		}
 		// #state Nothing should be required here, since it should already be in the right state.
-		dispatchEvent({type:"releaseOutside", state:state, button:button});
+		dispatchEvent({type:EventTypes.RELEASE_OUTSIDE, state:state, button:button});
 	}
 	
 	// A double click did not happen. Clear the interval.
@@ -607,7 +588,7 @@ class gfx.controls.Button extends UIComponent {
 	
 	// The button is being pressed, and doing a "repeat"
 	private function handleButtonRepeat(controllerIdx:Number, button:Number):Void {
-		dispatchEventAndSound({type:"click", controllerIdx:controllerIdx, button:button});
+		dispatchEventAndSound({type:EventTypes.CLICK, controllerIdx:controllerIdx, button:button});
 	}
 	
 	private function clearRepeatInterval():Void {
