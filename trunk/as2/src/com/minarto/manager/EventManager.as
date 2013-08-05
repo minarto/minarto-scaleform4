@@ -29,7 +29,7 @@
 				a = dic[$type];
 				i = a.length;
 				
-				if ($handler) {
+				if ($handler && $scope) {
 					while (i --) {
 						item = a[i];
 						if (item[1] == $handler && item[2] == $scope) {

@@ -53,6 +53,7 @@ otherwise accompanies this software in either electronic or hard copy form.
 import gfx.controls.Button;
 import gfx.core.UIComponent;
 import gfx.data.DataProvider;
+import gfx.events.EventTypes;
 import gfx.managers.FocusHandler;
 import gfx.ui.InputDetails;
 import gfx.ui.NavigationCode;
@@ -65,7 +66,7 @@ class gfx.controls.ButtonBar extends UIComponent {
 // Public Properties:
 
 // Private Properties:
-	private var _dataProvider:Object;
+	private var _dataProvider;
 	private var _itemRenderer:String = "Button";
 	private var _spacing:Number = 0;
 	private var _direction:String = "horizontal";
@@ -86,6 +87,7 @@ class gfx.controls.ButtonBar extends UIComponent {
 	 */
 	public function ButtonBar() { 
 		super();
+		_dataProvider = [];
 		renderers = [];
 		focusEnabled = tabEnabled = !_disabled;
 		tabChildren = false;
@@ -94,45 +96,42 @@ class gfx.controls.ButtonBar extends UIComponent {
 // Public Methods:
 	[Inspectable(defaultValue="false")]
 	public function get disabled():Boolean { return _disabled; } 
-	public function set disabled(value:Boolean):Void {
-		super.disabled = value;
-		focusEnabled = tabEnabled = !_disabled;
-		if (!initialized) { return; }
-		for (var i:Number=0; i<renderers.length; i++) {
-			renderers[i].disabled = _disabled;
-		}
+	public function set disabled($v:Boolean):Void {
+		super.disabled = $v;
+		focusEnabled = tabEnabled = !$v;
+		if (!initialized)	return;
+		
+		for (var i in renderers)	renderers[i].disabled = $v;
 	}
 
 	/**
 	 * The list of buttons to display. Unlike list-based components, this is just an Array.  The Array can contain Objects or Strings, and the {@code itemToLabel} method will determine the resulting text label for each button.
 	 * @see #itemToLabel
 	 */
-	public function get dataProvider():Object { return _dataProvider; }
-	public function set dataProvider(value:Object):Void {
-		if (_dataProvider == value) { return; }
-		if (_dataProvider != null) {
-			_dataProvider.removeEventListener("change", this, "onDataChange");
-		}
-		_dataProvider = value;
-		if (_dataProvider == null) { return; }
+	public function get dataProvider() { return _dataProvider; }
+	public function set dataProvider($v):Void {
+		if (_dataProvider == $v)	return;
+		if (_dataProvider)	_dataProvider.removeEventListener(EventTypes.CHANGE, this, "onDataChange");
+		_dataProvider = $v;
+		if (!$v)	return;
 		
 		// LM: I recommend that we move this check to the DataProvider.initialize(), and change it so it takes a second parameter (component instance).
-		if ((value instanceof Array) && !value.isDataProvider) { 
-			DataProvider.initialize(_dataProvider);
-		} else if (_dataProvider.initialize != null) {
-			_dataProvider.initialize(this);
+		if (($v instanceof Array) && !$v.isDataProvider) { 
+			DataProvider.initialize($v);
+		} else if ($v.initialize) {
+			$v.initialize(this);
 		}
 		
-		_dataProvider.addEventListener("change", this, "onDataChange");  // Do a full redraw
+		$v.addEventListener(EventTypes.CHANGE, this, "onDataChange");  // Do a full redraw
 		selectedIndex = 0;
-		tabEnabled = focusEnabled = !_disabled && (_dataProvider.length > 0);
+		tabEnabled = focusEnabled = !_disabled && ($v.length > 0);
 		
 		reflowing = false;
 		invalidate();
 	}
 	
 	public function invalidateData():Void {
-		selectedIndex = Math.min(_dataProvider.length-1, _selectedIndex);
+		selectedIndex = Math.min(_dataProvider ? _dataProvider.length-1 : 0, _selectedIndex);
 		populateData();
 		invalidate();
 	}
@@ -175,12 +174,12 @@ class gfx.controls.ButtonBar extends UIComponent {
 	 */
 	[Inspectable(type="String", enumeration="none,left,center,right", defaultValue="none")]
 	public function get autoSize():String { return _autoSize; }
-	public function set autoSize(value:String):Void {
-		if (value == _autoSize) { return; }
-		_autoSize = value;
-		for (var i:Number=0; i<renderers.length; i++) {
-			renderers[i].autoSize = _autoSize;
-		}
+	public function set autoSize($v:String):Void {
+		var i;
+		
+		if ($v == _autoSize)	return;
+		_autoSize = $v;
+		for (i in renderers)	renderers[i].autoSize = $v;
 		invalidate();
 	}	
 	
@@ -198,23 +197,24 @@ class gfx.controls.ButtonBar extends UIComponent {
 	 * The 0-base index of the selected button. The ButtonBar can have a single selected item in its {@code dataProvider}, represented by the {@code selectedIndex}. When the {@code selectedIndex} changes, a "change" event is dispatched.
 	 */
 	public function get selectedIndex():Number { return _selectedIndex; }
-	public function set selectedIndex(value:Number):Void {
-		if (_selectedIndex == value) return;
-		_selectedIndex = value;
-		selectItem(_selectedIndex);
-		dispatchEventAndSound({type:"change", index:_selectedIndex, renderer:renderers[_selectedIndex], item:selectedItem, data:selectedItem.data});
+	public function set selectedIndex($v:Number):Void {
+		if ($v < - 1 || isNaN($v))	$v = - 1;
+		if (_selectedIndex == $v) return;
+		_selectedIndex = $v;
+		selectItem($v);
+		dispatchEventAndSound({type:EventTypes.CHANGE, index:$v, renderer:renderers[$v], item:selectedItem, data:selectedItem.data});
 	}
 	
 	/**
 	 * The item at the {@code selectedIndex} in the DataProvider.
 	 */
-	public function get selectedItem():Object { return _dataProvider.requestItemAt(_selectedIndex); }
+	public function get selectedItem() { return _dataProvider.requestItemAt(_selectedIndex); }
 	
 	/**
 	 * The {@code data} property of the {@code selectedItem}.
 	 * @see Button#data
 	 */
-	public function get data():Object { return selectedItem.data; }
+	public function get data() { return selectedItem.data; }
 	
 	/**
 	 * The name of the field in the {@code dataProvider} model to be displayed as the label for itemRenderers.  A {@code labelFunction} will be used over a {@code labelField} if it is defined.
@@ -241,165 +241,157 @@ class gfx.controls.ButtonBar extends UIComponent {
 	 * @see #labelField
 	 * @see #labelFunction
 	 */
-	public function itemToLabel(item:Object):String {
-		if (item == null) { return ""; }
-		if (_labelFunction != null) {
-			return _labelFunction(item);
-		} else if (_labelField != null && item[_labelField] != null) {
-			return item[_labelField];
-		}
+	public function itemToLabel(item):String {
+		if (!item)	return "";
+		
+		if (_labelFunction)	return _labelFunction(item);
+		else if (_labelField && item[_labelField])	return item[_labelField];
 		return item.toString();
 	}
 	
 	public function handleInput(details:InputDetails, pathToFocus:Array):Boolean {		
-		var keyPress:Boolean = (details.value == "keyDown" || details.value == "keyHold");
+		var keyPress:Boolean = (details.value == "keyDown" || details.value == "keyHold"), newIndex:Number;
 		
-		var newIndex:Number; 
 		switch (details.navEquivalent) {
 			case NavigationCode.LEFT:
-				if (_direction == "horizontal") {
-					newIndex = _selectedIndex-1;
-				}
+				if (_direction == "horizontal")	newIndex = _selectedIndex-1;
 				break;
 			case NavigationCode.RIGHT:
-				if (_direction == "horizontal") {
-					newIndex = _selectedIndex+1;
-				}
+				if (_direction == "horizontal")	newIndex = _selectedIndex+1;
 				break;
 			case NavigationCode.UP:
-				if (_direction == "vertical") {
-					newIndex = _selectedIndex-1;
-				}
+				if (_direction == "vertical")	newIndex = _selectedIndex-1;
 				break;
 			case NavigationCode.DOWN:				
-				if (_direction == "vertical") {
-					newIndex = _selectedIndex+1;
-				}
+				if (_direction == "vertical")	newIndex = _selectedIndex+1;
 				break;
 		}
-		if (newIndex != null) {
-			newIndex = Math.max(0, Math.min(_dataProvider.length-1, newIndex));			
+		
+		if (newIndex) {
+			newIndex = Math.max(0, Math.min(_dataProvider ? _dataProvider.length-1 : 0, newIndex));			
 			if (newIndex != _selectedIndex) { 
-				if (!keyPress) { return true; }
+				if (!keyPress)	return true;
 				selectedIndex = newIndex;
 				return true;
 			}
 		}
 		return false;
-	}	
-	
-	/** @exclude */
-	public function toString():String {
-		return "[Scaleform ButtonBar " + _name + "]";
 	}
 	
 	
 // Private Methods:	
 	private function draw():Void {
+		var l:Number, r:MovieClip;
+		
 		if (!reflowing) {
 			// Update current buttons
-			var l:Number = _dataProvider.length;
+			l = _dataProvider.length;
 			while (renderers.length > l) {
-				var r:MovieClip = MovieClip(renderers.pop());
+				r = MovieClip(renderers.pop());
 				r.group.removeButton(r);	
 				r.removeMovieClip();
 			}		
-			while (renderers.length < l) {		
-				renderers.push(createRenderer(renderers.length));
-			}
+			while (renderers.length < l)	renderers.push(createRenderer(renderers.length));
 		
 			populateData();
 			reflowing = true;
 			invalidate();
 			return;
 		}
-		if (drawLayout() && _selectedIndex != -1) {
-			selectItem(_selectedIndex);
-		}		
+		if (drawLayout() && _selectedIndex > -1)	selectItem(_selectedIndex);
 	}
 	
 	private function drawLayout():Boolean {
-		// If the (last) renderer is not yet ready, invalidate to force a redraw.
-		if (renderers.length > 0 && !renderers[renderers.length-1].initialized) {
+		var i:Number, l:Number = renderers.length, w:Number, h:Number, r:MovieClip;
+		
+		if (l > 0 && !renderers[l-1].initialized) {
 			reflowing = true;
 			invalidate();
 			return false;
 		}
 		reflowing = false;
 		
-		var w:Number = 0;
-		var h:Number = 0;
-		for (var i:Number=0; i<renderers.length; i++) {
-			var renderer:MovieClip = renderers[i];
+		w = 0;
+		h = 0;
+		for (i=0; i<l; ++i) {
+			r = renderers[i];
 			// Manually size the renderer
 			if (_autoSize == "none" && _buttonWidth > 0) {				
-				renderer.width = _buttonWidth;
+				r.width = _buttonWidth;
 			}
 			
 			if (_direction == "horizontal") {
-				renderer._y = 0;
-				renderer._x = w;
-				w += renderer.width + _spacing;
+				r._y = 0;
+				r._x = w;
+				w += r.width + _spacing;
 			} else {
-				renderer._x = 0;
-				renderer._y = h;
-				h += renderer.height + _spacing;
+				r._x = 0;
+				r._y = h;
+				h += r.height + _spacing;
 			}
 		}
 		return true;
 	}
 	
 	private function createRenderer(index:Number):MovieClip {
-		var renderer:MovieClip = attachMovie(itemRenderer, "clip"+index, this.getNextHighestDepth(), {toggle:true, focusTarget:this, tabEnabled:false, autoSize:_autoSize});
-		if (renderer == null) { return null; }
-		renderer.addEventListener("click", this, "handleItemClick");
-		renderer["index"] = index;
+		var r:MovieClip = attachMovie(itemRenderer, "clip" + index, getNextHighestDepth(), { toggle:true, focusTarget:this, tabEnabled:false, autoSize:_autoSize } );
+		
+		if (!r)	return r;
+		
+		r.addEventListener(EventTypes.CLICK, this, "handleItemClick");
+		r["index"] = index;
 		
 		// This assumes linkage is a Button, or has Button in its inheritance chain.
-		renderer.groupName = _name+"ButtonGroup";
+		r.groupName = _name+"ButtonGroup";
 
-		return renderer;
+		return r;
 	}
 	
-	private function handleItemClick(event:Object):Void {
-		var renderer:MovieClip = event.target;
-		var index:Number = renderer.index;
+	private function handleItemClick($e):Void {
+		var index:Number = $e.target.index;
+		
 		selectedIndex = index;
-		dispatchEventAndSound({type:"itemClick", data:selectedItem.data, item:selectedItem, index:index, controllerIdx:event.controllerIdx});
+		dispatchEventAndSound({type:EventTypes.ITEM_CLICK, data:selectedItem.data, item:selectedItem, index:index, controllerIdx:$e.controllerIdx});
 	}
 	
 	private function selectItem(index:Number):Void {
-		if (renderers.length < 1) { return; }
-		var renderer:MovieClip = renderers[index];		
-		if (!renderer.selected) { renderer.selected = true; }
+		var l:Number = renderers.length, r:MovieClip, i:Number;
 		
-		var l:Number = renderers.length;
-		for (var i:Number=0; i<l; i++) {
-			if (i == index) { continue; }
-			var depth:Number = 100 + l-i;
-			renderers[i].swapDepths(depth);
-			renderers[i].displayFocus = false;
+		if (l < 1)	return;
+		
+		for (i = 0; i<l; ++i++) {
+			if (i == index)	continue;
+			r = renderers[i];
+			r.swapDepths(100 + i);
+			r.displayFocus = false;
 		}
-		renderer.swapDepths(1000); // Put the item on the top depth. Note that "i+1" breaks other things.
-		renderer.displayFocus = _focused;
+		
+		r = renderers[index];		
+		if (!r.selected)	r.selected = true;
+		r.swapDepths(1000);
+		r.displayFocus = _focused;
 	}
 	
 	private function changeFocus():Void {
-		var renderer:MovieClip = renderers[_selectedIndex];
-		if (renderer == null) { return; }
-		renderer.displayFocus = _focused;
+		var r:MovieClip = renderers[_selectedIndex];
+		
+		if (!r)	return;
+		r.displayFocus = _focused;
 	}
 	
-	private function onDataChange(event:Object):Void {
+	private function onDataChange($e):Void {
 		invalidateData();
 	}
 	
 	private function populateData():Void {
-		for (var i:Number = 0; i < renderers.length; i++) {
-			var renderer:MovieClip = renderers[i];
-			renderer.label = itemToLabel(_dataProvider.requestItemAt(i));
-			renderer.data = _dataProvider.requestItemAt(i);
-			renderer.disabled = _disabled;
+		var i, r:MovieClip, data;
+		
+		for (i in renderers) {
+			r = renderers[i];
+			data = _dataProvider[i];
+			r.label = itemToLabel(data);
+			r.data = data;
+			r.disabled = _disabled;
 		}		
 	}
 }
