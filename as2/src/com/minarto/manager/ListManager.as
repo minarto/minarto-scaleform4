@@ -1,198 +1,56 @@
-﻿import com.minarto.manager.*;
-import com.minarto.utils.Util;
-import gfx.controls.*;
+﻿import gfx.controls.CoreList;
 import gfx.data.DataProvider;
-import gfx.events.EventTypes;
-import gfx.utils.Delegate;
 
 
-class com.minarto.manager.ListManager extends EventDispatcher {
-	private static var hnItemPress:Function, hnItemLoadComplete:Function, hnItemDrag:Function, hnMouseUp:Function, hnItemClick:Function;
-	
-	
+class com.minarto.manager.ListManager {
 	private static function _init() {
-		var listDic = { }, fromSlot:ListItemRenderer, mEvt:MovieClip, point = { }, dataDic = {};
+		var valueDic = { }, listDic = {};
 		
-		mEvt = _root.createEmptyMovieClip("__mEvt__", _root.getNextHighestDepth());
-		_global.ASSetPropFlags(_root, "__mEvt__", 1);
-		
-		var content:MovieClip = mEvt.createEmptyMovieClip("content", 0);
-		
-		mEvt._visible = false;
-		mEvt.hitTestDisable = true;
-		mEvt.topmostLevel = true;
-		mEvt.enabled = false;
-		
-		
-		add = function() {
-			var i, c:Number, id:String, list:CoreList, pType:String = EventTypes.ITEM_PRESS, cType:String = EventTypes.ITEM_CLICK, data, a:Array, j:Number, l:Number;
+		add = function($key:String, $list:CoreList) {
+			var a:Array = listDic[$key];
+			if (!a)	listDic[$key] = a = [];
+			a.push($list);
 			
-			for (i = 0, c = arguments.length; i < c; ++ i) {
-				id = arguments[i ++];
-				list = arguments[i];
-				
-				list["id"] = id;
-				list.addEventListener(pType, ListManager, "hnItemPress");
-				list.addEventListener(cType, ListManager, "hnItemClick");
-				
-				list.dataProvider = data = dataDic[id];
-				
-				a = listDic[id];
-				if (!a)	listDic[id] = a;
-				for (j = 0, l = a.length; j < l; ++ j)	if (a[id] == list)	break;
-				if (j == l)	a.push(list);
-			}
+			$list.dataProvider = valueDic[$key];
 		}
 		
 		
-		del = function() {
-			var i, c:Number, list:CoreList, pType:String = EventTypes.ITEM_PRESS, cType:String = EventTypes.ITEM_CLICK, a:Array, j;
+		del = function($list:CoreList) {
+			var a:Array, i;
 			
-			if(arguments.length){
-				for (i = 0, c = arguments.length; i < c; ++ i) {
-					list =  arguments[i];
-					list.removeEventListener(pType, ListManager, "hnItemPress");
-					list.removeEventListener(cType, ListManager, "hnItemClick");
-					
-					a = listDic[list["id"]];
-					for (j in a) {
-						if (a[j] == list) {
-							a.splice(j, 1);
-							if (!a.length)	delete listDic[list["id"]];
-							break;
+			if ($list) {
+				a = listDic[$key]
+				if (a) {
+					for (i in a) {
+						if (a[i] == $list) {
+							a.splice(i, 1);
+							if (!a.length)	delete	listDic[$key];
+							return;
 						}
 					}
 				}
 			}
-			else {
-				for (i in listDic) {
-					list = listDic[i];
-					list.removeEventListener(pType, ListManager, "hnItemPress");
-					list.removeEventListener(cType, ListManager, "hnItemClick");
-				}
-				
-				listDic = {};
-			}
+			else	listDic = { };
+		}
+
+		
+		set = function($key:String, $datas:Array) {
+			var i, a:Array = listDic[$key];
+			
+			DataProvider.initialize($datas);
+			valueDic[$key] = $datas;
+			
+			for (i in a)	a[i].dataProvider = $datas;
 		}
 		
 		
-		hnItemPress = function($e) {
-			var list:CoreList, data = $e.item, content:MovieClip, startPoint;
-			
-			if (data) {
-				LoadManager.load(mEvt["content"], data.src, hnItemLoadComplete, ListManager);
-				
-				list = $e.target;
-				fromSlot = $e.renderer;
-				
-				startPoint = Util.point;
-				startPoint.x = 0;
-				startPoint.y = 0;
-				
-				content = fromSlot["content"];
-				
-				content.localToGlobal(startPoint);
-				
-				point.x = content._xmouse;
-				point.y = content._ymouse;
-				content.localToGlobal(point);
-				
-				point.x -= startPoint.x;
-				point.y -= startPoint.y;
-				
-				Mouse.addListener(ListManager);
-			}
-		}
-		
-		
-		hnItemLoadComplete = function($content:MovieClip) {
-			$content._width = 64;
-			$content._height = 64;
-			mEvt._visible = true;
-			mEvt.onEnterFrame = Delegate.create(ListManager, hnItemDrag);
-		}
-		
-		
-		hnItemDrag = function() {
-			var c:MovieClip = mEvt["content"], p = point;
-			
-			c._x = _root._x + p.x;
-			c._y = _root._y + p.y;
-		}
-		
-		
-		hnMouseUp = function() {
-			var targetSlot:MovieClip = eval(arguments[1]), list:CoreList, e;
-			
-			Mouse.removeListener(ListManager);
-			
-			mEvt._visible = false;
-			LoadManager.unLoad(mEvt["content"]);
-			
-			while (targetSlot) {
-				if (targetSlot.owner) {
-					list = targetSlot.owner;
-					break;
-				}
-				
-				targetSlot = targetSlot._parent;
-			}
-			
-			if (list) {
-				e = { type:"itemDrag", target:ListManager, fromListID:fromSlot.owner["id"], fromIndex:fromSlot.index, targetListID:list["id"], targetIndex:targetSlot.index, item:fromSlot.data };
-			}
-		}
-		
-		
-		hnItemClick = function($e) {
-			var slot:ListItemRenderer = $e.renderer, listID = slot.owner["id"], index:Number = $e.index, data = $e.item;
-		}
-		
-		
-		setList = function($id, $datas) {
-			var a:Array, i;
-			
-			if ($datas) {
-				if (dataDic[$id] == $datas)	$datas.invalidate();
-				else {
-					DataProvider.initialize($datas);
-					dataDic[$id] = $datas;
-					
-					a = listDic[$id];
-					for (i in a)	a[i].dataProvider = $datas;
-				}
-			}
-			else {
-				dataDic[$id] = $datas;
-				a = listDic[$id];
-				for (i in a)	a[i].dataProvider = $datas;
-			}
-		}
-		
-		
-		getList = function() {
-			return	dataDic[arguments[0]];
-		}
-		
-		
-		setData = function($id, $index:Number, $data) {
-			var datas:Array = dataDic[$id];
-			
-			if (datas) {
-				datas[$index] = $data;
-				datas.invalidate();
-			}
-			else {
-				datas = [];
-				datas[$index] = $data;
-				
-				setList($id, datas);
-			}
+		get = function() {
+			return	valueDic[arguments[0]];
 		}
 	}
 		
 		
-	public static function add($id, $list:CoreList):Void {
+	public static function add($key:String, $list:CoreList):Void {
 		_init();
 		add.apply(ListManager, arguments);
 	}
@@ -204,20 +62,14 @@ class com.minarto.manager.ListManager extends EventDispatcher {
 	}
 		
 		
-	public static function setList($id, $datas:Array):Void {
+	public static function set($key:String, $datas:Array):Void {
 		_init();
-		setList($id, $datas);
+		ListManager.set($key, $datas);
 	}
 		
 		
-	public static function getList($id):Array {
+	public static function get($key:String):Array {
 		_init();
-		return	getList($id);
-	}
-		
-		
-	public static function setData($id, $index:Number, $data):Void {
-		_init();
-		setData($id, $index, $data);
+		return	ListManager.get($key);
 	}
 }
