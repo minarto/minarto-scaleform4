@@ -35,12 +35,12 @@ class com.minarto.manager.ListManager {
 
 		
 		set = function($key:String, $datas:Array) {
-			var i, a:Array = listDic[$key];
+			var a:Array = listDic[$key];
 			
 			DataProvider.initialize($datas);
 			valueDic[$key] = $datas;
 			
-			for (i in a)	a[i].dataProvider = $datas;
+			for ($key in a)	a[$key].dataProvider = $datas;
 		}
 		
 		
