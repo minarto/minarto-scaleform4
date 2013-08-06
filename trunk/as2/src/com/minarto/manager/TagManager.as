@@ -4,13 +4,8 @@
 		
 		add = function($tag:String, $convert) {
 			if (isNaN($convert)) {	//	is text
-				if ($tag.indexOf("STR_ICON=", 0) > - 1) {
-					arguments[0] = "img";
-					arguments[3] = "<img src='" + $convert + "' align='baseline' vspace='-1'>";
-				}
-				else {
-					arguments[0] = "txt";
-				}
+				arguments[0] = "img";
+				arguments[3] = "<img src='" + $convert + "' align='baseline' vspace='-1'>";
 				dic["{" + $tag + "}"] = arguments;
 			}
 			else {	//	is color
@@ -36,12 +31,6 @@
 						case "img":
 							endIndex = startIndex + tag.length;
 							label = arg[3];
-							$msg = $msg.substring(0, startIndex) + label + $msg.substring(endIndex + 1);
-							break;
-							
-						case "txt":
-							endIndex = startIndex + tag.length;
-							label = arg[1];
 							$msg = $msg.substring(0, startIndex) + label + $msg.substring(endIndex + 1);
 							break;
 							
@@ -72,28 +61,6 @@
 			return	$msg;
 		}
 		
-		add("loadImgTag", 0xFFFFFF, "barunson.manager.TagManager.showLoadImgTag");
-		add("AM", 0xFFFFFF, "barunson.manager.TagManager.showWayFindingTag");
-		add("item", 0xFF0000);
-		
-		add("STR_ICON=SHIFT", "TAG_SHIFT");
-		add("STR_ICON=ALT", "TAG_ALT");
-		add("STR_ICON=CTRL", "TAG_CTRL");
-		add("STR_ICON=MOUSE_LB", "TAG_MOUSE_LB");
-		add("STR_ICON=MOUSE_RB", "TAG_MOUSE_RB");
-		add("STR_ICON=GOLD", "TAG_GOLD");
-		
-		add("ROMAN_LEVEL=1", "Ⅰ");
-		add("ROMAN_LEVEL=2", "Ⅱ");
-		add("ROMAN_LEVEL=3", "Ⅲ");
-		add("ROMAN_LEVEL=4", "Ⅳ");
-		add("ROMAN_LEVEL=5", "Ⅴ");
-		add("ROMAN_LEVEL=6", "Ⅵ");
-		add("ROMAN_LEVEL=7", "Ⅶ");
-		add("ROMAN_LEVEL=8", "Ⅷ");
-		add("ROMAN_LEVEL=9", "Ⅸ");
-		add("ROMAN_LEVEL=10", "Ⅹ");
-		
 		delete	init;
 	}
 	
@@ -113,19 +80,5 @@
 	public static function parse($msg:String):String {
 		init();
 		return	parse($msg);
-	}
-	
-	
-	
-	/**
-	 * 태그정보를 클라로 디스패치
-	 * 
-	 * @param	tagName
-	 */
-	public static function showLoadImgTag(tagId:String):Void {
-		ExternalInterface.call("showLoadImgTag", tagId);
-	}
-	public static function showWayFindingTag(tagId:String):Void {
-		ExternalInterface.call("showWayFindingTag", tagId);
 	}
 }
