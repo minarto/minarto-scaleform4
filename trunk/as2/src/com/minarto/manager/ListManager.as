@@ -4,43 +4,43 @@ import gfx.data.DataProvider;
 
 class com.minarto.manager.ListManager {
 	private static function _init() {
-		var valueDic = { }, listDic = {};
+		var valueDic = { }, listDic:Array = [];
 		
 		add = function($key:String, $list:CoreList) {
-			var a:Array = listDic[$key];
-			if (!a)	listDic[$key] = a = [];
-			a.push($list);
+			var i;
+			
+			$list.__listKey__ = $key;
+			for (i in listDic)	if (listDic[i] == $list)	return;
+			
+			listDic.push($list);
 			
 			$list.dataProvider = valueDic[$key];
 		}
 		
 		
 		del = function($list:CoreList) {
-			var a:Array, i;
+			var i;
 			
-			if ($list) {
-				a = listDic[$key]
-				if (a) {
-					for (i in a) {
-						if (a[i] == $list) {
-							a.splice(i, 1);
-							if (!a.length)	delete	listDic[$key];
-							return;
-						}
-					}
+			for (i in listDic) {
+				if (listDic[i] == $list) {
+					listDic.splice(i, 1);
+					return;
 				}
 			}
-			else	listDic = { };
+			else	listDic = [];
 		}
 
 		
 		set = function($key:String, $datas:Array) {
-			var a:Array = listDic[$key];
+			var i, list:CoreList;
 			
 			DataProvider.initialize($datas);
 			valueDic[$key] = $datas;
 			
-			for ($key in a)	a[$key].dataProvider = $datas;
+			for (i in listDic) {
+				list = listDic[i];
+				if (list.__listKey__ == $key)	list.dataProvider = $datas;
+			}
 		}
 		
 		
@@ -66,8 +66,8 @@ class com.minarto.manager.ListManager {
 		_init();
 		ListManager.set($key, $datas);
 	}
-		
-		
+	
+	
 	public static function get($key:String):Array {
 		_init();
 		return	ListManager.get($key);
