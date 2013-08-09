@@ -3,7 +3,7 @@
 
 class com.minarto.data.Binding {
 	public static function init($delegateObj):Void {
-		_init();
+		if(_init)	_init();
 		
 		if ($delegateObj)	$delegateObj.setValue = set;
 		else ExternalInterface.call("Binding", Binding);
@@ -15,7 +15,7 @@ class com.minarto.data.Binding {
 	public static function dateInit($key:String, $interval:Number):Void {
 		var keys = { };
 		
-		_init();
+		if(_init)	_init();
 		
 		dateInit = function($key, $interval) {
 			clearInterval(keys[$key]);
