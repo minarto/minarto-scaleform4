@@ -18,20 +18,21 @@ class com.minarto.ui.KeyBinding {
 	
 	
 	private static function _init() {
-		var keyDic = { }, bindingDic = {}, lastKey:Number;
+		var keyDic = { }, bindingDic = {}, lastKeys = {};
 		
 		Key.addListener(KeyBinding);
 		
 		onKeyDown = function() {
-			var k:Number, d, bindingKey:String, a:Array, i:Number, l:Number, arg:Array;
+			var k:Number, d, lastKey:String, bindingKey:String, a:Array, i:Number, l, arg:Array;
 			
 			d = FocusHandler.instance.getFocus();
 			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
 			
 			k = Key.getCode();
-			if (lastKey == k)	return;
+			if (lastKeys[k])	return;
 			
-			d = isNaN(lastKey) ? keyDic["1." + k] : keyDic["1." + k + "." + lastKey];
+			//	눌러진 키로 검색
+			d = keyDic["1." + k];
 			for (bindingKey in d) {
 				a = bindingDic[bindingKey];
 				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
@@ -40,8 +41,18 @@ class com.minarto.ui.KeyBinding {
 				}
 			}
 			
-			//	반대순서 조합으로 다시검색하여 실행
-			if (!isNaN(lastKey)) {
+			//	키 조합으로 검색
+			for (lastKey in lastKeys) {
+				d = keyDic["1." + k + "." + lastKey];
+				for (bindingKey in d) {
+					a = bindingDic[bindingKey];
+					for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+						arg = a[i];
+						arg[1].apply(arg[2], arg[3]);
+					}
+				}
+				
+				//	키 반대 조합으로 다시 검색
 				d = keyDic["1." + lastKey + "." + k];
 				for (bindingKey in d) {
 					a = bindingDic[bindingKey];
@@ -52,16 +63,19 @@ class com.minarto.ui.KeyBinding {
 				}
 			}
 			
-			lastKey = k;
+			lastKeys[k] = 1;
 		}
 		
 		onKeyUp = function() {
-			var d, bindingKey:String, a:Array, i:Number, l:Number, arg:Array;
+			var d, bindingKey:String, a:Array, i, l:Number, arg:Array;
 			
 			d = FocusHandler.instance.getFocus();
 			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
 			
-			d = keyDic["." + Key.getCode()];
+			d = Key.getCode();
+			delete	lastKeys[d];
+			
+			d = keyDic["." + d];
 			for (bindingKey in d) {
 				a = bindingDic[bindingKey];
 				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
@@ -69,8 +83,6 @@ class com.minarto.ui.KeyBinding {
 					arg[1].apply(arg[2], arg[3]);
 				}
 			}
-			
-			lastKey = undefined;
 		}
 		
 		
@@ -102,7 +114,7 @@ class com.minarto.ui.KeyBinding {
 							}
 						}
 					}
-				}	else	$combi = undefined;
+				}	else	$combi = NaN;
 				
 				if ($isDown)	k = isNaN($combi) ? "1." + $key : "1." + $key + "." + $combi;
 				else	k = "." + $key;
