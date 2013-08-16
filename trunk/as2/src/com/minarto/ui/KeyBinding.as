@@ -101,8 +101,6 @@ class com.minarto.ui.KeyBinding {
 									$combi = Key.ALT;
 									break;
 								case "CONTROL" :
-									$combi = Key.CONTROL;
-									break;
 								case "CTRL" :
 									$combi = Key.CONTROL;
 									break;
