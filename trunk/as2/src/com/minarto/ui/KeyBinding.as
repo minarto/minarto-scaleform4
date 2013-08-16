@@ -154,7 +154,7 @@ class com.minarto.ui.KeyBinding {
 		
 		
 		del = function($bindingKey:String, $handler:Function, $scope) {
-			var a:Array = i, arg:Array;
+			var a:Array, i, arg:Array;
 			
 			if ($bindingKey) {
 				a = bindingDic[$bindingKey];
