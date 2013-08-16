@@ -7,129 +7,8 @@ class com.minarto.ui.KeyBinding {
 	private static var onKeyDown:Function, onKeyUp:Function;
 	
 	
-	private static function _init() {
-		var combi = {}, keyDic = { }, downDic = {}, upDic = {};
-		
-		Key.addListener(KeyBinding);
-		
-		onKeyDown = function() {
-			var k:Number, a:Array, i, arg;
-			
-			arg = FocusHandler.instance.getFocus();
-			if (arg instanceof TextField || arg instanceof TextInput || arg instanceof TextArea) return;
-			
-			k = Key.getCode();
-			switch(k) {
-				case Key.CONTROL :	combi[k] = 1;	break;
-				case Key.ALT :		combi[k] = 1;	break;
-				case Key.SHIFT :	combi[k] = 1;	break;
-			}
-			
-			for (i in combi) {
-				a = downDic[keyDic[i + "," + k]];
-				for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
-					arg = a[i];
-					arg[2].apply(arg[3], arg[4]);
-				}
-				return;
-			}
-			
-			a = downDic[keyDic[k]];
-			for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
-				arg = a[i];
-				arg[2].apply(arg[3], arg[4]);
-			}
-		}
-		
-		onKeyUp = function() {
-			var k:Number, a:Array, i, arg;
-			
-			arg = FocusHandler.instance.getFocus();
-			if (arg instanceof TextField || arg instanceof TextInput || arg instanceof TextArea) return;
-			
-			k = Key.getCode();
-			switch(k) {
-				case Key.CONTROL :	delete	combi[k];	break;
-				case Key.ALT :		delete	combi[k];	break;
-				case Key.SHIFT :	delete	combi[k];	break;
-			}
-			
-			for (i in combi) {
-				a = upDic[keyDic[i + "," + k]];
-				for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
-					arg = a[i];
-					arg[2].apply(arg[3], arg[4]);
-				}
-				return;
-			}
-			
-			a = upDic[keyDic[k]];
-			for (i = 0, k = a ? a.length : 0; i < k; ++ i) {
-				arg = a[i];
-				arg[2].apply(arg[3], arg[4]);
-			}
-		}
-		
-		
-		set = function($bindingKey:String, $key, $combi:Number) {
-			if ($bindingKey) {
-				if (typeof($key) === "string")	$key = $key.toUpperCase().charCodeAt(0);
-				keyDic[$combi ? $combi + "," + $key : $key] = $bindingKey;
-			}
-			else				keyDic = { };
-		};
-		
-		
-		add = function($bindingKey:String, $isDown, $handler:Function, $scope) {
-			var arg, a:Array;
-			
-			arguments[4] = arguments.slice(4);
-			
-			arg = $isDown ? downDic : upDic;
-			a = arg[$bindingKey];
-			if (a) {
-				for ($bindingKey in a) {
-					arg = a[$bindingKey];
-					if (arg[2] === $handler && arg[3] == $scope) {
-						a[$bindingKey] = arguments;
-						return;
-					}
-				}
-				a.push(arguments);
-			}
-			else	arg[$bindingKey] = a = [arguments];
-		};
-		
-		
-		del = function($bindingKey:String, $isDown, $handler:Function, $scope):Void {
-			var a:Array, i, arg;
-			
-			if ($bindingKey) {
-				a = $isDown ? downDic[$bindingKey] : upDic[$bindingKey];
-				for (i in a) {
-					arg = a[i];
-					if (arg[2] === $handler && arg[3] == $scope) {
-						a.splice(i, 1);
-						if (!a.length) {
-							if ($isDown)	delete	downDic[$bindingKey];
-							else			delete	upDic[$bindingKey];
-						}					
-						return;
-					}
-				}
-			}
-			else {
-				downDic = {};
-				upDic = {};
-			}
-		};
-		
-		delete	_init;
-	}
-	
-	
 	public static function init($delegateObj):Void {
-		_init();
+		if(_init)	_init();
 		
 		if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
 		else				ExternalInterface.call("KeyBinding", KeyBinding);
@@ -138,20 +17,172 @@ class com.minarto.ui.KeyBinding {
 	}
 	
 	
-	public static function set($bindingKey:String, $key, $combi:Number):Void {
-		_init();
-		set.apply(KeyBinding, arguments);
+	private static function _init() {
+		var keyDic = { }, bindingDic = {}, lastKey:Number;
+		
+		Key.addListener(KeyBinding);
+		
+		onKeyDown = function() {
+			var k:Number, d, bindingKey:String, a:Array, i:Number, l:Number, arg:Array;
+			
+			d = FocusHandler.instance.getFocus();
+			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
+			
+			k = Key.getCode();
+			if (lastKey == k)	return;
+			
+			d = isNaN(lastKey) ? keyDic["1." + k] : keyDic["1." + k + "." + lastKey];
+			for (bindingKey in d) {
+				a = bindingDic[bindingKey];
+				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+					arg = a[i];
+					arg[1].apply(arg[2], arg[3]);
+				}
+			}
+			
+			//	반대순서 조합으로 다시검색하여 실행
+			if (!isNaN(lastKey)) {
+				d = keyDic["1." + lastKey + "." + k];
+				for (bindingKey in d) {
+					a = bindingDic[bindingKey];
+					for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+						arg = a[i];
+						arg[1].apply(arg[2], arg[3]);
+					}
+				}
+			}
+			
+			lastKey = k;
+		}
+		
+		onKeyUp = function() {
+			var d, bindingKey:String, a:Array, i:Number, l:Number, arg:Array;
+			
+			d = FocusHandler.instance.getFocus();
+			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
+			
+			d = keyDic["." + Key.getCode()];
+			for (bindingKey in d) {
+				a = bindingDic[bindingKey];
+				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
+					arg = a[i];
+					arg[1].apply(arg[2], arg[3]);
+				}
+			}
+			
+			lastKey = undefined;
+		}
+		
+		
+		set = function($bindingKey:String, $isDown:Boolean, $key, $combi) {
+			var d, k:String;
+			
+			if ($bindingKey) {
+				if (typeof($key) == "string")	$key = $key.toUpperCase().charCodeAt(0);
+				
+				if ($isDown) {
+					if (arguments.length > 3) {
+						if (typeof($combi) == "string") {
+							$combi = $combi.toUpperCase();
+							switch($combi) {
+								case "ALT" :
+									$combi = Key.ALT;
+									break;
+								case "CONTROL" :
+									$combi = Key.CONTROL;
+									break;
+								case "CTRL" :
+									$combi = Key.CONTROL;
+									break;
+								case "SHIFT" :
+									$combi = Key.SHIFT;
+									break;
+								default :
+									$combi = $combi.toUpperCase().charCodeAt(0);
+							}
+						}
+					}
+				}	else	$combi = undefined;
+				
+				if ($isDown)	k = isNaN($combi) ? "1." + $key : "1." + $key + "." + $combi;
+				else	k = "." + $key;
+				
+				d = keyDic[k];
+				if (!d)	keyDic[k] = d = {};
+				d[$bindingKey] = 1;
+			}
+			else	keyDic = { };
+		};
+		
+		
+		get = function($bindingKey:String) {
+			var key:String, a:Array = [];
+			
+			for (key in keyDic)	if (keyDic[key][$bindingKey])	a.push(key.split("."));
+			
+			return	a;
+		};
+		
+		
+		add = function($bindingKey:String, $handler:Function, $scope) {
+			var a:Array = bindingDic[$bindingKey], i, arg:Array;
+			
+			arguments[3] = arguments.slice(3);
+			arguments.length  = 4;
+			
+			if (a) {
+				for (i in a) {
+					arg = a[i];
+					if (arg[1] == $handler && arg[2] == $scope) {
+						a[i] = arguments;
+						return;
+					}
+					a.push(arguments);
+				}
+			}	else	bindingDic[$bindingKey] = a = [arguments];
+		};
+		
+		
+		del = function($bindingKey:String, $handler:Function, $scope) {
+			var a:Array = i, arg:Array;
+			
+			if ($bindingKey) {
+				a = bindingDic[$bindingKey];
+				for (i in a) {
+					arg = a[i];
+					if (arg[1] == $handler && arg[2] == $scope) {
+						a.splice(i, 1);
+						if (!a.length)	delete	bindingDic[$bindingKey];
+						return;
+					}
+				}
+			}	else	bindingDic = {};
+		};
+		
+		delete	_init;
 	}
 	
 	
-	public static function add($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Void {
+	public static function set($bindingKey:String, $isDown:Boolean, $key, $combi:Number):Void {
+		_init();
+		KeyBinding.set($bindingKey, $isDown, $key, $combi);
+	}
+	
+	
+	public static function get($bindingKey:String):Array {
+		_init();
+		return	KeyBinding.get($bindingKey);
+	}
+	
+	
+	public static function add($bindingKey:String, $handler:Function, $scope):Void {
 		_init();
 		add.apply(KeyBinding, arguments);
 	}
 	
 	
-	public static function del($bindingKey:String, $isDown:Boolean, $handler:Function, $scope):Void {
+	public static function del($bindingKey:String, $handler:Function, $scope):Void {
 		_init();
-		del.apply(KeyBinding, arguments);
+		del(KeyBinding, $handler, $scope);
 	}
 }
