@@ -18,7 +18,7 @@ package com.minarto.data {
 		 *  
 		 */		
 		public static function init($delegateObj:*):void{
-			if ($delegateObj)	$delegateObj.setValue = set;
+			if ($delegateObj)	$delegateObj.setValue = Binding.set;
 			else ExternalInterface.call("Binding", Binding);
 		}
 		
