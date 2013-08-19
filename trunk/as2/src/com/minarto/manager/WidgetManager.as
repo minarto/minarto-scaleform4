@@ -11,8 +11,9 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		
 		Mouse.addListener(WidgetManager);
 		
-		init = function() {
-			container = arguments[0];
+		init = function($container:MovieClip) {
+			if ($container)	container = $container;
+			return	container;
 		}
 		
 		
@@ -177,16 +178,16 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	/**
 	 * 
 	 */
-	public static function init($container:MovieClip):Void {
+	public static function init($container:MovieClip):MovieClip {
 		_init();
-		init.apply(WidgetManager, arguments);
+		return	init($container);
 	}
 	
 	
 	/**
 	 * 
 	 */
-	public static function add($id, $widget, $onComplete:Function, $scope, $onError:Function, $onErrorScope) {
+	public static function add($id, $widget, $onComplete:Function, $scope, $onError:Function, $onErrorScope):MovieClip {
 		_init();
 		return	add($id, $widget, $onComplete, $scope, $onError, $onErrorScope);
 	}
@@ -200,7 +201,7 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	
 	public static function get($id):MovieClip {
 		_init();
-		return	get($id);
+		return	WidgetManager.get($id);
 	}
 	
 	
