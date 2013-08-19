@@ -23,7 +23,7 @@ class com.minarto.ui.KeyBinding {
 		Key.addListener(KeyBinding);
 		
 		onKeyDown = function() {
-			var k:Number, d, lastKey:String, bindingKey:String, a:Array, i:Number, l, arg:Array;
+			var k:Number, d, lastKey:String, bindingKey:String, a:Array, i:Number, l:Number, arg:Array;
 			
 			d = FocusHandler.instance.getFocus();
 			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
@@ -85,6 +85,11 @@ class com.minarto.ui.KeyBinding {
 			}
 		}
 		
+		
+		isOn = function($on:Boolean) {
+			if ($on)	Key.addListener(KeyBinding);
+			else	Key.removeListener(KeyBinding);
+		}
 		
 		set = function($bindingKey:String, $isDown:Boolean, $key, $combi) {
 			var d, k:String;
@@ -173,7 +178,13 @@ class com.minarto.ui.KeyBinding {
 	}
 	
 	
-	public static function set($bindingKey:String, $isDown:Boolean, $key, $combi:Number):Void {
+	public static function isOn($on:Boolean):Void {
+		_init();
+		isOn($on);
+	}
+	
+	
+	public static function set($bindingKey:String, $isDown:Boolean, $key, $combi):Void {
 		_init();
 		KeyBinding.set($bindingKey, $isDown, $key, $combi);
 	}
@@ -193,6 +204,6 @@ class com.minarto.ui.KeyBinding {
 	
 	public static function del($bindingKey:String, $handler:Function, $scope):Void {
 		_init();
-		del(KeyBinding, $handler, $scope);
+		del($bindingKey, $handler, $scope);
 	}
 }
