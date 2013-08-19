@@ -5,10 +5,10 @@ class com.minarto.data.Binding {
 	public static function init($delegateObj):Void {
 		if(_init)	_init();
 		
-		if ($delegateObj)	$delegateObj.setValue = set;
+		if ($delegateObj)	$delegateObj.setValue = Binding.set;
 		else ExternalInterface.call("Binding", Binding);
 		
-		delete Binding.init;
+		delete init;
 	}
 	
 	
@@ -17,7 +17,7 @@ class com.minarto.data.Binding {
 		
 		if(_init)	_init();
 		
-		dateInit = function($key, $interval) {
+		dateInit = function($key:String, $interval:Number) {
 			clearInterval(keys[$key]);
 			
 			if ($interval) {
@@ -37,7 +37,7 @@ class com.minarto.data.Binding {
 		var valueDic = { }, bindingDic = { };
 		
 		
-		set = function ($key, $value) {
+		Binding.set = function ($key, $value) {
 			var i:Number, a:Array = bindingDic[$key], item, arg:Array;
 
 			valueDic[$key] = $value;
@@ -116,8 +116,8 @@ class com.minarto.data.Binding {
 		}
 		
 		
-		get = function() {
-			return	valueDic[arguments[0]];
+		Binding.get = function($key:String) {
+			return	valueDic[$key];
 		}
 		
 		
