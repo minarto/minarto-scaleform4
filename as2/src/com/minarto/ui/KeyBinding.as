@@ -87,39 +87,47 @@ class com.minarto.ui.KeyBinding {
 		}
 		
 		set = function($bindingKey:String, $isDown:Boolean, $key, $combi) {
-			var d, k:String;
-			
 			if ($bindingKey) {
-				if (typeof($key) == "string")	$key = $key.toUpperCase().charCodeAt(0);
-				
-				if ($isDown) {
-					if (arguments.length > 3) {
-						if (typeof($combi) == "string") {
-							$combi = $combi.toUpperCase();
-							switch($combi) {
-								case "ALT" :
-									$combi = Key.ALT;
-									break;
-								case "CONTROL" :
-								case "CTRL" :
-									$combi = Key.CONTROL;
-									break;
-								case "SHIFT" :
-									$combi = Key.SHIFT;
-									break;
-								default :
-									$combi = $combi.toUpperCase().charCodeAt(0);
-							}
+				if (arguments.length > 1) {
+					if (typeof($key) == "string") {
+						$key = $key.toUpperCase();
+						switch($key) {
+							case "CTRL" :
+								$key = Key.CONTROL;
+								break;
+							case "ESC" :
+								$key = Key.ESCAPE;
+								break;
+							default :
+								$key = Key[$key] || $key.charCodeAt(0);
 						}
 					}
-				}	else	$combi = NaN;
-				
-				if ($isDown)	k = isNaN($combi) ? "1." + $key : "1." + $key + "." + $combi;
-				else	k = "." + $key;
-				
-				d = keyDic[k];
-				if (!d)	keyDic[k] = d = {};
-				d[$bindingKey] = 1;
+					
+					if ($isDown) {
+						if (arguments.length > 3) {
+							if (typeof($combi) == "string") {
+								$combi = $combi.toUpperCase();
+								switch($combi) {
+									case "CTRL" :
+										$combi = Key.CONTROL;
+										break;
+									case "ESC" :
+										$combi = Key.ESCAPE;
+										break;
+									default :
+										$combi = Key[$combi] || $combi.charCodeAt(0);
+								}
+							}
+						}
+						
+						$key = isNaN($combi) ? "1." + $key : "1." + $key + "." + $combi;
+					} else	$key = "." + $key;
+					
+					$combi = keyDic[$key];
+					if (!$combi)	keyDic[$key] = $combi = {};
+					$combi[$bindingKey] = 1;
+				}
+				else	for ($key in keyDic)	delete	keyDic[$key][$bindingKey];
 			}
 			else	keyDic = { };
 		};
