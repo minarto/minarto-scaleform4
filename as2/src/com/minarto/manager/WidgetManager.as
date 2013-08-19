@@ -22,35 +22,36 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		}
 		
 		
-		add = function($id, $widget, $onComplete:Function, $scope) {
-			var w:MovieClip, d:Number, f:Function;
+		add = function($id, $widget, $onComplete:Function, $scope, $onError:Function, $onErrorScope) {
+			var w:MovieClip, d:Number, f0:Function, f1:Function;
 			
 			if (typeof($widget) == "movieclip") {
+				w = WidgetManager.get($id);
+				if (w != $widget)	del($id);
 				w = $widget;
-				w.widgetID = $id;
+				w.__widgetID__ = $id;
+				dic[$id] = w;
 				setHandler(w);
 			}
 			else if (typeof($widget) == "string") {
 				d = container.getNextHighestDepth();
+				w = WidgetManager.get($id);
+				if(w)		del($id);
+				w = container.createEmptyMovieClip("w" + d, d);
 				
-				w = container.attachMovie($widget, "w" + d, d);
-				if (w) {
-					w.widgetID = $id;
+				f0 = function() {
+					w.__widgetID__ = $id;
+					dic[$id] = w;
 					setHandler(w);
+					if ($onComplete)	$onComplete.apply($scope);
 				}
-				else {
-					w = container.createEmptyMovieClip("w" + d, d);
-					
-					f = function() {
-						w.widgetID = $id;
-						setHandler(w);
-						if ($onComplete)	$onComplete.apply($scope);
-					}
-					LoadManager.load(w, $widget, f, WidgetManager, f, WidgetManager);
+				
+				f1 = function() {
+					w.removeMovieClip();
+					if ($onError)	$onError.apply($onErrorScope);
 				}
+				LoadManager.load(w, $widget, f0, WidgetManager, f1, WidgetManager);
 			}
-			
-			dic[$id] = w;
 			
 			return	w;
 		}
@@ -185,9 +186,9 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	/**
 	 * 
 	 */
-	public static function add($id, $widget, $onComplete:Function, $scope) {
+	public static function add($id, $widget, $onComplete:Function, $scope, $onError:Function, $onErrorScope) {
 		_init();
-		return	add.apply(WidgetManager, arguments);
+		return	add($id, $widget, $onComplete, $scope, $onError, $onErrorScope);
 	}
 	
 	
