@@ -1,5 +1,4 @@
-﻿import flash.external.ExternalInterface;
-import gfx.controls.*;
+﻿import gfx.controls.*;
 import gfx.managers.FocusHandler;
 
 
@@ -7,12 +6,8 @@ class com.minarto.ui.KeyBinding {
 	private static var onKeyDown:Function, onKeyUp:Function;
 	
 	
-	public static function init($delegateObj):Void {
+	public static function init():Void {
 		if(_init)	_init();
-		
-		if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
-		else				ExternalInterface.call("KeyBinding", KeyBinding);
-		
 		delete init;
 	}
 	
