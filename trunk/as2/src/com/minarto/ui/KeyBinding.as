@@ -116,6 +116,42 @@ class com.minarto.ui.KeyBinding {
 							case "ESC" :
 								$key = Key.ESCAPE;
 								break;
+							case "F1" :
+								$key = 112;
+								break;
+							case "F2" :
+								$key = 113;
+								break;
+							case "F3" :
+								$key = 114;
+								break;
+							case "F4" :
+								$key = 115;
+								break;
+							case "F5" :
+								$key = 116;
+								break;
+							case "F6" :
+								$key = 117;
+								break;
+							case "F7" :
+								$key = 118;
+								break;
+							case "F8" :
+								$key = 119;
+								break;
+							case "F9" :
+								$key = 120;
+								break;
+							case "F10" :
+								$key = 121;
+								break;
+							case "F11" :
+								$key = 122;
+								break;
+							case "F12" :
+								$key = 123;
+								break;
 							default :
 								$key = Key[$key] || $key.charCodeAt(0);
 						}
@@ -134,6 +170,42 @@ class com.minarto.ui.KeyBinding {
 										break;
 									case "ESC" :
 										$combi = Key.ESCAPE;
+										break;
+									case "F1" :
+										$combi = 112;
+										break;
+									case "F2" :
+										$combi = 113;
+										break;
+									case "F3" :
+										$combi = 114;
+										break;
+									case "F4" :
+										$combi = 115;
+										break;
+									case "F5" :
+										$combi = 116;
+										break;
+									case "F6" :
+										$combi = 117;
+										break;
+									case "F7" :
+										$combi = 118;
+										break;
+									case "F8" :
+										$combi = 119;
+										break;
+									case "F9" :
+										$combi = 120;
+										break;
+									case "F10" :
+										$combi = 121;
+										break;
+									case "F11" :
+										$combi = 122;
+										break;
+									case "F12" :
+										$combi = 123;
 										break;
 									default :
 										$combi = Key[$combi] || $combi.charCodeAt(0);
