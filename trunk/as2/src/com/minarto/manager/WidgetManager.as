@@ -19,7 +19,6 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 		
 		setHandler = function($widget:MovieClip) {
 			$widget.addEventListener(EventTypes.DRAG_BEGIN, this, "onDragStart");
-			$widget.addEventListener(EventTypes.HIDE, this, "onClose");
 		}
 		
 		
@@ -141,41 +140,6 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 			
 			return	w;
 		}
-		
-		
-		open = function():MovieClip {
-			var w:MovieClip = WidgetManager.get($id);
-			
-			if (w) {
-				if(w.open)	w.open();
-				w._visible = true;
-			}
-			
-			return	w;
-		}
-		
-		close = function($id):MovieClip {
-			var w:MovieClip = WidgetManager.get($id);
-			
-			if (w) {
-				if (w.close)	w.close();
-				else	w._visible = false;
-			}
-			
-			return	w;
-		}
-		
-		
-		onClose = function():Void {
-			var w:MovieClip = arguments[0].target, id;
-			
-			for (id in dic) {
-				if (dic[id] == w) {
-					close(w.id);
-					return;
-				}
-			}
-		}
 	}
 	
 	
@@ -212,17 +176,5 @@ class com.minarto.manager.WidgetManager extends EventDispatcher {
 	public static function setIndex($widget, $index:Number):MovieClip {
 		_init();
 		return	setIndex($widget, $index);
-	}
-	
-	
-	public static function open($id):MovieClip {
-		_init();
-		return	open($id);
-	}
-	
-	
-	public static function close($id):Void {
-		_init();
-		return	close($id);
 	}
 }

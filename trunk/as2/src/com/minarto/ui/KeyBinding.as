@@ -13,82 +13,74 @@ class com.minarto.ui.KeyBinding {
 	
 	
 	private static function _init() {
-		var keyDic = { }, bindingDic = { }, lastKeys = { }, bindingKeys = { }, 
-			keyList = { CTRL:Key.CONTROL, ALT:Key.ALT, ESC:Key.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123};
+		var keyDic = { }, bindingDic = { }, lastKeys:Array = [], bindingKeys = { }, 
+			keyList = { CTRL:Key.CONTROL, ALT:Key.ALT, ESC:Key.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123 },
+			lastKey:Number;
 		
 		Key.addListener(KeyBinding);
 		
 		onKeyDown = function() {
-			var k, d, lastKey:String, bindingKey:String, a:Array, i:Number, l:Number, item:Array, arg:Array;
+			var k:Number, d, bindingKey:String, a:Array, i, l:Number, item:Array, j:Number;
 			
 			d = FocusHandler.instance.getFocus();
 			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
 			
 			k = Key.getCode();
-			if (lastKeys[k])	return;
-			
-			k = "1." + k;
-			//	눌러진 키로 검색
-			d = keyDic[k];
-			for (bindingKey in d) {
-				a = bindingDic[bindingKey];
-				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
-					item = a[i];
-					arg = item[3];
-					arg[0] = k;
-					item[1].apply(item[2], arg);
-				}
-			}
-			
+			if (lastKey == k)	return;
+
 			//	키 조합으로 검색
-			for (lastKey in lastKeys) {
-				k = "1." + k + "." + lastKey;
-				d = keyDic[k];
-				for (bindingKey in d) {
-					a = bindingDic[bindingKey];
-					for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
-						item = a[i];
-						arg = item[3];
-						arg[0] = k;
-						item[1].apply(item[2], arg);
+			l = lastKeys.length;
+			if (l) {
+				for (i in lastKeys) {
+					d = keyDic["1." + k + "." + lastKeys[i]];
+
+					for (bindingKey in d) {
+						a = bindingDic[bindingKey];
+						for (j = 0, l = a ? a.length : 0; j < l; ++ j) {
+							item = a[j];
+							item[1].apply(item[2], item[3]);
+						}
 					}
 				}
-				
-				//	키 반대 조합으로 다시 검색
-				k = "1." + lastKey + "." + k;
-				d = keyDic[k];
+			}
+			else {
+				d = keyDic["1." + k];
+
 				for (bindingKey in d) {
 					a = bindingDic[bindingKey];
-					for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
-						item = a[i];
-						arg = item[3];
-						arg[0] = k;
-						item[1].apply(item[2], arg);
+					for (j = 0, l = a ? a.length : 0; j < l; ++ j) {
+						item = a[j];
+						item[1].apply(item[2], item[3]);
 					}
 				}
 			}
 			
-			lastKeys[k] = 1;
+			lastKey = k;
+			lastKeys.push(k);
 		}
 		
 		onKeyUp = function() {
-			var d, bindingKey:String, a:Array, i:Number, l:Number, item:Array, arg:Array, k:String;
+			var d, bindingKey:String, a:Array, i, l:Number, item:Array, k:Number;
 			
+			lastKey = NaN;
 			d = FocusHandler.instance.getFocus();
 			if (d instanceof TextField || d instanceof TextInput || d instanceof TextArea) return;
 			
-			d = Key.getCode();
-			delete	lastKeys[d];
+			k = Key.getCode();
 			
-			k = "." + d;
-			d = keyDic[k];
+			d = keyDic["." + k];
 			for (bindingKey in d) {
 				a = bindingDic[bindingKey];
 				for (i = 0, l = a ? a.length : 0; i < l; ++ i) {
 					item = a[i];
-					arg = item[3];
-					arg[0] = k;
-					item[1].apply(item[2], arg);
+					item[1].apply(item[2], item[3]);
+				}
+			}
+			
+			for (i in lastKeys) {
+				if (lastKeys[i] == k) {
+					lastKeys.splice(i, 1);
+					return;
 				}
 			}
 		}
@@ -100,7 +92,7 @@ class com.minarto.ui.KeyBinding {
 		}
 		
 		set = function($bindingKey, $isDown, $key) {
-			var combi = arguments[3];
+			var combi = arguments[3], k:String, ba, a:Array;
 			
 			if ($bindingKey) {
 				if (arguments.length > 1) {
@@ -109,29 +101,44 @@ class com.minarto.ui.KeyBinding {
 						$key = Key[$key] || keyList[$key] || $key.charCodeAt(0);
 					}
 					
-					if ($isDown) {
-						if (arguments.length > 3) {
-							if (typeof(combi) == "string") {
-								combi = combi.toUpperCase();
-								combi = Key[combi] || keyList[combi] || combi.charCodeAt(0);
-							}
-							$key = "1." + $key + "." + combi;
-						}
-						else	$key = "1." + $key;
-					} else	$key = "." + $key;
+					if (combi !== undefined && typeof(combi) == "string") {
+						combi = combi.toUpperCase();
+						combi = Key[combi] || keyList[combi] || combi.charCodeAt(0);
+					}
 					
-					combi = keyDic[$key];
-					if (!combi)	keyDic[$key] = combi = {};
-					combi[$bindingKey] = 1;
+					if (isNaN(combi))	k = $isDown ? "1." + $key : "." + $key;
+					else {
+						k = $isDown ? "1." + $key + "." + combi : "." + $key + "." + combi;
+						
+						ba = keyDic[k];
+						if (!ba)	keyDic[k] = ba = {};
+						ba[$bindingKey] = 1;
+						
+						k = $isDown ? "1." + combi + "." + $key : "." + combi + "." + $key;
+					}
+
+					ba = keyDic[k];
+					if (!ba)	keyDic[k] = ba = {};
+					ba[$bindingKey] = 1;
+
 					
-					combi = bindingKeys[$bindingKey];
-					if (!combi)	bindingKeys[$bindingKey] = combi = [];
+					ba = bindingKeys[$bindingKey];
+					if (!ba)	bindingKeys[$bindingKey] = ba = [];
 					
-					for ($isDown in combi)	if (combi[$isDown] == $key)	return;
-					combi.push($key);
+					if (isNaN(combi))	k = $isDown ? "1." + $key : "." + $key;
+					else	k = $isDown ? "1." + $key + "." + combi : "." + $key + "." + combi;
+					
+					a = k.split(".");
+					a[1] = Number(a[1]);
+					if(a.length > 2)	a[2] = Number(a[2]);
+					for (k in ba) {
+						combi = ba[k];
+						if(combi[0] == a[0] && combi[1] == a[1] && combi[2] == a[2])	return;
+					}
+					ba.push(a);
 				}
 				else {
-					for ($key in keyDic)	delete	keyDic[$key][$bindingKey];
+					for (k in keyDic)	delete	keyDic[k][$bindingKey];
 					delete bindingKeys[$bindingKey];
 				}
 			}
@@ -140,42 +147,37 @@ class com.minarto.ui.KeyBinding {
 		
 		
 		get = function($bindingKey) {
-			var r:Array = [], i:Number, l:Number;
-			
-			$bindingKey = bindingKeys[$bindingKey]
-			for (i = 0, l = $bindingKey ? $bindingKey.length : 0; i < l; ++i)	r.push($bindingKey[i].split("."));
-			
-			return	r;
+			return	bindingKeys[$bindingKey];
 		};
 		
 		
 		add = function($bindingKey:String, $handler:Function, $scope) {
-			var a:Array = bindingDic[$bindingKey], i, arg:Array;
+			var a:Array = bindingDic[$bindingKey], i, item:Array;
 			
-			arguments[3] = arguments.slice(2);
+			arguments[3] = arguments.slice(3);
 			arguments.length  = 4;
 			
 			if (a) {
 				for (i in a) {
-					arg = a[i];
-					if (arg[1] == $handler && arg[2] == $scope) {
+					item = a[i];
+					if (item[1] == $handler && item[2] == $scope) {
 						a[i] = arguments;
 						return;
 					}
 					a.push(arguments);
 				}
-			}	else	bindingDic[$bindingKey] = a = [arguments];
+			}	else	bindingDic[$bindingKey] = [arguments];
 		};
 		
 		
 		del = function($bindingKey:String, $handler:Function, $scope) {
-			var a:Array, i, arg:Array;
+			var a:Array, i, item:Array;
 			
 			if ($bindingKey) {
 				a = bindingDic[$bindingKey];
 				for (i in a) {
-					arg = a[i];
-					if (arg[1] == $handler && arg[2] == $scope) {
+					item = a[i];
+					if (item[1] == $handler && item[2] == $scope) {
 						a.splice(i, 1);
 						if (!a.length)	delete	bindingDic[$bindingKey];
 						return;
