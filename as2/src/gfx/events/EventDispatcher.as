@@ -113,7 +113,7 @@ class gfx.events.EventDispatcher {
 	 * @return If the component has a specific listener
 	 */
 	public function hasEventListener($type:String):Boolean {
-		return	0;
+		return	false;
 	}
 	
 	/**

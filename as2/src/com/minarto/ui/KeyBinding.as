@@ -8,13 +8,13 @@ class com.minarto.ui.KeyBinding {
 	
 	public static function init():Void {
 		if(_init)	_init();
-		
 		delete init;
 	}
 	
 	
 	private static function _init() {
-		var keyDic = { }, bindingDic = {}, lastKeys = {}, bindingKeys = {};
+		var keyDic = { }, bindingDic = { }, lastKeys = { }, bindingKeys = { }, 
+			keyList = { CTRL:Key.CONTROL, ALT:Key.ALT, ESC:Key.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123};
 		
 		Key.addListener(KeyBinding);
 		
@@ -99,138 +99,39 @@ class com.minarto.ui.KeyBinding {
 			else	Key.removeListener(KeyBinding);
 		}
 		
-		set = function($bindingKey:String, $isDown:Boolean, $key, $combi) {
-			var a:Array, i;
+		set = function($bindingKey, $isDown, $key) {
+			var combi = arguments[3];
 			
 			if ($bindingKey) {
 				if (arguments.length > 1) {
 					if (typeof($key) == "string") {
 						$key = $key.toUpperCase();
-						switch($key) {
-							case "CTRL" :
-								$key = Key.CONTROL;
-								break;
-							case "ALT" :
-								$key = Key.ALT;
-								break;
-							case "ESC" :
-								$key = Key.ESCAPE;
-								break;
-							case "F1" :
-								$key = 112;
-								break;
-							case "F2" :
-								$key = 113;
-								break;
-							case "F3" :
-								$key = 114;
-								break;
-							case "F4" :
-								$key = 115;
-								break;
-							case "F5" :
-								$key = 116;
-								break;
-							case "F6" :
-								$key = 117;
-								break;
-							case "F7" :
-								$key = 118;
-								break;
-							case "F8" :
-								$key = 119;
-								break;
-							case "F9" :
-								$key = 120;
-								break;
-							case "F10" :
-								$key = 121;
-								break;
-							case "F11" :
-								$key = 122;
-								break;
-							case "F12" :
-								$key = 123;
-								break;
-							default :
-								$key = Key[$key] || $key.charCodeAt(0);
-						}
+						$key = Key[$key] || keyList[$key] || $key.charCodeAt(0);
 					}
 					
 					if ($isDown) {
 						if (arguments.length > 3) {
-							if (typeof($combi) == "string") {
-								$combi = $combi.toUpperCase();
-								switch($combi) {
-									case "CTRL" :
-										$combi = Key.CONTROL;
-										break;
-									case "ALT" :
-										$combi = Key.ALT;
-										break;
-									case "ESC" :
-										$combi = Key.ESCAPE;
-										break;
-									case "F1" :
-										$combi = 112;
-										break;
-									case "F2" :
-										$combi = 113;
-										break;
-									case "F3" :
-										$combi = 114;
-										break;
-									case "F4" :
-										$combi = 115;
-										break;
-									case "F5" :
-										$combi = 116;
-										break;
-									case "F6" :
-										$combi = 117;
-										break;
-									case "F7" :
-										$combi = 118;
-										break;
-									case "F8" :
-										$combi = 119;
-										break;
-									case "F9" :
-										$combi = 120;
-										break;
-									case "F10" :
-										$combi = 121;
-										break;
-									case "F11" :
-										$combi = 122;
-										break;
-									case "F12" :
-										$combi = 123;
-										break;
-									default :
-										$combi = Key[$combi] || $combi.charCodeAt(0);
-								}
+							if (typeof(combi) == "string") {
+								combi = combi.toUpperCase();
+								combi = Key[combi] || keyList[combi] || combi.charCodeAt(0);
 							}
-							$key = "1." + $key + "." + $combi;
+							$key = "1." + $key + "." + combi;
 						}
 						else	$key = "1." + $key;
 					} else	$key = "." + $key;
 					
-					$combi = keyDic[$key];
-					if (!$combi)	keyDic[$key] = $combi = {};
-					$combi[$bindingKey] = 1;
+					combi = keyDic[$key];
+					if (!combi)	keyDic[$key] = combi = {};
+					combi[$bindingKey] = 1;
 					
-					a = bindingKeys[$bindingKey];
-					if (!a)	bindingKeys[$bindingKey] = a = [];
+					combi = bindingKeys[$bindingKey];
+					if (!combi)	bindingKeys[$bindingKey] = combi = [];
 					
-					for (i in a) {
-						if (a[i] == $key)	return;
-					}
-					a.push($key);
+					for ($isDown in combi)	if (combi[$isDown] == $key)	return;
+					combi.push($key);
 				}
 				else {
 					for ($key in keyDic)	delete	keyDic[$key][$bindingKey];
-					
 					delete bindingKeys[$bindingKey];
 				}
 			}
@@ -238,15 +139,11 @@ class com.minarto.ui.KeyBinding {
 		};
 		
 		
-		get = function($bindingKey:String) {
-			var key:String, a:Array = bindingKeys[$bindingKey], r:Array = [], i:Number, l:Number;
+		get = function($bindingKey) {
+			var r:Array = [], i:Number, l:Number;
 			
-			if (a) {
-				for (i = 0, l = a.length; i < l; ++i) {
-					r.push(a[i].split("."));
-				}
-			}
-			
+			$bindingKey = bindingKeys[$bindingKey]
+			for (i = 0, l = $bindingKey ? $bindingKey.length : 0; i < l; ++i)	r.push($bindingKey[i].split("."));
 			
 			return	r;
 		};
@@ -299,7 +196,7 @@ class com.minarto.ui.KeyBinding {
 	
 	public static function set($bindingKey:String, $isDown:Boolean, $key, $combi):Void {
 		_init();
-		KeyBinding.set($bindingKey, $isDown, $key, $combi);
+		KeyBinding.set.apply(KeyBinding, arguments);
 	}
 	
 	
