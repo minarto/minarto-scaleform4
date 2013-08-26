@@ -14,7 +14,7 @@ package com.minarto.controls {
 	 * @author KIMMINHWAN
 	 */
 	public class BaseMain extends Sprite {
-		public var toolTipManager:IToolTipContainer;
+		public var toolTipManager:IToolTipContainer, setValue:Function, getValue:Function;
 		
 		
 		public function BaseMain() {
