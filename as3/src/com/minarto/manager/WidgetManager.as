@@ -1,6 +1,5 @@
 package com.minarto.manager {
 	import flash.display.*;
-	import flash.utils.getDefinitionByName;
 	
 	
 	/**
@@ -15,35 +14,35 @@ package com.minarto.manager {
 		}
 		
 		
-		public static function init($container:DisplayObjectContainer):void{
+		public static function init($container:DisplayObjectContainer = null):DisplayObjectContainer{
 			var id:*;
 			
-			if(container == $container || !$container)	return;
+			if($container){
+				if(container == $container)	return	container;
+				for(id in dic)	$container.addChild(dic[id]);
+				container = $container;
+			}
 			
-			if(!container)	for(id in dic)	$container.addChild(dic[id]);
-			
-			container = $container;
+			return	container;
 		}
 		
 		
-		public static function add($id:*, $widget:*, $onComplete:Function=null):DisplayObject{
-			var c:Class = getDefinitionByName($widget) as Class, w:DisplayObject, f:Function;
+		public static function add($id:String, $widget:*, $onComplete:Function=null, $onError:Function=null):DisplayObject{
+			var w:DisplayObject = $widget as DisplayObject;
 			
-			if($widget as String){
-				f = function($content:DisplayObject):void{
-					if(container)	container.addChild($content);
-					$onComplete($content);
-					dic[$widget] = $content;
-				}
-				LoadManager.load($widget, f, f);
-			}
-			else if(c){
-				dic[$id] = w = new c;
+			del($id);
+			
+			if(w){
+				dic[$id] = w;
 				if(container)	container.addChild(w);
+				
 			}
-			else if($widget as DisplayObject){
-				dic[$id] = w = $widget;
-				if(container)	container.addChild(w);
+			else if($widget as String){
+				LoadManager.load($widget, function($content:DisplayObject):void{
+						dic[$id] = $content;
+						if(container)	container.addChild($content);
+						if(Boolean($onComplete))	$onComplete($content);
+					}, $onError);
 			}
 			
 			return	w;
@@ -57,20 +56,13 @@ package com.minarto.manager {
 				if($id as DisplayObject){
 					w = $id;
 					for($id in dic){
-						if(dic[$id] == w){
-							delete	dic[$id];
-						}
+						if(dic[$id] == w)	delete	dic[$id];
 					}
 				}
-				else{
-					w = dic[$id];
-					if(w)	delete	dic[$id];
-				}
+				else	delete	dic[$id];
 			}
 			else{
-				for($id in dic){
-					delete	dic[$id];
-				}
+				for($id in dic)	delete	dic[$id];
 				
 				dic = {};
 			}			

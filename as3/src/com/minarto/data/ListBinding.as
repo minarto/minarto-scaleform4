@@ -2,252 +2,161 @@
  * 
  */
 package com.minarto.data {
-	import de.polygonal.core.ObjectPool;
-	
-	import flash.events.Event;
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
 	
 	import scaleform.clik.controls.CoreList;
 	import scaleform.clik.data.DataProvider;
-	import scaleform.gfx.Extensions;
 	
 	
 	public class ListBinding {
-		private static var _listDic:* = {}, _listBindingDic:* = {}, _pool:ObjectPool,
-			_dataListKey:Dictionary = new Dictionary(true),	//	아이템이 포함된 리스트의 키를 반환
-			_dataBindingDic:Dictionary = new Dictionary(true),	//	모든 아이템의 바인딩 데이터
-			_bridge:ListBridge;
+		private static var valueDic:* = {}, listDic:* = {}, dataDic:Dictionary = new Dictionary(true);
 		
 		
-		public function ListBinding(){
-			throw	new Error("don't create instance");
-		}
-		
-		
-		public static function getBridge():ListBridge{
-			return	_bridge;
-		}
-		
-		
-		public static function addListBind($key:String, $listOrScope:*, $property:String=null):void{
-			if(!$key)	return;
-			
-			var dataProvider:DataProvider = _listDic[$key];
-			if(!dataProvider){
-				if(!_pool){
-					_pool = new ObjectPool(true);
-					_pool.allocate(10, DataProvider);
-				}
-				_listDic[$key] = dataProvider = _pool.object;
-			}
-			
-			var dic:Dictionary = _listBindingDic[$key] || (_listBindingDic[$key] = new Dictionary(true));
-			if($listOrScope as CoreList){
-				$listOrScope.dataProvider = dataProvider;
-			}
-			else if($listOrScope as Function){
-				$listOrScope(dataProvider);
-			}
-			else {
-				var t:* = dic[$listOrScope] || (dic[$listOrScope] = {});
-				t[$property] = $property;
-				$listOrScope[$property] = dataProvider;
-			}
-		}
-		
-		
-		public static function delListBind($listOrScope:*, $property:String=null):void{
-			if($listOrScope){
-				for(var key:String in _listBindingDic){
-					var dic:Dictionary = _listBindingDic[key];
-					
-					for(var i:* in dic){
-						var listOrScope:* = dic[i];
-						if(listOrScope == $listOrScope){
-							if($listOrScope as CoreList){
-								$listOrScope.dataProvider = null;
-								delete	dic[$listOrScope];
-							}
-							else if($listOrScope as Function){
-								$listOrScope(null);
-								delete	dic[$listOrScope];
-							}
-							else{
-								listOrScope = dic[$listOrScope];
-								if(listOrScope)	delete	listOrScope[$property];
-							}
-							
-							return;
-						}
-					}
-				}
-			}
-			else{
-				_listBindingDic = {};
-			}
-		}
-		
-		
-		public static function init($bridge:ListBridge):void{
-			_bridge = $bridge;
-			trace("ListBinding.init");
-		}
-		
-		
-		public static function action($e:Event):void{
-			if(_bridge)	_bridge.dispatchEvent($e);
+		/**
+		 * 초기화 및 위임
+		 *  
+		 * @param $delegateObj	위임 객체
+		 *  
+		 */		
+		public static function init():void{
+			ExternalInterface.call("ListBinding", ListBinding);
 		}
 		
 		
 		/**
-		 * 
-		 * @param $key
-		 * @param $a
+		 * 값 설정 
+		 * @param $key	바인딩 키
+		 * @param $datas	바인딩 값
+		 */
+		public static function set($key:String, $datas:Array):void {
+			var dataProvider:DataProvider = valueDic[$key], item:*;
+			
+			if(!dataProvider)	valueDic[$key] = dataProvider = new DataProvider();
+			dataProvider.setSource($datas);
+			for($key in $datas)	dataDic[$datas[$key]] = dataProvider;
+			dataProvider.invalidate();
+		}
+		
+		
+		/**
+		 * 데이터 설정 
+		 * @param $key	바인딩 키
+		 * @param $datas	바인딩 값
+		 */
+		public static function setItem($key:String, $data:*, $index:int=NaN):void {
+			var dataProvider:DataProvider = valueDic[$key];
+			
+			if(!dataProvider)	valueDic[$key] = dataProvider = new DataProvider();
+
+			dataDic[$data] = dataProvider;
+			if($index > -1)	dataProvider[$index] = $data;
+			else	dataProvider.push($data);
+			dataProvider.invalidate();
+		}
+		
+		
+		/**
+		 * 데이터 속성값 설정  
+		 * @param $data
+		 * @param $prpos
+		 * @param $value
+		 * @param $args
 		 * 
 		 */		
-		public static function setList($key:String, $a:Array):void {
-			if($key){
-				var dataProvider:DataProvider = _listDic[$key];
-				if(dataProvider){
-					for(var i:* in dataProvider){
-						var d:* = dataProvider[i];
-						delete _dataListKey[d];
-						delete _dataBindingDic[d];
-					}
-					dataProvider.setSource($a);
-				}
-				else{
-					if(!_pool){
-						_pool = new ObjectPool(true);
-						_pool.allocate(10, DataProvider);
-					}
-					dataProvider = _pool.object;
-					dataProvider.setSource($a);
-					_listDic[$key] = dataProvider;
-				}
-				
-				for(i in dataProvider){
-					d = dataProvider[i];
-					_setData(d, $key);
-				}
-				
-				var dic:Dictionary = _listBindingDic[$key];
-				for(i in dic){
-					var list:CoreList = d[i];
-					if(list.dataProvider == dataProvider){
-						dataProvider.invalidate();
-					}
-					else{
-						list.dataProvider = dataProvider;
-					}
-				}
-			}
-			else{
-				_listDic = {};
-				_dataListKey = new Dictionary(true);
-				_dataBindingDic = new Dictionary(true);
-			}
-		}
-		
-		
-		public static function getList($key:String):DataProvider {
-			return _listDic[$key];
-		}
-		
-		
-		protected static function _setData($data:*, $key:String):void {
-			if(!$data)	return;
+		public static function setItemProps($data:*, $prpos:String, $value:*, ...$args):void {
+			var dataProvider:DataProvider = dataDic[$data], key:String, a:Array, i:uint, l:uint, arg:Array;
 			
-			_dataListKey[$data] = $key;
-			_dataBindingDic[$data] = {};
+			if(!dataProvider)	return;
+			$data[$prpos] = $value;
+			
+			for(i = 0, l = $args.length; i<l;){
+				$data[$args[i++]] = $args[i++];
+			}
+			dataProvider.invalidate();
 		}
 		
 		
-		public static function addDataBind($data:*, $handler:Function, ...$properties):void {
-			if($data){
-				$data = _dataBindingDic[$data];
-				if($data){
-					for(var p:String in $properties){
-						var d:Dictionary = $data[$properties[p]] || ($data[$properties[p]] = new Dictionary(true));
-						d[$handler] = $handler;
-					}
-				}
-			}
+		/**
+		 * 리스트 추가 
+		 * @param $key
+		 * @param $list
+		 * 
+		 */		
+		public static function add($key:String, $list:CoreList):void {
+			var dataProvider:DataProvider = valueDic[$key], d:Dictionary = listDic[$key];
 			
-			$handler();
+			if(!dataProvider)	valueDic[$key] = dataProvider = new DataProvider();
+			
+			if(!d)	listDic[$key] = d = new Dictionary(true);
+			for ($key in d)	if (d[$key] == $list)	return;
+			d[$list] = $list;
+			$list.dataProvider = dataProvider;
 		}
 		
 		
-		public static function delDataBind($data:*, $handler:Function, ...$properties):void {
-			if(!$data && !Boolean($handler)){
-				_dataBindingDic = new Dictionary(true);
-			}
-			else{
-				$data = _dataBindingDic[$data];
-				if($data){
-					for(var p:String in $properties){
-						var d:Dictionary = $data[$properties[p]];
-						if(d)	delete d[$handler];
-					}
-				}
-			}
+		/**
+		 * 리스트 추가 및 데이터 바로 적용 
+		 * @param $key
+		 * @param $list
+		 * 
+		 */		
+		public static function addNPlay($key:String, $list:CoreList):void {
+			add($key, $list);
+			$list.invalidate();
 		}
 		
 		
-		public static function setDataProperty($data:*, $p:String, $value:*):void {
-			if(!$data)	return;
+		/**
+		 * 리스트 삭제 
+		 * @param $list
+		 * 
+		 */		
+		public static function del($list:CoreList):void {
+			var key:String;
 			
-			$data[$p] = $value;
-			
-			//	해당 아이템 바인딩
-			$value = _dataBindingDic[$data];
-			$data = $value[$p];
-			for($value in $data){
-				$data[$value]();
-			}
+			for(key in listDic)	delete	listDic[key][$list];
 		}
 		
 		
-		public static function setData($target:*, $data:*, $index:uint=0):void {
-			var data:*, key:String, dataProvider:DataProvider;
+		/**
+		 * 리스트의 값을 가져온다 
+		 * @param $key	키 값
+		 * @return 
+		 * 
+		 */		
+		public static function get($key:String):DataProvider {
+			return	valueDic[$key];
+		}
+		
+		
+		/**
+		 * 데이터에 연동된 리스트 바인딩 키를 가져온다 
+		 * @param $dataProvider	데이터
+		 * @return 바인딩 키
+		 * 
+		 */		
+		public static function getDataKey($dataProvider:DataProvider):String {
+			var key:String;
 			
-			if($target as String){
-				key = $target;
-				
-				dataProvider = _listDic[key];
-				if(dataProvider){
-					_setData($data, key);
-					
-					data = dataProvider[$index];
-					if(data){
-						delete _dataListKey[data];
-						delete _dataBindingDic[data];
-					}
-					dataProvider[$index] = $data;
-					dataProvider.invalidate();
-				}
-				else{
-					var a:Array = [];
-					a[$index] = $data;
-					setList(key, a);
-				}
-			}
-			else if($target){
-				data = $target;
-				if(data){
-					key = _dataListKey[data];
-					delete _dataListKey[data];
-					delete _dataBindingDic[data];
-					
-					dataProvider = _listDic[key];
-					dataProvider[(dataProvider as Array).indexOf(data)] = $data;
-					
-					_setData($data, key);
-					
-					dataProvider.invalidate();
-				}
-			}
+			for(key in valueDic)	if(valueDic[key] == $dataProvider)	return	key;
+
+			return	null;
+		}
+		
+		
+		/**
+		 * 리스트에 연동된 리스트 바인딩 키를 가져온다 
+		 * @param $list	리스트
+		 * @return 바인딩 키
+		 * 
+		 */		
+		public static function getListKey($list:CoreList):String {
+			var key:String;
+			
+			for(key in listDic)	if(listDic[key][$list])	return	key;
+			
+			return	null;
 		}
 	}
 }

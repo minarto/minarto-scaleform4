@@ -13,22 +13,18 @@ package com.minarto.manager {
 		private static var	dic:* = { }, funDic:* = {};
 		
 		
-		public static function load($src:String, $onComplete:Function):void{
+		public static function add($src:String, $onComplete:Function):void{
 			var bd:BitmapData = dic[$src], a:Array;
 			
-			if(bd){
-				$onComplete(bd);
-			}
+			if(bd)	$onComplete(bd);
 			else{
 				a = funDic[$src];
-				if(a){
-					a.push($onComplete);
-				}
+				if(a)	a.push($onComplete);
 				else{
 					funDic[$src] = a = [$onComplete];
 					
 					LoadManager.load(Extensions.isScaleform ? "img://" + $src : $src, function($bm:Bitmap):void {
-						var bd:BitmapData, i:uint, l:uint;
+						var i:uint, l:uint;
 						
 						if($bm){
 							bd = $bm.bitmapData;
@@ -44,20 +40,32 @@ package com.minarto.manager {
 			}
 		}
 		
+		public static function get($src:String):BitmapData{
+			return	dic[$src];
+		}
 		
-		public static function destroy($src:String=null):void {
-			var bd:BitmapData;
+		
+		public static function del($srcOrBitmapData:*=null):void {
+			var bd:BitmapData, i:*;
 			
-			if ($src){
-				bd = dic[$src];
-				if(bd){
-					bd.dispose();
-					delete dic[$src];
+			if ($srcOrBitmapData){
+				if($srcOrBitmapData as String){
+					bd = dic[$srcOrBitmapData];
+					if(bd){
+						bd.dispose();
+						delete dic[$srcOrBitmapData];
+					}
+				}
+				else if($srcOrBitmapData as BitmapData){
+					for(i in dic){
+						bd = dic[i];
+						if(bd == $srcOrBitmapData)	bd.dispose();
+					}
 				}
 			}
 			else{
-				for($src in dic){
-					bd = dic[$src];
+				for(i in dic){
+					bd = dic[i];
 					bd.dispose();
 				}
 				dic = {};
