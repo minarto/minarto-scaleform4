@@ -23,6 +23,7 @@ package com.minarto.controls {
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
 			
 			Binding.init(this);
+			Binding.addNPlay("mode", setMode);
 		}
 		
 		
@@ -47,8 +48,8 @@ package com.minarto.controls {
 		protected function setMode($mode:String):void {
 			WidgetManager.del();
 			Binding.del();
-			
 			System.gc();
+			Binding.add("mode", setMode);
 		}
 	}
 }
