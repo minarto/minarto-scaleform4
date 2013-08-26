@@ -23,6 +23,7 @@ package com.minarto.controls {
 			addEventListener(Event.ADDED_TO_STAGE, configUI);
 			
 			Binding.init(this);
+			WidgetManager.init(this);
 			Binding.addNPlay("mode", setMode);
 		}
 		
