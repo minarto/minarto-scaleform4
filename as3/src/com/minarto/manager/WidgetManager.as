@@ -6,11 +6,42 @@ package com.minarto.manager {
 	 * @author KIMMINHWAN
 	 */
 	public class WidgetManager {
-		private static var container:DisplayObjectContainer, dic:* = {};
+		private static var container:DisplayObjectContainer, dic:* = {}, modeSrcs:* = {};
 		
 		
 		public function WidgetManager() {
 			throw new Error("don't create instance");
+		}
+		
+		
+		public static function setMode($mode:String, $id:String, $src:String, ...$args):void{
+			var source:Array = modeSrcs[$mode], i:uint, l:uint = source ? source.length - 1 : 0;
+			
+			if(!source)	modeSrcs[$mode] = source = [];
+			
+			source.length = 0;
+			source.push($id, $src);
+			
+			for(i = 0; i<l;)	source.push($args[i ++], $args[i ++]);
+		}
+		
+		
+		public static function getMode($mode:String):Array{
+			return	modeSrcs[$mode];
+		}
+		
+		
+		public static function loadMode($mode:String, onComplete:Function):void{
+			var source:Array = modeSrcs[$mode], i:uint, l:uint = source ? source.length - 1 : 0;
+			
+			if(l < 1){
+				onComplete();
+				return;
+			}
+			
+			for(i = 0, l = source ? source.length - 1 : 0; i<l;)	add(source[i ++], source[i ++]);
+			
+			add(source[i ++], source[i], onComplete, onComplete);
 		}
 		
 		
