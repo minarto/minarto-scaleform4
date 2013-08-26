@@ -38,15 +38,12 @@ package com.minarto.manager {
 		
 		
 		public static function unLoad($src:String, $onComplete:Function):void{
-			var i:uint, _item:LoadItem, info:LoaderInfo;
+			var i:*, _item:LoadItem, info:LoaderInfo;
 			
 			if($src){
-				if(item && item.src == $src && item.onComplete == $onComplete){
-					loader.close();
-				}
+				if(item && item.src == $src && item.onComplete == $onComplete)	loader.close();
 				
-				i = reservations.length;
-				while(i --){
+				for(i in reservations){
 					_item = reservations[i];
 					if(_item && item.src == $src && _item.onComplete == $onComplete)	reservations.splice(i, 1);
 				}
@@ -66,7 +63,6 @@ package com.minarto.manager {
 		private static function _load():void {
 			var info:LoaderInfo = loader.contentLoaderInfo;
 			
-			if(item)	Utils.getPool(LoadItem).object = item;
 			item = reservations.shift();
 			if(item){
 				request.url = item.src;
@@ -81,6 +77,7 @@ package com.minarto.manager {
 		
 		private static function _onComplete($e:Event):void {
 			item.onComplete(loader.contentLoaderInfo.content);
+			Utils.getPool(LoadItem).object = item;
 			_load();
 		}
 		

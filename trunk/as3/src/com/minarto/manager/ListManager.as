@@ -1,84 +1,34 @@
-/**
- * 
- */
-package com.minarto.data {
-	import flash.events.TimerEvent;
-	import flash.external.ExternalInterface;
-	import flash.utils.Timer;
+package com.minarto.manager {
+	import com.minarto.utils.Utils;
+	
+	import flash.display.*;
+	
+	import scaleform.clik.controls.CoreList;
+	import scaleform.clik.data.DataProvider;
+	import scaleform.gfx.Extensions;
 	
 	
-	public class Binding {
+	/**
+	 * @author KIMMINHWAN
+	 */
+	public class ListManager {
 		private static var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
 		
 		
-		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
-		 *  
-		 */		
-		public static function init($delegateObj:*):void{
-			if ($delegateObj)	$delegateObj.setValue = Binding.set;
-			else ExternalInterface.call("Binding", Binding);
-		}
-		
-		
-		/**
-		 * 시간 관리
-		 *  
-		 * @param $key
-		 * @param $interval
-		 * 
-		 */		
-		public static function dateInit($key:String, $interval:Number=NaN):void {
-			var o:* = dateKey[$key], timer:Timer, f:Function;
+		public static function set($key:String, $datas:Array):void{
+			var dataProvider:DataProvider = valueDic[$key], a:Array = bindingDic[$key], i:Number, l:Number = a ? a.length : 0, item:*;
 			
-			if(o){
-				timer = o.timer;
-				timer.stop();
-				if($interval){
-					timer.delay = $interval * 1000;
-					timer.reset();
-					timer.start();
-				}
-				else{
-					timer.removeEventListener(TimerEvent.TIMER, o.func);
-					delete	dateKey[$key];
-				}
-			}
-			else if($interval){
-				timer = new Timer($interval * 1000);
-				
-				f = function($$e:*):void{
-					set($key, new Date);
-				};
-				
-				f($interval);
-				
-				timer.addEventListener(TimerEvent.TIMER, f);
-				timer.start();
-				
-				dateKey[$key] = o = {timer:timer, func:f};
-			}
-		}
-		
-		
-		/**
-		 * 값 설정 
-		 * @param $key	바인딩 키
-		 * @param $value	바인딩 값
-		 */
-		public static function set($key:String, $value:*):void {
-			var a:Array = bindingDic[$key], i:uint, l:uint = a ? a.length : 0, item:*, arg:Array;
-			
-			valueDic[$key] = $value;
+			if(!dataProvider)	valueDic[$key] = dataProvider = new DataProvider();
+			dataProvider.setSource($datas);
 			
 			for (i = 0; i < l; ++ i) {
 				item = a[i];
-				arg = item.arg;
-				arg[0] = $value;
-				item.handler.apply(null, arg);
+				item.handler(dataProvider);
 			}
+		}
+		
+		public static function get($key:String):DataProvider{
+			return	valueDic[$key];
 		}
 		
 		
@@ -106,6 +56,30 @@ package com.minarto.data {
 			}
 			else{
 				item = {handler:$handler, arg:$args};
+				bindingDic[$key] = a = [item];
+			}
+		}
+		
+		
+		/**
+		 * 바인딩 
+		 * @param $key		바인딩 키
+		 * @param $handler	바인딩 핸들러
+		 * @param $args		바인딩 추가 인자
+		 */				
+		public static function addList($key:String, $list:CoreList):void {
+			var a:Array = bindingDic[$key], i:*, item:*;
+			
+			if(a){
+				for (i in a){
+					item = a[i];
+					if (item.target == $list)	return;
+				}
+				item = {target:$list};
+				a.push(item);
+			}
+			else{
+				item = {target:$list};
 				bindingDic[$key] = a = [item];
 			}
 		}
@@ -163,17 +137,6 @@ package com.minarto.data {
 				}
 			}
 			else	bindingDic = {};
-		}
-		
-		
-		/**
-		 * 특정 바인딩 값을 가져온다 
-		 * @param $key	바인딩키
-		 * @return 바인딩 값
-		 * 
-		 */		
-		public static function get($key:String):* {
-			return	valueDic[$key];
 		}
 	}
 }
