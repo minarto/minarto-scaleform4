@@ -2,67 +2,42 @@
  * 
  */
 package com.minarto.data {
-	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
-	import flash.utils.Timer;
-	
-	
-	public class Binding {
-		private static var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
+
+	public class ObjectBinding {
+		private static var bDic:* = {};
+		
+		private var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
 		
 		
 		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
-		 *  
+		 * 바인딩 객체 반환
 		 */		
-		public static function init($delegateObj:*):void{
-			if ($delegateObj){
-				$delegateObj.setValue = Binding.set;
-				$delegateObj.getValue = Binding.get;
+		public static function addBinding($key:String):ObjectBinding{
+			var b:ObjectBinding = bDic[$key];
+			
+			if(!b){
+				bDic[$key] = b = new ObjectBinding;
+				ExternalInterface.call("ObjectBinding." + $key, b);
 			}
-			else ExternalInterface.call("Binding", Binding);
+			
+			return	b;
 		}
 		
 		
 		/**
-		 * 시간 관리
-		 *  
-		 * @param $key
-		 * @param $interval
-		 * 
+		 * 바인딩 객체 반환
 		 */		
-		public static function dateInit($key:String, $interval:Number=NaN):void {
-			var o:* = dateKey[$key], timer:Timer, f:Function;
-			
-			if(o){
-				timer = o.timer;
-				timer.stop();
-				if($interval){
-					timer.delay = $interval * 1000;
-					timer.reset();
-					timer.start();
-				}
-				else{
-					timer.removeEventListener(TimerEvent.TIMER, o.func);
-					delete	dateKey[$key];
-				}
-			}
-			else if($interval){
-				timer = new Timer($interval * 1000);
-				
-				f = function($$e:*):void{
-					set($key, new Date);
-				};
-				
-				f($interval);
-				
-				timer.addEventListener(TimerEvent.TIMER, f);
-				timer.start();
-				
-				dateKey[$key] = o = {timer:timer, func:f};
-			}
+		public static function getBinding($key:String):ObjectBinding{
+			return	bDic[$key];
+		}
+		
+		
+		/**
+		 * 바인딩 객체 삭제
+		 */	
+		public static function delBinding($key:String):void{
+			delete	bDic[$key];
 		}
 		
 		
@@ -71,7 +46,7 @@ package com.minarto.data {
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		public static function set($key:String, $value:*):void {
+		public function set($key:String, $value:*):void {
 			var a:Array = bindingDic[$key], i:*, item:*, arg:Array;
 			
 			valueDic[$key] = $value;
@@ -91,7 +66,7 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public static function add($key:String, $handler:Function, ...$args):void {
+		public function add($key:String, $handler:Function, ...$args):void {
 			var a:Array = bindingDic[$key], i:*, item:*;
 			
 			$args.unshift(i);
@@ -116,7 +91,7 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public static function addNPlay($key:String, $handler:Function, ...$args):void {
+		public function addNPlay($key:String, $handler:Function, ...$args):void {
 			var a:Array = bindingDic[$key], i:*, item:*;
 			
 			$args.unshift(get($key));
@@ -144,7 +119,7 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public static function del($key:String=null, $handler:Function=null):void {
+		public function del($key:String=null, $handler:Function=null):void {
 			var a:Array, i:*;
 			
 			if($key){
@@ -167,7 +142,7 @@ package com.minarto.data {
 		 * @return 바인딩 값
 		 * 
 		 */		
-		public static function get($key:String):* {
+		public function get($key:String):* {
 			return	valueDic[$key];
 		}
 	}
