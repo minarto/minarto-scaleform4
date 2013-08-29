@@ -4,7 +4,7 @@
 package com.minarto.data {
 	import flash.external.ExternalInterface;
 
-	public class ObjectBinding {
+	public class BindingObject {
 		private static var bDic:* = {};
 		
 		private var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
@@ -13,12 +13,12 @@ package com.minarto.data {
 		/**
 		 * 바인딩 객체 반환
 		 */		
-		public static function addBinding($key:String):ObjectBinding{
-			var b:ObjectBinding = bDic[$key];
+		public static function addBinding($key:String):BindingObject{
+			var b:BindingObject = bDic[$key];
 			
 			if(!b){
-				bDic[$key] = b = new ObjectBinding;
-				ExternalInterface.call("ObjectBinding." + $key, b);
+				bDic[$key] = b = new BindingObject;
+				ExternalInterface.call("BindingObject." + $key, b);
 			}
 			
 			return	b;
@@ -28,7 +28,7 @@ package com.minarto.data {
 		/**
 		 * 바인딩 객체 반환
 		 */		
-		public static function getBinding($key:String):ObjectBinding{
+		public static function getBinding($key:String):BindingObject{
 			return	bDic[$key];
 		}
 		
