@@ -30,7 +30,7 @@ package com.minarto.data {
 		 * @param $datas	바인딩 값
 		 */
 		public static function set($key:String, $datas:Array):void {
-			var dataProvider:DataProvider = valueDic[$key], item:*;
+			var dataProvider:DataProvider = valueDic[$key];
 			
 			if(!dataProvider)	valueDic[$key] = dataProvider = new DataProvider();
 			dataProvider.setSource($datas);
