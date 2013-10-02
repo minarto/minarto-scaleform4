@@ -5,20 +5,20 @@ package com.minarto.data {
 	import flash.external.ExternalInterface;
 
 	public class BindingObject {
-		private static var bDic:* = {};
+		static private var bDic:* = {};
 		
-		private var valueDic:* = {}, bindingDic:* = {}, dateKey:* = {};
+		private var valueDic:* = {}, bindingDic:* = {};
 		
 		
 		/**
 		 * 바인딩 객체 반환
 		 */		
-		public static function addBinding($key:String):BindingObject{
-			var b:BindingObject = bDic[$key];
+		static public function AddObject($name:String):BindingObject{
+			var b:BindingObject = GetObject($name);
 			
 			if(!b){
-				bDic[$key] = b = new BindingObject;
-				ExternalInterface.call("BindingObject." + $key, b);
+				bDic[$name] = b = new BindingObject;
+				ExternalInterface.call("BindingObject", $name, b);
 			}
 			
 			return	b;
@@ -28,16 +28,36 @@ package com.minarto.data {
 		/**
 		 * 바인딩 객체 반환
 		 */		
-		public static function getBinding($key:String):BindingObject{
-			return	bDic[$key];
+		static public function GetObject($name:String):BindingObject{
+			return	bDic[$name];
 		}
 		
 		
 		/**
 		 * 바인딩 객체 삭제
 		 */	
-		public static function delBinding($key:String):void{
-			delete	bDic[$key];
+		static public function DelObject($name:String):void{
+			delete	bDic[$name];
+		}
+		
+		
+		/**
+		 * 갑 설정
+		 */	
+		static public function SetObjectValue($name:String, $key:String, $value:*):BindingObject{
+			var b:BindingObject = AddObject($name);
+			
+			b.set($key, $value);
+			
+			return	b;
+		}
+		
+		
+		/**
+		 * 갑 설정
+		 */	
+		static public function GetObjectValue($name:String, $key:String):*{
+			return	AddObject($name).get($key, $value);
 		}
 		
 		
