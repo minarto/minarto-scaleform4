@@ -54,7 +54,7 @@ package com.minarto.data {
 		
 		
 		/**
-		 * 갑 설정
+		 * 값 설정
 		 */	
 		static public function GetObjectValue($name:String, $key:String):*{
 			return	AddObject($name).get($key, $value);
