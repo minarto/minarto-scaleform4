@@ -5,6 +5,8 @@ package com.minarto.utils {
 	import flash.geom.*;
 	import flash.utils.Dictionary;
 	
+	import com.minarto.debug.Debug;
+	
 
 	public class Utils 	{
 		private static var localeDic:* = {};
@@ -14,12 +16,6 @@ package com.minarto.utils {
 		
 		
 		public static var point:Point = new Point;
-		
-		
-		public static function error($type:String, $msg:String):void{
-			ExternalInterface.call("error", $type, $msg);
-			trace("error - " + $type + " : " + $msg);
-		}
 		
 		
 		public static function addComma($n:Number, $cipher:uint = 3):String {
@@ -45,34 +41,28 @@ package com.minarto.utils {
 		}
 		
 		
-		public static function locale($msg:String):String {
+		static public function locale($msg:String):String {
 			var r:String = localeDic[$msg];
 			
 			if(!r){
 				r = ExternalInterface.call("locale", $msg);
 				if(r)	localeDic[$msg] = r;
-				else	error("locale", $msg);
+				else	Debug.error("locale", $msg);
 			}
 			
 			return	r;
 		}
 		
-		private static var _poolDic:Dictionary = new Dictionary(true);
+		
+		static private var _poolDic:Dictionary = new Dictionary(true);
 		
 		
-		public static function getPool($c:Class, $size:int=-1):ObjectPool{
+		static public function getPool($c:Class):ObjectPool{
 			var p:ObjectPool = _poolDic[$c];
 			
 			if(!p){
-				if($size < 0){
-					p = new ObjectPool(true);
-					p.allocate(1, $c);
-				}
-				else{
-					p = new ObjectPool;
-					p.allocate($size, $c);
-				}
-				
+				p = new ObjectPool(true);
+				p.allocate(1, $c);
 				_poolDic[$c] = p;
 			}			
 			
@@ -80,7 +70,7 @@ package com.minarto.utils {
 		}
 		
 		
-		public static function delPool($c:Class):void{
+		static public function delPool($c:Class):void{
 			delete	_poolDic[$c];
 		}
 	}

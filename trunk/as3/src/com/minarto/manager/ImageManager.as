@@ -10,62 +10,66 @@ package com.minarto.manager {
 	 * @author KIMMINHWAN
 	 */
 	public class ImageManager {
-		private static var	dic:* = { }, funDic:* = {};
+		static private var	dic:* = { };
 		
 		
-		public static function add($src:String, $onComplete:Function):void{
-			var bd:BitmapData = dic[$src], a:Array;
+		static private function _onComplete($src:String, $bm:Bitmap):void{
+			var bd:BitmapData, a:Array = dic[$src], i:*;
+			
+			if($bm){
+				bd = $bm.bitmapData;
+				dic[$src] = bd;
+				for(i in a)	a[i](bd);
+			}
+		}
+		
+		
+		static public function load($src:String, $onComplete:Function):void{
+			var bd:BitmapData = get($src), a:Array;
 			
 			if(bd)	$onComplete(bd);
 			else{
-				a = funDic[$src];
+				a = dic[$src];
 				if(a)	a.push($onComplete);
 				else{
-					funDic[$src] = a = [$onComplete];
-					
-					LoadManager.load(Extensions.isScaleform ? "img://" + $src : $src, function($bm:Bitmap):void {
-						var i:uint, l:uint;
-						
-						if($bm){
-							bd = $bm.bitmapData;
-							dic[$src] = bd;
-							Utils.getPool(Bitmap).object = $bm;
-							
-							for(i = 0, l = a.length; i<l; ++ i)	a[i](bd);
-						}
-						
-						delete	funDic[$src];
-					});
+					dic[$src] = a = [$onComplete];
+					LoadManager.load(Extensions.isScaleform ? "img://" + $src : $src, _onComplete);
 				}
 			}
 		}
 		
-		public static function get($src:String):BitmapData{
-			return	dic[$src];
+		
+		static public function get($src:String):BitmapData{
+			return	dic[$src] as BitmapData;
 		}
 		
 		
-		public static function del($srcOrBitmapData:*=null):void {
-			var bd:BitmapData, i:*;
+		static public function unLoad($src:*=null):void {
+			var bd:BitmapData;
 			
-			if ($srcOrBitmapData){
-				if($srcOrBitmapData as String){
-					bd = dic[$srcOrBitmapData];
+			if ($src){
+				if($src as String){
+					bd = get($src);
 					if(bd){
 						bd.dispose();
-						delete dic[$srcOrBitmapData];
+						delete dic[$src];
 					}
 				}
-				else if($srcOrBitmapData as BitmapData){
-					for(i in dic){
-						bd = dic[i];
-						if(bd == $srcOrBitmapData)	bd.dispose();
+				else{
+					bd = $src as BitmapData;
+					if(bd){
+						for($src in dic){
+							if(bd == dic[$src]){
+								bd.dispose();
+								delete dic[$src];
+							}
+						}
 					}
 				}
 			}
 			else{
-				for(i in dic){
-					bd = dic[i];
+				for($src in dic){
+					bd = dic[$src];
 					bd.dispose();
 				}
 				dic = {};

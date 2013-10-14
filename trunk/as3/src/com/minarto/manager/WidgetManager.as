@@ -6,101 +6,91 @@ package com.minarto.manager {
 	 * @author KIMMINHWAN
 	 */
 	public class WidgetManager {
-		private static var container:DisplayObjectContainer, dic:* = {}, modeSrcs:* = {};
+		static private var dic:* = {}, sourceDic:* = {};
 		
 		
-		public function WidgetManager() {
-			throw new Error("don't create instance");
+		static public function init():void{
 		}
 		
 		
-		public static function setMode($mode:String, $id:String, $src:String, ...$args):void{
-			var source:Array = modeSrcs[$mode], i:uint, l:uint = source ? source.length - 1 : 0;
+		static public function load($src:String, $onComplete:Function=null, $onError:Function=null):void{
+			var w:DisplayObject = getSrc($src);
 			
-			if(!source)	modeSrcs[$mode] = source = [];
-			
-			source.length = 0;
-			source.push($id, $src);
-			
-			for(i = 0; i<l;)	source.push($args[i ++], $args[i ++]);
+			if(w)	unLoad($src);
+			sourceDic[$src] = arguments;
+			LoadManager.load($src, _onComplete, _onError);
 		}
 		
 		
-		public static function getMode($mode:String):Array{
-			return	modeSrcs[$mode];
-		}
-		
-		
-		public static function loadMode($mode:String, onComplete:Function):void{
-			var source:Array = modeSrcs[$mode], i:uint, l:uint = source ? source.length - 1 : 0;
-			
-			if(l < 1){
-				onComplete();
-				return;
-			}
-			
-			for(i = 0, l = source ? source.length - 1 : 0; i<l;)	add(source[i ++], source[i ++]);
-			
-			add(source[i ++], source[i], onComplete, onComplete);
-		}
-		
-		
-		public static function init($container:DisplayObjectContainer = null):DisplayObjectContainer{
-			var id:*;
-			
-			if($container){
-				if(container == $container)	return	container;
-				for(id in dic)	$container.addChild(dic[id]);
-				container = $container;
-			}
-			
-			return	container;
-		}
-		
-		
-		public static function add($id:String, $widget:*, $onComplete:Function=null, $onError:Function=null):DisplayObject{
-			var w:DisplayObject = $widget as DisplayObject;
-			
-			del($id);
+		static public function unLoad($src:String):void{
+			var w:DisplayObject = getSrc($src), p:DisplayObjectContainer;
 			
 			if(w){
-				dic[$id] = w;
-				if(container)	container.addChild(w);
-				
-			}
-			else if($widget as String){
-				LoadManager.load($widget, function($content:DisplayObject):void{
-						dic[$id] = $content;
-						if(container)	container.addChild($content);
-						if(Boolean($onComplete))	$onComplete($content);
-					}, $onError);
-			}
-			
-			return	w;
-		}
-		
-		
-		public static function del($id:* = null):void{
-			var w:DisplayObject;
-			
-			if($id){
-				if($id as DisplayObject){
-					w = $id;
-					for($id in dic){
-						if(dic[$id] == w)	delete	dic[$id];
-					}
+				p = w.parent;
+				if(p){
+					p.removeChild(w);
 				}
-				else	delete	dic[$id];
 			}
 			else{
-				for($id in dic)	delete	dic[$id];
-				
-				dic = {};
-			}			
+				LoadManager.unLoad($src, _onComplete);
+				delete	sourceDic[$src];
+			}
 		}
 		
 		
-		public static function get($id:*):DisplayObject{
+		static private function _onComplete($src:String, $widget:DisplayObject):void{
+			var f:Function = dic[$src][1];
+			
+			sourceDic[$src] = $widget;
+			if(Boolean(f))	f($src, $widget);
+		}
+		
+		
+		static private function _onError($src:String):void{
+			var f:Function = dic[$src][2];
+			
+			if(Boolean(f))	f($src);
+		}
+		
+		
+		static public function getSrc($src:String):DisplayObject{
+			return	sourceDic[$src] as DisplayObject;
+		}
+		
+		
+		static public function add($id:*, $widget:DisplayObject):DisplayObject{
+			dic[$id] = $widget;
+			return	$widget;
+		}
+		
+		
+		static public function del($widget:* = null):DisplayObject{
+			var w:DisplayObject, id:*;
+			
+			if($widget){
+				w = $widget as DisplayObject;
+				if(w){
+					for(id in dic){
+						if(dic[id] == w){
+							delete	dic[id];
+							return	w;
+						}
+					}
+				}
+				else{
+					w = dic[id];
+					delete	dic[id];
+					return	w;
+				}
+			}
+			else{
+				for(id in dic)	delete	dic[id];
+				dic = {};
+			}
+		}
+		
+		
+		static public function get($id:*):DisplayObject{
 			return	dic[$id];
 		}
 	}
