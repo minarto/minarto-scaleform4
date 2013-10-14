@@ -1,4 +1,5 @@
 package com.minarto.manager {
+	import com.minarto.debug.Debug;
 	import com.minarto.utils.*;
 	
 	import flash.display.*;
@@ -7,45 +8,35 @@ package com.minarto.manager {
 	
 
 	public class LoadManager {
-		private static var loader:Loader, request:URLRequest = new URLRequest(), reservations:Array = [], item:LoadItem;
+		static private var loader:Loader, request:URLRequest = new URLRequest(), reservations:Array = [], item:*;
 		
 		
-		public function LoadManager() {
-			throw new Error("don't create instance");
-		}
-		
-		
-		public static function load($src:String, $onComplete:Function, $onError:Function=null):void{
-			var i:LoadItem, info:LoaderInfo;
+		static public function load($src:String, $onComplete:Function, $onError:Function=null):void{
+			var info:LoaderInfo;
 			
 			if(!$src)	return;
 			
-			i = Utils.getPool(LoadItem).object;
-			i.src = $src;
-			i.onComplete = $onComplete;
-			i.onError = $onError;
-			
-			reservations.push(i);
+			reservations.push(arguments);
 			
 			if(!item){
-				info = loader.contentLoaderInfo;
-				info.addEventListener(Event.COMPLETE, _onComplete);
-				info.addEventListener(IOErrorEvent.IO_ERROR, _onError);
+				//info = loader.contentLoaderInfo;
+				//info.addEventListener(Event.COMPLETE, _onComplete);
+				//info.addEventListener(IOErrorEvent.IO_ERROR, _onError);
 					
 				_load();
 			}
 		}
 		
 		
-		public static function unLoad($src:String, $onComplete:Function):void{
-			var i:*, _item:LoadItem, info:LoaderInfo;
+		static public function unLoad($src:String, $onComplete:Function):void{
+			var i:*, _item:*, info:LoaderInfo;
 			
 			if($src){
-				if(item && item.src == $src && item.onComplete == $onComplete)	loader.close();
+				if(item && item[0] == $src && item[1] == $onComplete)	loader.close();
 				
 				for(i in reservations){
 					_item = reservations[i];
-					if(_item && item.src == $src && _item.onComplete == $onComplete)	reservations.splice(i, 1);
+					if(_item && item[0] == $src && _item[1] == $onComplete)	reservations.splice(i, 1);
 				}
 			}
 			else{
@@ -56,16 +47,21 @@ package com.minarto.manager {
 				info.removeEventListener(IOErrorEvent.IO_ERROR, _onError);
 				
 				reservations.length = 0;
-			}			
+			}
 		}
 		
 		
-		private static function _load():void {
-			var info:LoaderInfo = loader.contentLoaderInfo;
+		static private function _load():void {
+			var info:LoaderInfo;
+			
+			loader = new Loader;
+			info = loader.contentLoaderInfo;
+			info.addEventListener(Event.COMPLETE, _onComplete);
+			info.addEventListener(IOErrorEvent.IO_ERROR, _onError);
 			
 			item = reservations.shift();
 			if(item){
-				request.url = item.src;
+				request.url = item[0];
 				loader.load(request);
 			}
 			else{
@@ -76,27 +72,19 @@ package com.minarto.manager {
 		
 		
 		private static function _onComplete($e:Event):void {
-			item.onComplete(loader.contentLoaderInfo.content);
-			Utils.getPool(LoadItem).object = item;
+			item[1](item[0], loader.contentLoaderInfo.content);
 			_load();
 		}
 		
 		
 		private static function _onError($e:IOErrorEvent):void {
-			var f:Function = item.onError;
+			var src:String = item[0], f:Function = item[2];
 			
-			Utils.error(IOErrorEvent.IO_ERROR, item.src);
+			Debug.error(IOErrorEvent.IO_ERROR, src);
 			
-			if(Boolean(f))	f(loader.contentLoaderInfo.content);
+			if(Boolean(f))	f(src);
 			
 			_load();
 		}
 	}
-}
-
-
-internal class LoadItem{
-	public var src:String;
-	public var onComplete:Function;
-	public var onError:Function;
 }
