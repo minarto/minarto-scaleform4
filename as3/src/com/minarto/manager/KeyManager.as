@@ -11,25 +11,21 @@ package com.minarto.ui {
 	import flash.ui.Keyboard;
 	
 	import scaleform.clik.controls.*;
+	import scaleform.clik.core.CLIK;
 	import scaleform.clik.managers.FocusHandler;
 	
 	
-	public class KeyBinding {
-		private static var keyDic:* = { }, bindingDic:* = {}, bindingKeys:* = {}, keyList:* = { CTRL:Keyboard.CONTROL, ALT:Keyboard.ALTERNATE, ESC:Keyboard.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123 },
+	public class KeyManager {
+		static private var keyDic:* = { }, bindingDic:* = {}, bindingKeys:* = {}, keyList:* = { CTRL:Keyboard.CONTROL, ALT:Keyboard.ALTERNATE, ESC:Keyboard.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123 },
 							lastKey:uint = 4294967295, _isOn:Boolean = true;
 		
 		
-		private static function _init():void{
-			Binding.addNPlay("stage", _setListener);
-		}
-		
-		
-		private static function _setListener($stage:Stage):void{
-			if($stage){
-				Binding.del("stage", _setListener);
-				$stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-				$stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-			}
+		static public function init($stage:Stage, $delegateFunction:Function):void{
+			if ($delegateFunction)	$delegateFunction = KeyBinding.set;
+			else ExternalInterface.call("KeyBinding", KeyBinding);
+			
+			$stage.addEventListener(KeyboardEvent.KEY_DOWN, _onKeyDown);
+			$stage.addEventListener(KeyboardEvent.KEY_UP, _onKeyUp);
 		}
 		
 		
@@ -39,7 +35,7 @@ package com.minarto.ui {
 		 * @param $delegateObj	위임 객체
 		 *  
 		 */		
-		private static function onKeyDown($e:KeyboardEvent):void{
+		static private function _onKeyDown($e:KeyboardEvent):void{
 			var d:* = FocusHandler.getInstance().getFocus(0), k:uint, bindingKey:String, a:Array, i:uint, l:uint, arg:*;
 			
 			if (d as TextField || d as TextInput || d as TextArea) return;
@@ -66,7 +62,7 @@ package com.minarto.ui {
 		 * @param $delegateObj	위임 객체
 		 *  
 		 */		
-		private static function onKeyUp($e:KeyboardEvent):void{
+		private static function _onKeyUp($e:KeyboardEvent):void{
 			var d:*= FocusHandler.getInstance().getFocus(0), bindingKey:String, a:Array, i:Number, l:Number, arg:*;
 			
 			if (d as TextField || d as TextInput || d as TextArea) return;
@@ -85,34 +81,13 @@ package com.minarto.ui {
 		}
 		
 		
-		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
-		 *  
-		 */		
-		public static function init($delegateObj:*, $stage:Stage):void{
-			if ($delegateObj)	$delegateObj.setKey = KeyBinding.set;
-			else ExternalInterface.call("KeyBinding", KeyBinding);
-			
-			if(Binding.get("stage") != $stage)	Binding.set("stage", $stage);
-		}
-		
-		
 		public static function isOn($on:Boolean):void {
-			var stage:Stage;
+			var stage:Stage = CLIK.stage;
 			
-			if($on)	Binding.addNPlay("stage", _setListener);
-			else{
-				Binding.del("stage", _setListener);
-				stage = Binding.get("stage");
-				if(stage){
-					stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-					stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-				}
+			if(stage){
+				stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+				stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 			}
-			
-			_isOn = $on;
 		}
 		
 		

@@ -9,16 +9,13 @@ package com.minarto.utils {
 	
 
 	public class Utils 	{
-		private static var localeDic:* = {};
+		static private var _localeDic:* = {}, _poolDic:Dictionary = new Dictionary(true);
 		
 		
-		public static var rectangle:Rectangle = new Rectangle;
+		static public var rectangle:Rectangle = new Rectangle, point:Point = new Point;
 		
 		
-		public static var point:Point = new Point;
-		
-		
-		public static function addComma($n:Number, $cipher:uint = 3):String {
+		static public function addComma($n:Number, $cipher:uint=3):String {
 			var s:String, c:uint, i:int, t:String;
 			
 			if (isNaN($n))	return	s;
@@ -42,19 +39,16 @@ package com.minarto.utils {
 		
 		
 		static public function locale($msg:String):String {
-			var r:String = localeDic[$msg];
+			var r:String = _localeDic[$msg];
 			
 			if(!r){
 				r = ExternalInterface.call("locale", $msg);
-				if(r)	localeDic[$msg] = r;
+				if(r)	_localeDic[$msg] = r;
 				else	Debug.error("locale", $msg);
 			}
 			
 			return	r;
 		}
-		
-		
-		static private var _poolDic:Dictionary = new Dictionary(true);
 		
 		
 		static public function getPool($c:Class):ObjectPool{
