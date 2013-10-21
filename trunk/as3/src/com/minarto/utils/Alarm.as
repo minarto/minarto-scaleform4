@@ -4,7 +4,7 @@ package com.minarto.utils {
 	import flash.utils.Dictionary;
 	
     public class Alarm {
-		private static var _dic:* = {}, _date:Date = new Date();
+		static private var _dic:* = {}, _date:Date = new Date();
 		
 		
 		static public function getDate($h:uint, $m:uint, $s:uint):Date {
