@@ -2,12 +2,15 @@
  * 
  */
 package com.minarto.data {
+	import scaleform.clik.controls.CoreList;
+	import scaleform.clik.data.DataProvider;
+	import flash.utils.Dictionary;
 	import flash.external.ExternalInterface;
 
 	public class BindingObject {
-		static private var bDic:* = {};
+		static private var _bDic:* = {};
 		
-		private var valueDic:* = {}, bindingDic:* = {};
+		private var _valueDic:* = {}, _handlerDic:* = {}, _itemDic:Dictionary = new Dictionary(true), _listDic:* = {};
 		
 		
 		/**
@@ -17,7 +20,7 @@ package com.minarto.data {
 			var b:BindingObject = GetObject($name);
 			
 			if(!b){
-				bDic[$name] = b = new BindingObject;
+				_bDic[$name] = b = new BindingObject;
 				ExternalInterface.call("BindingObject", $name, b);
 			}
 			
@@ -29,7 +32,7 @@ package com.minarto.data {
 		 * 바인딩 객체 반환
 		 */		
 		static public function GetObject($name:String):BindingObject{
-			return	bDic[$name];
+			return	_bDic[$name];
 		}
 		
 		
@@ -37,7 +40,7 @@ package com.minarto.data {
 		 * 바인딩 객체 삭제
 		 */	
 		static public function DelObject($name:String):void{
-			delete	bDic[$name];
+			delete	_bDic[$name];
 		}
 		
 		
@@ -57,7 +60,7 @@ package com.minarto.data {
 		 * 값 설정
 		 */	
 		static public function GetObjectValue($name:String, $key:String):*{
-			return	AddObject($name).get($key, $value);
+			return	AddObject($name).get($key);
 		}
 		
 		
@@ -67,16 +70,105 @@ package com.minarto.data {
 		 * @param $value	바인딩 값
 		 */
 		public function set($key:String, $value:*):void {
-			var a:Array = bindingDic[$key], i:*, item:*, arg:Array;
+			var a:Array, i:*, item:*, arg:Array, dataProvider:DataProvider, index:int;
 			
-			valueDic[$key] = $value;
-			
+			if($value as Array){
+				dataProvider = get($key) as DataProvider;
+				
+				for (i in dataProvider){
+					item = dataProvider[i];
+					a = _itemDic[item];
+					a.splice(a.indexOf($key), 1);
+					if(!a.length)	delete	_itemDic[item];
+				}
+				
+				for (i in $value) {
+					item = $value[i];
+					a = _itemDic[item];
+					if(a)	a.push($key);
+					else	_itemDic[item] = [$key];
+				}
+				
+				if(dataProvider){
+					dataProvider.setSource($value);
+					dataProvider.invalidate();
+				}
+				else	_valueDic[$key] = dataProvider = new DataProvider($value);
+				
+				$value = dataProvider;
+			}
+			else	_valueDic[$key] = $value;
+
+			a = _handlerDic[$key];
 			for (i in a) {
 				item = a[i];
 				arg = item.arg;
 				arg[0] = $value;
 				item.handler.apply(null, arg);
 			}
+			
+			a = _listDic[$key];
+			for (i in a) {
+				item = a[i];
+				item.dataProvider = dataProvider;
+			}
+		}
+		
+		
+		public function setListItem($key:String, $item:*, $index:int=-1):void{
+			var dataProvider:* = get($key), a:Array, i:*, item:*, arg:Array;
+			
+			if(dataProvider){
+				dataProvider = dataProvider as DataProvider;
+				if(dataProvider){
+					$index = ($index > - 1) ? $index : dataProvider.length;
+					item = dataProvider[$index];
+					if(item){
+						a = _itemDic[item];
+						a.splice(a.indexOf($key), 1);
+						if(!a.length)	delete	_itemDic[item];
+					}
+					
+					a = _itemDic[$item];
+					if(a)	a.push($key);
+					else	_itemDic[$item] = [$key];
+					
+					dataProvider[$index] = $item;
+					dataProvider.invalidate();
+					
+					a = _handlerDic[$key];
+					for (i in a) {
+						item = a[i];
+						arg = item.arg;
+						arg[0] = dataProvider;
+						item.handler.apply(null, arg);
+					}
+				}
+				else	return;
+			}
+			else{
+				dataProvider = [];
+				dataProvider[($index > - 1) ? $index : 0] = $item;
+				set($key, dataProvider);
+			}
+		}
+		
+		
+		public function setListItemP($item:*, $p:String, $value:*):void{
+			var key:String = _itemDic[$item], dataProvider:DataProvider = get(key) as DataProvider, a:Array, arg:Array;
+			
+			if(!dataProvider)	return;
+			$item[$p] = $value;
+			
+			dataProvider.invalidate();
+			
+			a = _handlerDic[key];
+			for ($p in a) {
+				$item = a[$p];
+				arg = $item.arg;
+				arg[0] = dataProvider;
+				$item.handler.apply(null, arg);
+			}
 		}
 		
 		
@@ -86,22 +178,39 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function add($key:String, $handler:Function, ...$args):void {
-			var a:Array = bindingDic[$key], i:*, item:*;
+		public function add($key:String, $handlerOrList:*, ...$args):void {
+			var a:Array, i:*, item:*, dataProvider:DataProvider;
 			
-			$args.unshift(i);
-			
-			if(a){
-				for (i in a){
-					item = a[i];
-					if (item.handler == $handler){
-						item.arg = $args;
-						return;
+			if($handlerOrList as Function){
+				a = _handlerDic[$key];
+				
+				$args.unshift(i);
+				
+				if(a){
+					for (i in a){
+						item = a[i];
+						if (item.handler == $handlerOrList){
+							item.arg = $args;
+							return;
+						}
 					}
+					a.push({handler:$handlerOrList, arg:$args});
 				}
-				a.push({handler:$handler, arg:$args});
+				else	_handlerDic[$key] = a = [{handler:$handlerOrList, arg:$args}];
 			}
-			else	bindingDic[$key] = a = [{handler:$handler, arg:$args}];
+			else if($handlerOrList as CoreList){
+				item = get($key);
+				dataProvider = get($key) as DataProvider;
+				if(!dataProvider)	_valueDic[$key] = dataProvider = new DataProvider();
+
+				a = _listDic[$key];
+				if(a){
+					for(i in a)	if(a[i] == $handlerOrList)	return;
+					a.push($handlerOrList);
+				}
+				else	_listDic[$key] = a = [$handlerOrList];				
+			}
+			else	throw	new Error("Bonding.add Error - $handlerOrList is not Function, CoreList");
 		}
 		
 		
@@ -111,25 +220,21 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addNPlay($key:String, $handler:Function, ...$args):void {
-			var a:Array = bindingDic[$key], i:*, item:*;
+		public function addNPlay($key:String, $handlerOrList:*, ...$args):void {
+			var dataProvider:DataProvider;
 			
-			$args.unshift(get($key));
+			$args.unshift($key, $handlerOrList);
+			add.apply(Binding, $args);
 			
-			if(a){
-				for (i in a){
-					item = a[i];
-					if (item.handler == $handler){
-						item.arg = $args;
-						$handler.apply(null, $args);
-						return;
-					}
-				}
-				a.push({handler:$handler, arg:$args});
+			if($handlerOrList as Function){
+				$args[0] = get($key);
+				$handlerOrList.apply(null, $args);
 			}
-			else	bindingDic[$key] = a = [{handler:$handler, arg:$args}];
-			
-			$handler.apply(null, $args);
+			else if($handlerOrList as CoreList){
+				dataProvider = get($key);
+				if(dataProvider == $handlerOrList.dataProvider)	$handlerOrList.invalidate();
+				else	$handlerOrList.dataProvider = dataProvider;
+			}
 		}
 		
 		
@@ -139,20 +244,41 @@ package com.minarto.data {
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public function del($key:String=null, $handler:Function=null):void {
+		public function del($key:String=null, $handlerOrList:*=null):void {
 			var a:Array, i:*;
 			
 			if($key){
-				a = bindingDic[$key];
-				for (i in a) {
-					if (a[i].handler == $handler){
-						a.splice(i, 1);
-						if(!a.length)	delete	bindingDic[$key];
-						return;
+				if($handlerOrList){
+					if($handlerOrList as Function){
+						a = _handlerDic[$key];
+						for (i in a) {
+							if (a[i].handler == $handlerOrList){
+								a.splice(i, 1);
+								if(!a.length)	delete	_handlerDic[$key];
+								return;
+							}
+						}
 					}
+					else if($handlerOrList as CoreList){
+						a = _listDic[$key];
+						for (i in a) {
+							if (a[i] == $handlerOrList){
+								a.splice(i, 1);
+								if(!a.length)	delete	_listDic[$key];
+								return;
+							}
+						}
+					}
+					else	throw	new Error("Bonding.del Error - $handlerOrList is not Function, CoreList");
+				} else{
+					delete	_handlerDic[$key];
+					delete	_listDic[$key];
 				}
 			}
-			else	bindingDic = {};
+			else{
+				_handlerDic = {};
+				_listDic = {};
+			}
 		}
 		
 		
@@ -163,7 +289,7 @@ package com.minarto.data {
 		 * 
 		 */		
 		public function get($key:String):* {
-			return	valueDic[$key];
+			return	_valueDic[$key];
 		}
 	}
 }
