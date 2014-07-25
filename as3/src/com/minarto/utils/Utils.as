@@ -1,71 +1,42 @@
 package com.minarto.utils {
 	import de.polygonal.core.ObjectPool;
 	
+	import flash.display.GraphicsPath;
 	import flash.external.ExternalInterface;
 	import flash.geom.*;
 	import flash.utils.Dictionary;
 	
-	import com.minarto.debug.Debug;
-	
 
 	public class Utils 	{
-		static private var _localeDic:* = {}, _poolDic:Dictionary = new Dictionary(true);
+		static private const _LOCALE_DIC:* = {}, _POOL_DIC:Dictionary = new Dictionary; 
 		
 		
-		static public var rectangle:Rectangle = new Rectangle, point:Point = new Point;
+		static public const POINT:Point = new Point, RECTANGLE:Rectangle = new Rectangle, RADIAN:Number = Math.PI / 180,
+			GRAPHICS_PATH:GraphicsPath = new GraphicsPath(new <int>[], new <Number>[]);
 		
 		
-		static public function addComma($n:Number, $cipher:uint=3):String {
-			var s:String, c:uint, i:int, t:String;
-			
-			if (isNaN($n))	return	s;
-			
-			s = "" + $n;
-			
-			c = s.length;
-			i = s.indexOf(".", 0) - $cipher;
-			if (i < - ($cipher - 1)) i = c - $cipher;
-			
-			while (i > 0) {
-				t = s.substring(0, i);
-				if(t === "-")	return	s;
-				else	s = t + "," + s.substring(i, c ++);
-				
-				i -= $cipher;
-			}
-			
-			return	s;
-		}
-		
-		
-		static public function locale($msg:String):String {
-			var r:String = _localeDic[$msg];
+		static public function LOCALE($msg:String):String {
+			var r:String = _LOCALE_DIC[$msg];
 			
 			if(!r){
 				r = ExternalInterface.call("locale", $msg);
-				if(r)	_localeDic[$msg] = r;
-				else	Debug.error("locale", $msg);
+				if(r)	_LOCALE_DIC[$msg] = r;
 			}
 			
-			return	r;
+			return	r || $msg;
 		}
 		
 		
-		static public function getPool($c:Class):ObjectPool{
-			var p:ObjectPool = _poolDic[$c];
+		static public function POOL($c:Class):ObjectPool{
+			var p:ObjectPool = _POOL_DIC[$c];
 			
 			if(!p){
 				p = new ObjectPool(true);
 				p.allocate(1, $c);
-				_poolDic[$c] = p;
+				_POOL_DIC[$c] = p;
 			}			
 			
 			return	p;
-		}
-		
-		
-		static public function delPool($c:Class):void{
-			delete	_poolDic[$c];
 		}
 	}
 }
