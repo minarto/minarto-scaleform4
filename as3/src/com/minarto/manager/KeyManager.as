@@ -1,14 +1,11 @@
 /**
  * 
  */
-package com.minarto.ui {
-	import com.minarto.data.Binding;
-	
+package com.minarto.manager {
 	import flash.display.Stage;
-	import flash.events.*;
-	import flash.external.ExternalInterface;
+	import flash.events.KeyboardEvent;
 	import flash.text.TextField;
-	import flash.ui.Keyboard;
+	import flash.utils.Dictionary;
 	
 	import scaleform.clik.controls.*;
 	import scaleform.clik.core.CLIK;
@@ -16,193 +13,134 @@ package com.minarto.ui {
 	
 	
 	public class KeyManager {
-		static private var keyDic:* = { }, bindingDic:* = {}, bindingKeys:* = {}, keyList:* = { CTRL:Keyboard.CONTROL, ALT:Keyboard.ALTERNATE, ESC:Keyboard.ESCAPE, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123 },
-							lastKey:uint = 4294967295, _isOn:Boolean = true;
+		static private const _BINDING_DIC:* = { };
 		
 		
-		static public function init($stage:Stage, $delegateFunction:Function):void{
-			if ($delegateFunction)	$delegateFunction = KeyBinding.set;
-			else ExternalInterface.call("KeyBinding", KeyBinding);
-			
-			$stage.addEventListener(KeyboardEvent.KEY_DOWN, _onKeyDown);
-			$stage.addEventListener(KeyboardEvent.KEY_UP, _onKeyUp);
-		}
+		static private var _HANDLER_DIC:* = {}, _REPEAT_KEY:String;
+		
+		
+		static public var REPEAT:Boolean;
 		
 		
 		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
-		 *  
-		 */		
-		static private function _onKeyDown($e:KeyboardEvent):void{
-			var d:* = FocusHandler.getInstance().getFocus(0), k:uint, bindingKey:String, a:Array, i:uint, l:uint, arg:*;
-			
-			if (d as TextField || d as TextInput || d as TextArea) return;
-			
-			k = $e.keyCode;
-			if (lastKey == k)	return;
-			
-			d = isNaN(lastKey) ? keyDic["1." + k] : keyDic["1." + k + "." + lastKey];
-			for (bindingKey in d) {
-				a = bindingDic[bindingKey];
-				for (i = 0, l = a.length; i < l; ++ i) {
-					arg = a[i];
-					arg.handler.apply(null, arg.args);
-				}
-			}
-			
-			lastKey = k;
-		}
-		
-		
-		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
+		 * 키 핸들러
+		 * @param $e
 		 *  
 		 */		
-		private static function _onKeyUp($e:KeyboardEvent):void{
-			var d:*= FocusHandler.getInstance().getFocus(0), bindingKey:String, a:Array, i:Number, l:Number, arg:*;
+		static private function _onKey($e:KeyboardEvent):void{
+			var f:* = FocusHandler.getInstance().getFocus(0), dic:Dictionary;
 			
-			if (d as TextField || d as TextInput || d as TextArea) return;
+			if (f as TextField || f as TextInput || f as TextArea) return;
 			
-			d = $e.keyCode;
-			lastKey = 4294967295;
+			f = $e.type + "." + $e.keyCode + "." + $e.ctrlKey + "." + $e.altKey + "." + $e.shiftKey;
+			if(!REPEAT && (_REPEAT_KEY == f))	return;
 			
-			d = keyDic["." + d];
-			for (bindingKey in d) {
-				a = bindingDic[bindingKey];
-				for (i = 0, l = a.length; i < l; ++ i) {
-					arg = a[i];
-					arg.handler.apply(null, arg.args);
-				}
+			_REPEAT_KEY = f;
+			dic = _HANDLER_DIC[_BINDING_DIC[f]];
+			for (f in dic) {
+				f.apply(null, dic[f]);
 			}
 		}
 		
 		
-		public static function isOn($on:Boolean):void {
+		static public function ENABLE($on:Boolean):void {
 			var stage:Stage = CLIK.stage;
 			
 			if(stage){
-				stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-				stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-			}
+				if($on){
+					stage.addEventListener(KeyboardEvent.KEY_DOWN, _onKey);
+					stage.addEventListener(KeyboardEvent.KEY_UP, _onKey);
+				}
+				else{
+					stage.removeEventListener(KeyboardEvent.KEY_DOWN, _onKey);
+					stage.removeEventListener(KeyboardEvent.KEY_UP, _onKey);
+				}
+			}			
 		}
 		
 		
 		/**
 		 * 키 설정 
-		 * @param $key	바인딩 키
-		 * @param $value	바인딩 값
+		 * @param $bindingKey
+		 * @param $eventType
+		 * @param $keyCode
+		 * @param $ctrlKey
+		 * @param $altKey
+		 * @param $shiftKey
+		 * @param $enable	//	등록된키 등록/삭제여부
+		 * 
 		 */
-		public static function set($bindingKey:String, $isDown:Boolean, $key:*, $combi:* = null):void {
-			var k:String, ba:*, a:Array;
+		static public function SET($bindingKey:String, $eventType:String, $keyCode:uint, $ctrlKey:Boolean = false, $altKey:Boolean = false, $shiftKey:Boolean = false, $enable:Boolean=true):void {
+			$eventType += "." + $keyCode + "." + $ctrlKey + "." + $altKey + "." + $shiftKey;
 			
-			if ($bindingKey) {
-				if($key !== undefined){
-					if (typeof($key) == "string"){
-						$key = $key.toUpperCase();
-						$key = Keyboard[$key] || keyList[$key] || $key.charCodeAt(0);
-					}
-				
-					if ($combi !== undefined && typeof($combi) == "string") {
-						$combi = $combi.toUpperCase();
-						$combi = Keyboard[$combi] || keyList[$combi] || $combi.charCodeAt(0);
-					}
-					
-					if (isNaN($combi))	k = $isDown ? "1." + $key : "." + $key;
-					else {
-						k = $isDown ? "1." + $key + "." + $combi : "." + $key + "." + $combi;
-						
-						ba = keyDic[k];
-						if (!ba)	keyDic[k] = ba = {};
-						ba[$bindingKey] = 1;
-						
-						k = $isDown ? "1." + $combi + "." + $key : "." + $combi + "." + $key;
-					}
-					
-					ba = keyDic[k];
-					if (!ba)	keyDic[k] = ba = {};
-					ba[$bindingKey] = 1;
-					
-					ba = bindingKeys[$bindingKey];
-					if (!ba)	bindingKeys[$bindingKey] = ba = [];
-					
-					if (isNaN($combi))	k = $isDown ? "1." + $key : "." + $key;
-					else	k = $isDown ? "1." + $key + "." + $combi : "." + $key + "." + $combi;
-					
-					a = k.split(".");
-					a[1] = uint(a[1]);
-					if(a.length > 2)	a[2] = uint(a[2]);
-					for (k in ba) {
-						$combi = ba[k];
-						if($combi[0] == a[0] && $combi[1] == a[1] && $combi[2] == a[2])	return;
-					}
-					ba.push(a);
-				}
-				else{
-					for (k in keyDic)	delete	keyDic[k][$bindingKey];
-					delete bindingKeys[$bindingKey];
-				}
-			}
-			else	keyDic = { };
+			if($enable)	_BINDING_DIC[$eventType] = $bindingKey;
+			else	delete	_BINDING_DIC[$eventType];
+			
+			ENABLE(true);
 		}
 		
 		
 		/**
-		 * 특정 바인딩 값을 가져온다 
-		 * @param $key	바인딩키
-		 * @return 바인딩 값
+		 * 특정 바인딩키에 매칭된 키값을 가져온다 
+		 * @param $bindingKey	바인딩키
+		 * @return 키 값
 		 * 
 		 */		
-		public static function get($bindingKey:String):Array {
-			return	bindingKeys[$bindingKey];
+		static public function GET_EVENT($bindingKey:String):Array {
+			arguments.length = 0;
+			for(var k:String in _BINDING_DIC){
+				if(_BINDING_DIC[k] == $bindingKey){
+					arguments.push(k);
+				}
+			}
+			
+			return	arguments;
+		}
+		
+		
+		/**
+		 * 특정 바인딩키 값을 가져온다 
+		 * @param $eventType
+		 * @param $keyCode
+		 * @param $ctrlKey
+		 * @param $altKey
+		 * @param $shiftKey
+		 * @return 
+		 * 
+		 */			
+		static public function GET_BINDINGKEY($eventType:String, $keyCode:uint, $ctrlKey:Boolean = false, $altKey:Boolean = false, $shiftKey:Boolean = false):String {
+			return	_BINDING_DIC[$eventType + "." + $keyCode+ "." + $ctrlKey + "." + $altKey + "." + $shiftKey];
 		}
 		
 		
 		/**
 		 * 바인딩 
-		 * @param $key		바인딩 키
+		 * @param $bindingKey		바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public static function add($bindingKey:String, $handler:Function, ...$args):void {
-			var a:Array = bindingDic[$bindingKey], i:*, arg:*;
-			
-			if (a) {
-				for (i in a) {
-					arg = a[i];
-					if (arg.handler == $handler) {
-						arg.args = $args;
-						return;
-					}
-					a.push({handler:$handler, args:$args});
-				}
-			}	else	bindingDic[$bindingKey] = a = [{handler:$handler, args:$args}];
+		static public function ADD($bindingKey:String, $handler:Function, ...$args):void {
+			(_HANDLER_DIC[$bindingKey] || (_HANDLER_DIC[$bindingKey] = new Dictionary(true)))[$handler] = $args;
 		}
 		
 		
 		/**
 		 * 바인딩 해제
-		 * @param $key	바인딩 키
+		 * @param $bindingKey	바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public static function del($bindingKey:String=null, $handler:Function=null):void {
-			var a:Array, i:*, arg:*;
+		static public function DEL($bindingKey:String, $handler:Function):void {
+			var dic:Dictionary;
 			
 			if ($bindingKey) {
-				a = bindingDic[$bindingKey];
-				for (i in a) {
-					arg = a[i];
-					if (arg.handler == $handler) {
-						a.splice(i, 1);
-						if (!a.length)	delete	bindingDic[$bindingKey];
-						return;
-					}
+				if($handler){
+					dic = _HANDLER_DIC[$bindingKey];
+					if(dic)	delete	dic[$handler];
 				}
-			}	else	bindingDic = {};
+				else	delete	_HANDLER_DIC[$bindingKey];
+			}
+			else	_HANDLER_DIC = {};
 		}
 	}
 }

@@ -1,78 +1,95 @@
 package com.minarto.manager {
-	import com.minarto.utils.Utils;
-	
 	import flash.display.*;
-	
-	import scaleform.gfx.Extensions;
 	
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
 	public class ImageManager {
-		static private var	dic:* = { };
+		static private const _DIC:* = { };
 		
 		
-		static private function _onComplete($src:String, $bm:Bitmap):void{
-			var bd:BitmapData, a:Array = dic[$src], i:*;
+		/**
+		 * 이미지 로드 완료 
+		 * @param $bm
+		 * @param $src
+		 * 
+		 */		
+		static private function _OnComplete($bm:Bitmap, $src:String):void{
+			var bd:BitmapData, f:Function, args:Array, i:uint, l:uint;
 			
-			if($bm){
-				bd = $bm.bitmapData;
-				dic[$src] = bd;
-				for(i in a)	a[i](bd);
+			arguments = _DIC[$src];
+			if($bm)	bd = $bm.bitmapData;
+			
+			_DIC[$src] = bd;
+			
+			for(l = arguments.length; i<l; ++i){
+				args = arguments[i];
+				f = args[0];
+				args[0] = bd;
+				f.apply(null, args);
 			}
 		}
 		
 		
-		static public function load($src:String, $onComplete:Function):void{
-			var bd:BitmapData = get($src), a:Array;
+		/**
+		 * 이미지 로드 
+		 * @param $src
+		 * @param $onComplete
+		 * @param $args
+		 * 
+		 */		
+		static public function ADD($src:String, $onComplete:Function, ...$args):void{
+			var bd:BitmapData = _DIC[$src] as BitmapData, a:Array;
 			
-			if(bd)	$onComplete(bd);
-			else{
-				a = dic[$src];
-				if(a)	a.push($onComplete);
+			if($src){
+				if(bd){
+					$args.unshift(bd);
+					$onComplete.apply(null, $args);
+				}
 				else{
-					dic[$src] = a = [$onComplete];
-					LoadManager.load(Extensions.isScaleform ? "img://" + $src : $src, _onComplete);
+					$args.unshift($onComplete);
+					a = _DIC[$src] as Array;
+					if(a)	a.push($args);
+					else{
+						_DIC[$src] = a = [$args];
+						a["loadID"] = LoadManager.ADD("img", $src, _OnComplete, _OnComplete, $src);
+					}
 				}
 			}
+			else{
+				$args.unshift(bd);
+				$onComplete.apply(null, $args);
+			}
 		}
 		
 		
-		static public function get($src:String):BitmapData{
-			return	dic[$src] as BitmapData;
-		}
-		
-		
-		static public function unLoad($src:*=null):void {
+		/**
+		 * 이미지 파괴 
+		 * @param $src
+		 * 
+		 */		
+		static public function DEL($src:String=null):void {
 			var bd:BitmapData;
 			
 			if ($src){
-				if($src as String){
-					bd = get($src);
-					if(bd){
-						bd.dispose();
-						delete dic[$src];
-					}
+				if(bd = _DIC[$src] as BitmapData){
+					bd.dispose();
+					delete _DIC[$src];
 				}
-				else{
-					bd = $src as BitmapData;
-					if(bd){
-						for($src in dic){
-							if(bd == dic[$src]){
-								bd.dispose();
-								delete dic[$src];
-							}
-						}
-					}
+				else if(arguments = _DIC[$src] as Array){
+					LoadManager.DEL(arguments["loadID"]);
+					delete _DIC[$src];
 				}
 			}
 			else{
-				for($src in dic){
-					bd = dic[$src];
-					bd.dispose();
+				for($src in _DIC){
+					if(bd = _DIC[$src] as BitmapData)	bd.dispose();
+					else if(arguments = _DIC[$src] as Array){
+						LoadManager.DEL(arguments["loadID"]);
+						delete _DIC[$src];
+					}
 				}
-				dic = {};
 			}
 		}
 	}

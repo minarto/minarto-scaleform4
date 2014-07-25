@@ -2,68 +2,146 @@
  * 
  */
 package com.minarto.data {
-	import flash.events.TimerEvent;
-	import flash.external.ExternalInterface;
-	import flash.utils.*;
-	import scaleform.clik.controls.CoreList;
-	import scaleform.clik.data.DataProvider;
+	import flash.utils.Dictionary;
+	
 	
 	public class Binding {
-		static private var _valueDic:* = {}, _handlerDic:* = {}, _itemDic:Dictionary = new Dictionary(true), _listDic:* = {};
+		static private const _BINDING_DIC:* = {}, _ID_DIC:* = {};
 		
 		
 		/**
-		 * 초기화 및 위임
-		 *  
-		 * @param $delegateObj	위임 객체
-		 *  
+		 * 클라와 바인딩 매핑
 		 */		
-		public static function init($delegateObj:*):void{
-			if ($delegateObj){
-				$delegateObj.setValue = Binding.set;
-				$delegateObj.getValue = Binding.get;
-			}
-			else ExternalInterface.call("Binding", Binding);
+		static public function SET($enum:Number, $classID:String):Binding{
+			var b:Binding = _BINDING_DIC[$enum] || _BINDING_DIC[$classID] || new Binding;
+			
+			_ID_DIC[$enum] = $classID;
+			_ID_DIC[$classID] = $enum;
+			
+			b.setEnum($enum);
+			b.setClassID($classID);
+			_BINDING_DIC[$enum] = b;
+			_BINDING_DIC[$classID] = b;
+			
+			return	b;
 		}
 		
 		
 		/**
-		 * 시간 관리
-		 *  
-		 * @param $key
-		 * @param $interval
-		 * 
+		 * 바인딩 객체 반환
 		 */		
-		public static function dateInit($key:String, $interval:Number=NaN):void {
-			var o:* = dateKey[$key], timer:Timer, f:Function;
+		static public function GET($id:*):Binding{
+			var b:Binding = _BINDING_DIC[$id] || (_BINDING_DIC[$id] = new Binding);
 			
-			if(o){
-				timer = o.timer;
-				timer.stop();
-				if($interval){
-					timer.delay = $interval * 1000;
-					timer.reset();
-					timer.start();
+			if(isNaN($id))	b.setClassID($id);
+			else			b.setEnum($id);
+			
+			return	b;
+		}
+		
+		
+		/**
+		 * 바인딩 객체 삭제
+		 */		
+		static public function DEL($id:*):void{
+			var b:Binding = _BINDING_DIC[$id];
+			
+			if(b)	b.del();
+			
+			delete	_BINDING_DIC[$id];
+		}
+		
+		
+		/**
+		 * $classID 에 연결된 enum 반환
+		 */		
+		static public function GET_Enum($classID:String):Number{
+			return	_ID_DIC[$classID];
+		}
+		
+		
+		/**
+		 * $enum 에 연결된 class id 반환
+		 */		
+		static public function GET_ClassID($enum:Number):String{
+			return	_ID_DIC[$enum];
+		}
+		
+		
+		/**
+		 * 값 설정
+		 */	
+		static public function SET_Values($enum:Number, $key:String, ...$values):void{
+			var b:Binding = _BINDING_DIC[$enum] || (_BINDING_DIC[$enum] = new Binding);
+			
+			b.setEnum($enum);
+			
+			$values.unshift($key);
+			b.set.apply(null, $values);
+		}
+		
+		
+		static public function SET_ListItem($enum:Number, $key:String, $item:*, $index:int=-1, $valueIndex:uint=0):void{
+			var b:Binding = _BINDING_DIC[$enum] || (_BINDING_DIC[$enum] = new Binding);
+			
+			b.setEnum($enum);
+			b.setListItem($key, $item, $index, $valueIndex);
+		}
+		
+		
+		static public function SET_ItemP($item:*, $p:String, $value:*):void{
+			for each(var b:Binding in _BINDING_DIC)	b.setListItemProp($item, $p, $value);
+		}
+		
+		
+		private const _valueDic:* = {}, _itemDic:Dictionary = new Dictionary(true), _reservations:* = {};
+		
+		
+		private var _handlerDic:* = {}, _enum:Number, _classID:String;
+		
+		
+		/**
+		 * 값 설정 
+		 * @param $key	바인딩 키
+		 * @param $value	바인딩 값
+		 */
+		public function set($key:String, ...$values):void {
+			var a:Array = _reservations[$key], f:*, i:uint = $values.length, l:uint, v:*;
+			
+			while(i --){
+				v = $values[i];
+				switch(typeof v){
+					case "string" :
+					case "number" :
+					case "boolean" :
+						break;
+					
+					default :
+						if(v as Array){
+							l = v.length;
+							while(l--)	_itemDic[v[l]] = $key;
+						}
+						else	_itemDic[v] = $key;
 				}
-				else{
-					timer.removeEventListener(TimerEvent.TIMER, o.func);
-					delete	dateKey[$key];
+				
+			}
+			_valueDic[$key] = $values;
+			
+			$values = $values.concat();
+			$values.unshift($key);
+			
+			for(f in _handlerDic[$key]){
+				if(a){
+					for(l=a.push($values); i<l; ++i)	_set.apply(null, a[i]);
+					delete	_reservations[$key];
 				}
+				else	_set.apply(null, $values);
+				
+				return;
 			}
-			else if($interval){
-				timer = new Timer($interval * 1000);
-				
-				f = function($$e:*):void{
-					set($key, new Date);
-				};
-				
-				f($interval);
-				
-				timer.addEventListener(TimerEvent.TIMER, f);
-				timer.start();
-				
-				dateKey[$key] = o = {timer:timer, func:f};
-			}
+			
+			if(!a)	_reservations[$key] = a = [];
+			a.push($values);
 		}
 		
 		
@@ -72,105 +150,46 @@ package com.minarto.data {
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		public static function set($key:String, $value:*):void {
-			var a:Array, i:*, item:*, arg:Array, dataProvider:DataProvider, index:int;
+		private function _set($key:String, ...$values):void {
+			var d:Dictionary = _handlerDic[$key], f:*;
 			
-			if($value as Array){
-				dataProvider = get($key) as DataProvider;
-				
-				for (i in dataProvider){
-					item = dataProvider[i];
-					a = _itemDic[item];
-					a.splice(a.indexOf($key), 1);
-					if(!a.length)	delete	_itemDic[item];
-				}
-				
-				for (i in $value) {
-					item = $value[i];
-					a = _itemDic[item];
-					if(a)	a.push($key);
-					else	_itemDic[item] = [$key];
-				}
-				
-				if(dataProvider){
-					dataProvider.setSource($value);
-					dataProvider.invalidate();
-				}
-				else	_valueDic[$key] = dataProvider = new DataProvider($value);
-				
-				$value = dataProvider;
-			}
-			else	_valueDic[$key] = $value;
-
-			a = _handlerDic[$key];
-			for (i in a) {
-				item = a[i];
-				arg = item.arg;
-				arg[0] = $value;
-				item.handler.apply(null, arg);
-			}
-			
-			a = _listDic[$key];
-			for (i in a) {
-				item = a[i];
-				item.dataProvider = dataProvider;
-			}
+			for(f in d)	f.apply(null, $values.concat(d[f]));
 		}
 		
 		
-		static public function setListItem($key:String, $item:*, $index:int=-1):void{
-			var dataProvider:* = get($key), a:Array, i:*, item:*, arg:Array;
+		public function setListItem($key:String, $item:*, $index:int=-1, $valueIndex:uint=0):void{
+			var values:Array = _valueDic[$key] || [], arguments:Array = values[$valueIndex] as Array || (values[$valueIndex] = []);
 			
-			if(dataProvider){
-				dataProvider = dataProvider as DataProvider;
-				if(dataProvider){
-					$index = ($index > - 1) ? $index : dataProvider.length;
-					item = dataProvider[$index];
-					if(item){
-						a = _itemDic[item];
-						a.splice(a.indexOf($key), 1);
-						if(!a.length)	delete	_itemDic[item];
-					}
-					
-					a = _itemDic[$item];
-					if(a)	a.push($key);
-					else	_itemDic[$item] = [$key];
-					
-					dataProvider[$index] = $item;
-					dataProvider.invalidate();
-					
-					a = _handlerDic[$key];
-					for (i in a) {
-						item = a[i];
-						arg = item.arg;
-						arg[0] = dataProvider;
-						item.handler.apply(null, arg);
-					}
-				}
-				else	return;
+			switch(typeof $item){
+				case "string" :
+				case "number" :
+				case "boolean" :
+					break;
+				default :
+					_itemDic[$item] = $key;
 			}
-			else{
-				dataProvider = [];
-				dataProvider[($index > - 1) ? $index : 0] = $item;
-				set($key, dataProvider);
-			}
+			
+			arguments[($index < 0) ? arguments.length : $index] = $item;
+			
+			set.apply(null, values);
 		}
 		
 		
-		static public function setListItemP($item:*, $p:String, $value:*):void{
-			var key:String = _itemDic[$item], dataProvider:DataProvider = get(key) as DataProvider, a:Array, arg:Array;
+		public function setListItemProp($item:*, $p:String, $value:*):void{
+			var key:String;
 			
-			if(!dataProvider)	return;
-			$item[$p] = $value;
-			
-			dataProvider.invalidate();
-			
-			a = _handlerDic[key];
-			for ($p in a) {
-				$item = a[$p];
-				arg = $item.arg;
-				arg[0] = dataProvider;
-				$item.handler.apply(null, arg);
+			switch(typeof $item){
+				case "string" :
+				case "number" :
+				case "boolean" :
+					return;
+				default :
+					if(key = _itemDic[$item]){
+						arguments = _valueDic[key].concat();
+						arguments.unshift(key);
+						$item[$p] = $value;
+						set.apply(null, arguments);
+					}
 			}
 		}
 		
@@ -178,65 +197,30 @@ package com.minarto.data {
 		/**
 		 * 바인딩 
 		 * @param $key		바인딩 키
-		 * @param $handlerOrList	바인딩 핸들러 또는 CoreList
-		 * @param $args		바인딩 추가 인자
+		 * @param $handler	바인딩 핸들러
 		 */				
-		public static function add($key:String, $handlerOrList:*, ...$args):void {
-			var a:Array, i:*, item:*, dataProvider:DataProvider;
+		public function add($key:*, $handler:Function, ...$args):void {
+			var d:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
 			
-			if($handlerOrList as Function){
-				a = _handlerDic[$key];
-				
-				$args.unshift(i);
-				
-				if(a){
-					for (i in a){
-						item = a[i];
-						if (item.handler == $handlerOrList){
-							item.arg = $args;
-							return;
-						}
-					}
-					a.push({handler:$handlerOrList, arg:$args});
-				}
-				else	_handlerDic[$key] = a = [{handler:$handlerOrList, arg:$args}];
-			}
-			else if($handlerOrList as CoreList){
-				item = get($key);
-				dataProvider = get($key) as DataProvider;
-				if(!dataProvider)	_valueDic[$key] = dataProvider = new DataProvider();
-
-				a = _listDic[$key];
-				if(a){
-					for(i in a)	if(a[i] == $handlerOrList)	return;
-					a.push($handlerOrList);
-				}
-				else	_listDic[$key] = a = [$handlerOrList];				
-			}
-			else	throw	new Error("Bonding.add Error - $handlerOrList is not Function, CoreList");
+			d[$handler] = $args;
 		}
 		
 		
 		/**
 		 * 바인딩 
 		 * @param $key		바인딩 키
-		 * @param $handlerOrList	바인딩 핸들러 또는 CoreList
+		 * @param $handler	바인딩 핸들러 또는 CoreList
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public static function addNPlay($key:String, $handlerOrList:*, ...$args):void {
-			var dataProvider:DataProvider;
+		public function addValuePlay($key:String, $handler:Function, ...$args):void {
+			var d:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true)), values:Array;
 			
-			$args.unshift($key, $handlerOrList);
-			add.apply(Binding, $args);
+			d[$handler] = $args;
 			
-			if($handlerOrList as Function){
-				$args[0] = get($key);
-				$handlerOrList.apply(null, $args);
-			}
-			else if($handlerOrList as CoreList){
-				dataProvider = get($key);
-				if(dataProvider == $handlerOrList.dataProvider)	$handlerOrList.invalidate();
-				else	$handlerOrList.dataProvider = dataProvider;
+			if(values = _valueDic[$key]){
+				$args = $args.concat();
+				$args.unshift.apply(null, values);
+				$handler.apply(null, $args);
 			}
 		}
 		
@@ -244,54 +228,63 @@ package com.minarto.data {
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
-		 * @param $handlerOrList	바인딩 핸들러 또는 CoreList
+		 * @param $handler	바인딩 핸들러 또는 CoreList
 		 * 
 		 */			
-		public static function del($key:String=null, $handlerOrList:*=null):void {
-			var a:Array, i:*;
+		public function del($key:String=null, $handler:Function=null):void {
+			var d:Dictionary, f:*;
 			
 			if($key){
-				if($handlerOrList){
-					if($handlerOrList as Function){
-						a = _handlerDic[$key];
-						for (i in a) {
-							if (a[i].handler == $handlerOrList){
-								a.splice(i, 1);
-								if(!a.length)	delete	_handlerDic[$key];
-								return;
-							}
+				if($handler){
+					d = _handlerDic[$key];
+					if(d){
+						delete	d[$handler];
+						
+						$handler = null;
+						for(f in d){
+							$handler = f;
+							break;
 						}
+						if(!$handler)	delete	_handlerDic[$key];
 					}
-					else if($handlerOrList as CoreList){
-						a = _listDic[$key];
-						for (i in a) {
-							if (a[i] == $handlerOrList){
-								a.splice(i, 1);
-								if(!a.length)	delete	_listDic[$key];
-								return;
-							}
-						}
-					}
-					else	throw	new Error("Bonding.del Error - $handlerOrList is not Function, CoreList");
-				} else{
-					delete	_handlerDic[$key];
-					delete	_listDic[$key];
 				}
+				else	delete	_handlerDic[$key];
 			}
-			else{
-				_handlerDic = {};
-				_listDic = {};
-			}
+			else	_handlerDic = {};
 		}
 		
 		
 		/**
-		 * 특정 바인딩 값을 가져온다 
+		 * enum
+		 */
+		public function setEnum($enum:Number):void {
+			if(_enum)	return;
+			_enum = $enum;
+		}
+		public function getEnum():Number {
+			return	_enum;
+		}
+		
+		
+		/**
+		 * classID
+		 */
+		public function setClassID($classID:String):void {
+			if(_classID)	return;
+			_classID = $classID;
+		}
+		public function getClassID():String {
+			return _classID;
+		}
+		
+		
+		/**
+		 * 값을 가져온다 
 		 * @param $key	바인딩키
 		 * @return 바인딩 값
 		 * 
-		 */		
-		public static function get($key:String):* {
+		 */
+		public function get($key:String):Array {
 			return	_valueDic[$key];
 		}
 	}
