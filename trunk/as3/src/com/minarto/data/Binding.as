@@ -4,6 +4,8 @@
 package com.minarto.data {
 	import flash.utils.Dictionary;
 	
+	import scaleform.clik.core.UIComponent;
+	
 	
 	public class Binding {
 		static private const _BINDING_DIC:* = {}, _ID_DIC:* = {};
@@ -106,7 +108,7 @@ package com.minarto.data {
 		 * @param $value	바인딩 값
 		 */
 		public function set($key:String, ...$values):void {
-			var a:Array = _reservations[$key], f:*, i:uint = $values.length, l:uint, v:*;
+			var a:Array = _reservations[$key], c:*, i:uint = $values.length, l:uint, v:*;
 			
 			while(i --){
 				v = $values[i];
@@ -130,7 +132,7 @@ package com.minarto.data {
 			$values = $values.concat();
 			$values.unshift($key);
 			
-			for(f in _handlerDic[$key]){
+			for(c in _handlerDic[$key]){
 				if(a){
 					for(l=a.push($values); i<l; ++i)	_set.apply(null, a[i]);
 					delete	_reservations[$key];
@@ -151,9 +153,13 @@ package com.minarto.data {
 		 * @param $value	바인딩 값
 		 */
 		private function _set($key:String, ...$values):void {
-			var d:Dictionary = _handlerDic[$key], f:*;
+			var d:Dictionary = _handlerDic[$key], c:*, v:*, u:UIComponent;
 			
-			for(f in d)	f.apply(null, $values.concat(d[f]));
+			for(c in d){
+				v = d[c];
+				if(u = c as UIComponent)	u.invalidate(v);
+				else	c.apply(null, $values.concat(v));
+			}
 		}
 		
 		
@@ -199,10 +205,22 @@ package com.minarto.data {
 		 * @param $key		바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 */				
-		public function add($key:*, $handler:Function, ...$args):void {
+		public function add($key:String, $handler:Function, ...$args):void {
 			var d:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
 			
 			d[$handler] = $args;
+		}
+		
+		
+		/**
+		 * 바인딩 
+		 * @param $key		바인딩 키
+		 * @param $handler	바인딩 핸들러
+		 */				
+		public function addValuePlayUI($key:String, $invalidationType:String, $uicomponent:UIComponent):void {
+			var d:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
+			
+			d[$uicomponent] = $invalidationType;
 		}
 		
 		
