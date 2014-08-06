@@ -217,7 +217,7 @@ package com.minarto.data {
 		 * @param $key		바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 */				
-		public function addValuePlayUI($key:String, $invalidationType:String, $uicomponent:UIComponent):void {
+		public function addValuePlayUI($key:String, $uicomponent:UIComponent, $invalidationType:String):void {
 			var d:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
 			
 			d[$uicomponent] = $invalidationType;
