@@ -246,24 +246,24 @@ package com.minarto.data {
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
-		 * @param $handler	바인딩 핸들러 또는 CoreList
+		 * @param $uiOrHandler	바인딩 uicomponent or 핸들러
 		 * 
 		 */			
-		public function del($key:String=null, $handler:Function=null):void {
+		public function del($key:String=null, $uiOrHandler:*=null):void {
 			var d:Dictionary, f:*;
 			
 			if($key){
-				if($handler){
+				if($uiOrHandler){
 					d = _handlerDic[$key];
 					if(d){
-						delete	d[$handler];
+						delete	d[$uiOrHandler];
 						
-						$handler = null;
+						$uiOrHandler = null;
 						for(f in d){
-							$handler = f;
+							$uiOrHandler = f;
 							break;
 						}
-						if(!$handler)	delete	_handlerDic[$key];
+						if(!$uiOrHandler)	delete	_handlerDic[$key];
 					}
 				}
 				else	delete	_handlerDic[$key];
