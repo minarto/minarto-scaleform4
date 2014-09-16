@@ -1,51 +1,44 @@
-package com.minarto.manager {
+package com.minarto.manager
+{
 	import com.minarto.data.Binding;
 	
 	import flash.display.*;
 	import flash.external.ExternalInterface;
+	import flash.system.System;
 	import flash.utils.Dictionary;
 	
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
-	public class ContentManager {
-		static private const _CONTENT_DIC:* = {}, _UID_DIC:Dictionary = new Dictionary, _PAGES:Array = [], 
-							_RECYCLE_DIC:* = {}, _RESERVATIONS:Array = [], _POOL:* = {}, _RESISTRATION:* = {};
+	public class ContentManager 
+	{
+		static private const _CONTENT_DIC:* = {}, _UID_DIC:Dictionary = new Dictionary(true), _RESERVATIONS:Array = []
+			, _SOURCE_DIC:* = {};
 		
 		
-		static private var _CONTENT_UID:Number = 0, _PAGE:*, _SOURCE:*, _PAGE_ID:String, _CURRENT_LOAD_UID:Number;
+		static private var _CONTENT_UID:Number = 0, _CURRENT_LOAD_UID:Number;
 		
 		
 		/**
-		 * 해당 컨텐츠 가져오기 
-		 * @param $contentID
-		 * @return 
-		 * 
-		 */			
-		static public function INIT($widgetSource:*, $source:*, $page:*, $menuDic:*):void{
-			_SOURCE = $source;
-			_PAGE = $page;
+		 * 소스 등록
+		 */		
+		static public function RESIST($contentID:String, $src:String, $gc:Boolean=true, $multi:Boolean=false):void
+		{
+			var sourceData:* = {src : $src, gc : $gc, multi : $multi};
+			
+			if(!$gc)	sourceData["pool"] = [];
+			
+			_SOURCE_DIC[$contentID] = sourceData;
 		}
 		
 		
 		/**
-		 * uid 얻기
-		 * @return 
-		 * 
-		 */			
-		static private function _GET_NEW_UID():Number{
-			return ++ _CONTENT_UID;
-		}
-		
-		
-		/**
-		 * 컨텐츠 가져오기 
-		 * @return 
-		 * 
-		 */			
-		static public function GET_PAGE():Array{
-			return _PAGES;
+		 * 소스 삭제
+		 */		
+		static public function UNRESIST($contentID:String):void
+		{
+			delete	_SOURCE_DIC[$contentID];
 		}
 		
 		
@@ -54,13 +47,16 @@ package com.minarto.manager {
 		 * @param $d
 		 * 
 		 */		
-		static private function _OnContentComplete($d:DisplayObject, $uid:Number):void{
-			var contentData:* = _CONTENT_DIC[$uid], contentID:String = contentData["contentID"], handler:Function;
+		static private function _OnComplete($d:DisplayObject, $uid:Number):void
+		{
+			var contentData:* = _CONTENT_DIC[$uid], contentID:String = contentData["contentID"], 
+				handler:Function = contentData["handler"];
 			
 			contentData["content"] = $d;
-			_UID_DIC[$d] = $uid;
+			if($d)	_UID_DIC[$d] = $uid;
 			
-			if(handler = contentData["handler"]){
+			if(handler)
+			{
 				arguments.push.apply(null, contentData["args"]);
 				handler.apply(null, arguments);
 				
@@ -75,271 +71,23 @@ package com.minarto.manager {
 		
 		
 		/**
-		 * 페이지 셋
+		 * 컨텐츠 추가
 		 */		
-		static public function SET_PAGE($pageID:String, $onComplete:Function, ...$args):void{
-			var i:uint, uid:Number, contentData:*, d:DisplayObject, contentID:String, a:Array, l:uint, layOutData:*;
+		static public function ADD($contentID:String, $handler:Function=null, ...$args):Number
+		{
+			var sourceData:* = _SOURCE_DIC[$contentID], uid:Number;
 			
-			if(_PAGE_ID == $pageID)	return;
+			if(!sourceData)	return	uid;
 			
-			_PAGE_ID = $pageID;
+			uid = ++ _CONTENT_UID;
 			
-			//	기존 예약된 페이지 명령 삭제
-			i = _RESERVATIONS.length;
-			while(i --){
-				contentData = _RESERVATIONS[i];
-				if(contentData["type"] == "page"){
-					_RESERVATIONS.splice(i, 1);
-				}
-			}
+			_CONTENT_DIC[uid] = {
+				contentID : $contentID
+				, handler : $handler
+				, args : $args
+			};
 			
-			
-			//	현재 로드중인 페이지 컨텐츠 삭제
-			if(contentData = _CONTENT_DIC[_CONTENT_UID]){
-				if(contentData["type"] == "page")	LoadManager.DEL(contentData["loadID"]);
-			}
-			
-			//	컨텐츠 추가
-			if(a = _PAGE[$pageID]){
-				for(i=0, l = a.length; i<l; ++ i){
-					uid = _GET_NEW_UID();
-					
-					layOutData = a[i];
-					
-					contentData = {type:"page"};
-					contentData["contentID"] = layOutData["id"];
-					contentData["layOut"] = layOutData;
-					
-					_CONTENT_DIC[uid] = contentData;
-					
-					
-					_PAGES.push(uid);
-				}
-			}
-			
-			_RESERVATIONS.push({handler:$onComplete, args:$args});
-			
-			if(isNaN(_CURRENT_LOAD_UID))	_ADD();
-		}
-		
-		
-		/**
-		 * 예약 명령 실행
-		 */		
-		static private function _ADD():void{
-			var uid:*, contentData:*, layOutData:*, contentID:String, d:DisplayObject, source:*, handler:Function;
-			
-			if(uid = _RESERVATIONS.shift()){
-				if(uid as Number){
-					_CURRENT_LOAD_UID = uid;
-					
-					contentData = _CONTENT_DIC[uid];
-					contentID = contentData["contentID"];
-					
-					if(contentData["type"] == "page"){	//	페이지 컨텐츠 추가
-						arguments = _RECYCLE_DIC[contentID] || (_RECYCLE_DIC[contentID] = []);
-						if(d = arguments.pop())	_OnContentComplete(d, uid);
-						else if(source = _SOURCE[contentID])	contentData["loadID"] = LoadManager.ADD("swf", source["src"], _OnContentComplete, _OnContentComplete, uid);
-						else	_ADD();
-					}
-					else{	//	시스템 컨텐츠 추가
-						if(source = _SOURCE[contentID]){
-							arguments = _POOL[contentID] || (_POOL[contentID] = []);
-							if(d = arguments.pop())	_OnContentComplete(d, uid);
-							else if(source = _SOURCE[contentID])	contentData["loadID"] = LoadManager.ADD("swf", source["src"], _OnContentComplete, _OnContentComplete, uid);
-							else	_ADD();
-						}
-						else{
-							if(contentData = _RESISTRATION[contentID]){
-								_OnContentComplete(contentData["content"], uid);
-							}
-							else	_ADD();
-						}
-					}
-				}
-				else{
-					_CURRENT_LOAD_UID = NaN;
-					
-					handler = uid["handler"];
-					handler.apply(null, uid["args"]);
-				}
-			}
-			else	_CURRENT_LOAD_UID = NaN;
-		}
-		
-		
-		static public function GET($uid:Number):DisplayObject{
-			var contentData:* = _CONTENT_DIC[$uid];
-			
-			return	contentData ? contentData["content"] : contentData;
-		}
-		
-		
-		static public function GET_CONTENT_ID($d:DisplayObject):String{
-			var uid:Number = _UID_DIC[$d], contentData:* = _CONTENT_DIC[uid];
-			
-			return	contentData ? contentData["contentID"] : contentData;
-		}
-		
-		
-		static public function GET_CONTENT_UID($d:DisplayObject):Number{
-			return	_UID_DIC[$d];
-		}
-		
-		
-		static public function GET_TYPE($uid:Number):String{
-			var contentData:* = _CONTENT_DIC[$uid];
-			
-			return	contentData ? contentData["type"] : contentData;
-		}
-		
-		
-		static public function GET_LAYOUT($uid:Number):*{
-			var contentData:* = _CONTENT_DIC[$uid];
-			
-			return	contentData ? contentData["layOut"] : contentData;
-		}
-		
-		
-		/**
-		 * 기존 불러진 페이지 요소 pool 로 보냄 
-		 * 
-		 */		
-		static public function DEL_PAGE():void{
-			var uid:*, contentData:*, d:DisplayObject, contentID:String;
-			
-			for(uid in _CONTENT_DIC){
-				contentData = _CONTENT_DIC[uid];
-				
-				if(contentData["type"] == "page"){
-					delete	_CONTENT_DIC[uid];
-					if(d = contentData["content"])	delete	_UID_DIC[d];
-					
-					if(arguments = _RECYCLE_DIC[contentData["contentID"]])	arguments.push(d);
-				}
-			}
-			
-			for(contentID in _RESISTRATION){
-				contentData = _RESISTRATION[contentID];
-				DEL(contentData["content"]);
-				delete	_RESISTRATION[contentID];
-			}
-			
-			_PAGES.length = 0;
-		}
-		
-		
-		/**
-		 * 사용되는 리소스 pool 로 보냄
-		 * @param $d
-		 * 
-		 */		
-		static public function DEL($d:DisplayObject):void{
-			var uid:Number = _UID_DIC[$d], contentData:* = _CONTENT_DIC[uid], contentID:String;
-			
-			if(contentData){
-				contentID = contentData["contentID"];
-				
-				delete	_UID_DIC[$d];
-				delete	_CONTENT_DIC[uid];
-				
-				if(arguments = (contentData["type"] == "page") ? _RECYCLE_DIC[contentID] : _POOL[contentID])	arguments.push($d);
-				
-				for(contentData in _PAGES){
-					if(_PAGES[contentData] == uid){
-						_PAGES.splice(contentData, 1);
-						return;
-					}
-				}
-			}
-		}
-		
-		
-		/**
-		 * 사용되는 리소스 pool 로 보냄 
-		 * @param $uid
-		 * 
-		 */		
-		static public function DEL_UID($uid:Number):void{
-			var contentData:* = _CONTENT_DIC[$uid], contentID:String, d:DisplayObject;
-			
-			if(contentData){
-				contentID = contentData["contentID"];
-				
-				if(d = contentData["content"]){
-					delete	_UID_DIC[d];
-					
-					if(arguments = (contentData["type"] == "page") ? _RECYCLE_DIC[contentID] : _POOL[contentID])	arguments.push(d);
-				}
-				
-				delete	_CONTENT_DIC[$uid];
-				
-				for(contentData in _PAGES){
-					if(_PAGES[contentData] == $uid){
-						_PAGES.splice(contentData, 1);
-						return;
-					}
-				}
-			}
-		}
-		
-		
-		/**
-		 * 사용하지 않는 컨텐츠 가져오기
-		 */
-		static public function GET_RECYCLE():Array{
-			var r:Array = [];
-			
-			for each(arguments in _RECYCLE_DIC){
-				r.push.apply(null, arguments);
-			}
-			
-			return	r;
-		}
-		
-		
-		/**
-		 * 컨텐츠 완전 삭제
-		 */
-		static public function DESTROY():void{
-			var contentID:String, d:DisplayObject, p:DisplayObjectContainer;
-			
-			for(contentID in _RECYCLE_DIC){
-				arguments = _RECYCLE_DIC[contentID];
-				for each(d in arguments){
-					if(p = d.parent)	p.removeChild(d);
-				}
-				arguments.length = 0;
-				
-				delete	_RECYCLE_DIC[contentID];
-			}
-		}
-		
-		
-		/**
-		 * 시스템 컨텐츠 추가
-		 */		
-		static public function ADD_SHOW($contentID:String, $handler:Function, ...$args):Number{
-			var contentData:* = _SOURCE[$contentID], uid:Number;
-			
-			if(contentData){
-				contentData = {};
-				contentData["type"] = "system";
-				contentData["contentID"] = $contentID;
-				contentData["layOut"] = _SOURCE[$contentID];
-			}
-			else	contentData = _RESISTRATION[$contentID];
-			
-			if(contentData){
-				uid = _GET_NEW_UID();
-				
-				contentData["handler"] = $handler;
-				contentData["args"] = $args;
-				
-				_CONTENT_DIC[uid] = contentData;
-				
-				_RESERVATIONS.push(uid);
-			}
+			_RESERVATIONS.push(uid);
 			
 			if(isNaN(_CURRENT_LOAD_UID))	_ADD();
 			
@@ -348,34 +96,182 @@ package com.minarto.manager {
 		
 		
 		/**
-		 * 시스템 컨텐츠 삭제
+		 * 핸들러 삭제
 		 */		
-		static public function DEL_SHOW($contentID:String):void{
-			var uid:* = _CONTENT_UID, contentData:*;
+		static public function DEL_HANDLER($handler:Function):void
+		{
+			var index:int = _RESERVATIONS.length, obj:*;
 			
-			while(uid --){
-				contentData = _CONTENT_DIC[uid];
-				if(contentData && contentData["contentID"] == $contentID && contentData["type"] == "system"){
-					DEL_UID(uid);
+			while(index --)
+			{
+				obj = _RESERVATIONS[index];
+				if(isNaN(obj))
+				{
+					if(obj["handler"] == $handler)
+					{
+						_RESERVATIONS.splice(index, 1);
+						break;
+					}
 				}
 			}
+			if(isNaN(_CURRENT_LOAD_UID))	_ADD();
 		}
 		
 		
 		/**
-		 * 임시 시스템 컨텐츠 등록
+		 * 핸들러 추가
 		 */		
-		static public function RESIST_SHOW($contentID:String, $d:DisplayObject, $layOutData:*=null):void{
-			var p:DisplayObjectContainer = $d.parent, contentData:* = {};
+		static public function ADD_HANDLER($handler:Function, ...$args):void
+		{
+			_RESERVATIONS.push({handler:$handler, args:$args});
+			if(isNaN(_CURRENT_LOAD_UID))	_ADD();
+		}
+		
+		
+		/**
+		 * 예약 명령 실행
+		 */		
+		static private function _ADD():void
+		{
+			var uid:*, contentData:*, sourceData:*, d:DisplayObject;
 			
-			if(p)	p.removeChild($d);
+			if(uid = _RESERVATIONS.shift())
+			{
+				if(uid as Number)
+				{
+					_CURRENT_LOAD_UID = uid;
+					
+					contentData = _CONTENT_DIC[uid];
+					sourceData = _SOURCE_DIC[contentData["contentID"]];
+					
+					arguments = sourceData["pool"];
+					if(arguments && (d = arguments.pop()))	_OnComplete(d, uid);
+					else	contentData["loadID"] = LoadManager.ADD("swf", sourceData["src"], _OnComplete, _OnComplete, uid);
+				}
+				else	//	로드완료 핸들러
+				{
+					_CURRENT_LOAD_UID = NaN;
+					uid["handler"].apply(null, uid["args"]);
+					_ADD();
+				}
+			}
+			else	_CURRENT_LOAD_UID = NaN;
+		}
+		
+		
+		/**
+		 * 컨텐츠 가져오기 
+		 * @param $uid
+		 * @return 
+		 * 
+		 */		
+		static public function GET($uid:Number):DisplayObject
+		{
+			var contentData:* = _CONTENT_DIC[$uid];
 			
-			contentData["type"] = "system";
-			contentData["contentID"] = $contentID;
-			contentData["layOut"] = $layOutData;
-			contentData["content"] = $d;
+			return	contentData ? contentData["content"] : contentData;
+		}
+		
+		
+		/**
+		 * 컨텐츠의 id 값 가져오기 
+		 * @param $uid
+		 * @return 
+		 * 
+		 */		
+		static public function GET_CONTENT_ID($uid:Number):String
+		{
+			var contentData:* = _CONTENT_DIC[$uid];
 			
-			_RESISTRATION[$contentID] = contentData;
+			return	contentData ? contentData["contentID"] : contentData;
+		}
+		
+		
+		/**
+		 * 컨텐츠id로 컨텐츠 가져오기 
+		 * @param $contentID
+		 * @return 
+		 * 
+		 */		
+		static public function GET_CONTENT_BY_ID($contentID:String):Vector.<DisplayObject>
+		{
+			var v:Vector.<DisplayObject> = new Vector.<DisplayObject>([]), uid:*, contentData:*, d:DisplayObject;
+			
+			for(uid in _CONTENT_DIC)
+			{
+				contentData = _CONTENT_DIC[uid];
+				if(contentData["contentID"] == $contentID)
+				{
+					if(d = contentData["content"])	v.push(d);
+				}
+			}
+			
+			return	v;
+		}
+		
+		
+		/**
+		 * 컨텐츠의 uid 가져오기 
+		 * @param $d
+		 * @return 
+		 * 
+		 */		
+		static public function GET_CONTENT_UID($d:DisplayObject):Number
+		{
+			return	_UID_DIC[$d];
+		}
+		
+		
+		/**
+		 * 리소스 pool 로 보내거나 삭제
+		 * @param $d
+		 * 
+		 */		
+		static public function DEL($d:DisplayObject):void
+		{
+			DEL_UID(_UID_DIC[$d]);
+		}
+		
+		
+		/**
+		 * 리소스 pool 로 보내거나 삭제
+		 * @param $uid
+		 * 
+		 */		
+		static public function DEL_UID($uid:Number):void
+		{
+			var i:Number = _RESERVATIONS.length, contentData:*, d:DisplayObject, sourceData:*;
+			
+			//	예약 명령어 중 삭제
+			while(i --)
+			{
+				if(_RESERVATIONS[i] == $uid)
+				{
+					delete	_CONTENT_DIC[$uid];
+					_RESERVATIONS.splice(i, 1);
+					return;
+				}
+			}
+			
+			//	로드 됐거나 진행중인 것 중 삭제
+			if(contentData = _CONTENT_DIC[$uid])
+			{
+				delete	_CONTENT_DIC[$uid];
+				
+				if(d = contentData["content"])
+				{
+					delete	_UID_DIC[d];
+					
+					sourceData = _SOURCE_DIC[contentData["contentID"]];
+					if(arguments = sourceData["pool"])	arguments.push(d);
+				}
+					//	로드 중인 것은 삭제하고 다음 예약 명령 실행
+				else if(i = contentData["loadID"])
+				{
+					LoadManager.DEL(i);
+					_ADD();
+				}
+			}
 		}
 	}
 }
