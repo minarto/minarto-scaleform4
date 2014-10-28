@@ -5,7 +5,6 @@ package com.minarto.data
 {
 	import flash.utils.Dictionary;
 	
-	import scaleform.clik.constants.InvalidationType;
 	import scaleform.clik.core.UIComponent;
 	
 	
