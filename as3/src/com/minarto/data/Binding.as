@@ -151,7 +151,7 @@ package com.minarto.data
 			d = _compDic[$key];
 			for(f in d)
 			{
-				f.invalidate(d[f]);
+				f.invalidate($key);
 			}
 		}
 		
@@ -231,14 +231,13 @@ package com.minarto.data
 		 * 컴포넌트 바인딩 
 		 * @param $key				바인딩 키
 		 * @param $comp				바인딩 컴포넌트
-		 * @param $invalidationType	UIComponent invalidationType
 		 * 
 		 */				
-		public function addComp($key:String, $comp:UIComponent, $invalidationType:String=null):void
+		public function addComp($key:String, $comp:UIComponent):void
 		{
 			var d:Dictionary = _compDic[$key] || (_compDic[$key] = new Dictionary(true));
 			
-			d[$comp] = $invalidationType ? $invalidationType : "default";
+			d[$comp] = $key;
 		}
 		
 		
@@ -266,16 +265,15 @@ package com.minarto.data
 		 * 컴포넌트 바인딩  (값이 존재하면 바로 실행)
 		 * @param $key				바인딩 키
 		 * @param $comp				바인딩 컴포넌트
-		 * @param $invalidationType	UIComponent invalidationType
 		 * 
 		 */					
-		public function addCompValuePlay($key:String, $comp:UIComponent, $invalidationType:String=null):void
+		public function addCompValuePlay($key:String, $comp:UIComponent):void
 		{
 			var dic:Dictionary = _compDic[$key] || (_compDic[$key] = new Dictionary(true));
 			
-			dic[$comp] = $invalidationType ? $invalidationType : "default";
+			dic[$comp] = $key;
 			
-			if(_valueDic[$key])	$comp.invalidate($invalidationType);
+			if(_valueDic[$key])	$comp.invalidate($key);
 		}
 		
 		
