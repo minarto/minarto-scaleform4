@@ -6,60 +6,66 @@
 
 Filename    :   CoreList.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
 otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
- 
-package scaleform.clik.controls {
-    
-    import flash.display.*;
-    import flash.events.*;
+
+package scaleform.clik.controls 
+{
+    import flash.display.DisplayObject;
+    import flash.display.Sprite;
+    import flash.events.Event;
+    import flash.events.MouseEvent;
     import flash.geom.Rectangle;
-    import flash.utils.getDefinitionByName;
-    import scaleform.gfx.MouseEventEx;
+    import flash.system.ApplicationDomain;
     
     import scaleform.clik.constants.InvalidationType;
     import scaleform.clik.core.UIComponent;
     import scaleform.clik.data.DataProvider;
-    import scaleform.clik.events.*;
-    import scaleform.clik.interfaces.*;
-        
-    public class CoreList extends UIComponent {
-        
+    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.events.ListEvent;
+    import scaleform.clik.events.ButtonEvent;
+    import scaleform.clik.interfaces.IDataProvider;
+    import scaleform.clik.interfaces.IListItemRenderer;
+    
+    import scaleform.gfx.MouseEventEx;
+    
+    public class CoreList extends UIComponent 
+    {
     // Constants:
         
     // Public Properties:
         
     // Protected Properties:
-        // The current selectedIndex being displayed.
+        /** The current selectedIndex being displayed. */
         protected var _selectedIndex:int = -1; 
-        // The latest internal selectedIndex. Will be pushed to _selectedIndex next time updateSelectedIndex() is called.
+        /** The latest internal selectedIndex. Will be pushed to _selectedIndex next time updateSelectedIndex() is called. */
         protected var _newSelectedIndex:int = -1; 
-        // The dataProvider for the List.
+        /** The dataProvider for the List. */
         protected var _dataProvider:IDataProvider;
-        // The property name of the Objects within the DataPRovider that holds the label for the ListItemRenderers. */
+        /**  The property name of the Objects within the DataPRovider that holds the label for the ListItemRenderers.  */
         protected var _labelField:String = "label";
-        // The function to use to evaluate the label for the ListItemRenderer.
+        /**  The function to use to evaluate the label for the ListItemRenderer. */
         protected var _labelFunction:Function;
         
-        // A reference to the class for the item renderers, used whenenever a new renderer is created.
+        /**  A reference to the class for the item renderers, used whenenever a new renderer is created.  */
         protected var _itemRenderer:Class;
-        // The name of the Class for the ListItemRenderer.
+        /**  The name of the Class for the ListItemRenderer. */
         protected var _itemRendererName:String = "DefaultListItemRenderer";
-        // List of the current renderers.
+        /**  List of the current renderers. */
         protected var _renderers:Vector.<IListItemRenderer>;
-        // true if the List is using external renderers; false if it generating them at runtime.
+        /**  true if the List is using external renderers; false if it generating them at runtime. */
         protected var _usingExternalRenderers:Boolean = false;
-        // The number of usable renderers.
+        /**  The number of usable renderers.  */
         protected var _totalRenderers:uint = 0;
         
-        // The current state of the component being displayed.
+        /**  The current state of the component being displayed. */
         protected var _state:String = "default";
-        // The latest internal state of the component. Pushed to _state and displayed in draw().
+        /**  The latest internal state of the component. Pushed to _state and displayed in draw(). */
         protected var _newFrame:String;
         
     // UI Elements:
@@ -71,6 +77,7 @@ package scaleform.clik.controls {
             super();
         }
         
+        /** @private */
         override protected function initialize():void {
             dataProvider = new DataProvider(); // Default Data.
             super.initialize();
@@ -96,7 +103,11 @@ package scaleform.clik.controls {
         public function get itemRendererName():String { return _itemRendererName; }
         public function set itemRendererName(value:String):void {
             if ((_inspector && value == "") || value == "") { return; }
-            var classRef:Class = getDefinitionByName(value) as Class;
+            
+            var domain:ApplicationDomain = ApplicationDomain.currentDomain;
+            if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
+            var classRef:Class = domain.getDefinition(value) as Class;
+
             if (classRef != null) {
                 itemRenderer = classRef;
             } else {
@@ -173,7 +184,7 @@ package scaleform.clik.controls {
             if (_selectedIndex == value) { return; }
             _selectedIndex = value;
             invalidateSelectedIndex();
-            dispatchEvent(new ListEvent(ListEvent.INDEX_CHANGE, true, false, _selectedIndex, -1, -1, getRendererAt(_selectedIndex), dataProvider[_selectedIndex]));
+            dispatchEventAndSound(new ListEvent(ListEvent.INDEX_CHANGE, true, false, _selectedIndex, -1, -1, getRendererAt(_selectedIndex), dataProvider[_selectedIndex]));
         }
         
         [Inspectable(defaultValue="true")]
@@ -256,7 +267,7 @@ package scaleform.clik.controls {
             scrollToIndex(_selectedIndex);
         }
         
-        public function itemToLabel(item:*):String {
+        public function itemToLabel(item:Object):String {
             if (item == null) { return ""; }
             if (_labelFunction != null) {
                 return _labelFunction(item);
@@ -288,7 +299,7 @@ package scaleform.clik.controls {
             invalidate(InvalidationType.SELECTED_INDEX);
         }
         
-        /** @exclude */
+        /** @private */
         override public function toString():String {
             return "[CLIK CoreList "+ name +"]";
         }
@@ -365,6 +376,7 @@ package scaleform.clik.controls {
             }
         }
         
+        /** @private */
         override protected function changeFocus():void {
             if (_focused || _displayFocus) {
                 setState("focused", "default");
@@ -373,14 +385,14 @@ package scaleform.clik.controls {
             }
         }
         
-        protected function refreshData():void {}
-        protected function updateSelectedIndex():void {}
+        protected function refreshData():void { }
+        protected function updateSelectedIndex():void { }
         
         protected function calculateRendererTotal(width:Number, height:Number):uint {
             return height / 20 >> 0;
         }
         
-        protected function drawLayout():void {}
+        protected function drawLayout():void { }
         
         protected function drawRenderers(total:Number):void {
             if (_itemRenderer == null) {
@@ -388,7 +400,7 @@ package scaleform.clik.controls {
             }
             
             var i:int, l:int, renderer:IListItemRenderer, displayObject:DisplayObject;
-	        for (i = _renderers.length; i < _totalRenderers; i++) {
+            for (i = _renderers.length; i < _totalRenderers; i++) {
                 renderer = createRenderer(i);
                 if (renderer == null) { break; }
                 _renderers.push(renderer);
@@ -404,14 +416,14 @@ package scaleform.clik.controls {
                 }
                 _renderers.splice(i, 1);
             }
-        }        
+        }
         
-        // NFM: Optimization idea: createRenderer(index, setup=true), don't setupRenderer() if !setup. Use createRenderer(0, false) when finding rendererHeight.
         protected function createRenderer(index:uint):IListItemRenderer {
             var renderer:IListItemRenderer = new _itemRenderer() as IListItemRenderer;
             if (renderer == null) {
                 trace("Renderer class could not be created."); return null;
             }
+            // NFM: Future optimization - createRenderer(index, setup=true), don't setupRenderer() if !setup. Use createRenderer(0, false) when finding rendererHeight.
             setupRenderer(renderer);
             return renderer;
         }
@@ -446,7 +458,7 @@ package scaleform.clik.controls {
             renderer.removeEventListener(MouseEvent.MOUSE_WHEEL, handleMouseWheel);
         }
         
-        protected function dispatchItemEvent(event:Event):Boolean {
+        protected function dispatchItemEvent(event:Event):Boolean {			
             var type:String;
             switch (event.type) {
                 case ButtonEvent.PRESS:
@@ -483,8 +495,8 @@ package scaleform.clik.controls {
             var isKeyboard:Boolean = false;
             if (event is ButtonEvent) { isKeyboard = (event as ButtonEvent).isKeyboard; }
             
-            var newEvent:ListEvent = new ListEvent(type, false, true, renderer.index, 0, renderer.index, renderer, dataProvider[renderer.index], controllerIdx, buttonIdx, isKeyboard);
-            return dispatchEvent(newEvent);
+            var newEvent:ListEvent = new ListEvent(type, false, true, renderer.index, 0, renderer.index, renderer, dataProvider ? dataProvider[renderer.index] : null, controllerIdx, buttonIdx, isKeyboard);
+            return dispatchEventAndSound(newEvent);
         }
         
         protected function handleDataChange(event:Event):void {

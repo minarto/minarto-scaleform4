@@ -7,7 +7,7 @@
     
     The TextInput also supports the standard selection and cut, copy, and paste functionality provided by the textField, including multi paragraph HTML formatted text. By default, the keyboard commands are select (Shift+Arrows), cut (Shift+Delete), copy (Ctrl+Insert), and paste (Shift+Insert).
     
-     <b>Inspectable Properties</b>
+    <b>Inspectable Properties</b>
     The inspectable properties of the TextInput component are:
     <ul>
         <li><i>text</i>: Sets the text of the textField.</li>
@@ -348,7 +348,7 @@ package scaleform.clik.controls {
                 }
                 updateAfterStateChange();
                 updateTextField();
-                dispatchEvent(new ComponentEvent(ComponentEvent.STATE_CHANGE));
+                dispatchEventAndSound(new ComponentEvent(ComponentEvent.STATE_CHANGE));
                 invalidate(InvalidationType.SIZE);
             } 
             else if (isInvalid(InvalidationType.DATA)) {
@@ -372,7 +372,6 @@ package scaleform.clik.controls {
             
             updateText();
             textField.maxChars = _maxChars;
-            textField.displayAsPassword = _displayAsPassword;
             textField.alwaysShowSelection = _alwaysShowSelection;
             textField.selectable = enabled ? _editable : enabled;
             textField.type = (_editable && enabled) ? TextFieldType.INPUT : TextFieldType.DYNAMIC;
@@ -397,6 +396,9 @@ package scaleform.clik.controls {
             if (_focused && _usingDefaultTextFormat) { 
                 textField.defaultTextFormat = _textFormat;
                 _usingDefaultTextFormat = false;
+                if ( _displayAsPassword && !textField.displayAsPassword ) {
+                    textField.displayAsPassword = true;
+                }
             }
             if (_text != "") {
                 if (_isHtml) {
@@ -407,7 +409,10 @@ package scaleform.clik.controls {
                 }
             } else {
                 textField.text = "";
-                if (!_focused && !_displayAsPassword && _defaultText != "") {
+                if (!_focused && _defaultText != "") {
+                    if ( _displayAsPassword ) { 
+                        textField.displayAsPassword = false;
+                    }
                     textField.text = _defaultText;
                     _usingDefaultTextFormat = true;
                     if (defaultTextFormat != null) { 
@@ -477,7 +482,7 @@ package scaleform.clik.controls {
         
         protected function handleTextChange(event:Event):void {
             _text = _isHtml ? textField.htmlText : textField.text;
-            dispatchEvent(new Event(Event.CHANGE));
+            dispatchEventAndSound(new Event(Event.CHANGE));
         }
     }
 }

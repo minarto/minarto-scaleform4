@@ -118,7 +118,7 @@ package scaleform.clik.controls {
             value = Math.max(_minPosition, Math.min(_maxPosition, value));
             if (value == _position) { return; }
             _position = value;
-            dispatchEvent(new Event(Event.SCROLL));
+            dispatchEventAndSound(new Event(Event.SCROLL));
             invalidateData();
         }
         

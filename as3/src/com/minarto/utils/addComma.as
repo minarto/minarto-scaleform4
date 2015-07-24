@@ -1,4 +1,5 @@
-package com.minarto.utils {
+package com.minarto.utils
+{
 	/**
 	 * @author minarto
 	 */

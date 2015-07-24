@@ -1,59 +1,65 @@
-﻿ /**
+﻿/**
  * The DropdownMenu wraps the behavior of a button and a list. Clicking on this component opens a list that contains the elements to be selected. The DropdownMenu displays only the selected element in its idle state. It can be configured to use either the ScrollingList or the TileList, to which either a ScrollBar or ScrollIndicator can be paired with. The list is populated via an installed DataProvider. The DropdownMenu’s list element is populated via a DataProvider. The dataProvider is assigned via code, as shown in the example below:
-    <i>dropdownMenu.dataProvider = ["item1", "item2", "item3", "item4"];</i>
-
-    <b>Inspectable Properties</b>
-    The inspectable properties of the DropdownMenu component are:<ul>
-    <li><i>autoSize</i>: Determines if the button will scale to fit the text that it contains and which direction to align the resized button. Setting the autoSize property to {@code autoSize="none"} will leave its current size unchanged.</li>
-    <li><i>dropdown</i>: Symbol name of the list component (ScrollingList or TileList) to use with the DropdownMenu component.</li>
-    <li><i>enabled</i>: Disables the button if set to false.</li>
-    <li><i>focusable</i>: By default buttons receive focus for user interactions. Setting this property to false will disable focus acquisition.</li>
-    <li><i>menuDirection:</i>The list open direction. Valid values are "up" and "down".</li>
-    <li><i>menuMargin</i>: The margin between the boundary of the list component and the list items created internally. This margin also affects the automatically generated scrollbar.</li>
-    <li><i>menuOffset</i>: Horizontal and vertical offsets of the dropdown list from the dropdown button position. A positive horizontal value moves the list to the right of the dropdown button horizontal position. A positive vertical value moves the list away from the button.</li>
-    <li><i>menuPadding</i>: Extra padding at the top, bottom, left, and right for the list items. Does not affect the automatically generated scrollbar.</li>
-    <li><i>menuRowCount</i>: The number of rows that the list should display.</li>
-    <li><i>menuWidth</i>: If set, this number will be enforced as the width of the menu.</li> 
-    <li><i>thumbOffset</i>: Scrollbar thumb top and bottom offsets. This property has no effect if the list does not automatically create a scrollbar instance.</li>
-    <li><i>scrollBar</i>: Symbol name of the dropdown list’s scroll bar. Created by the dropdown list instance. If value is empty, then the dropdown list will have no scroll bar.</li>
-    <li><i>visible</i>: Hides the component if set to false.</li>
+ * <i>dropdownMenu.dataProvider = ["item1", "item2", "item3", "item4"];</i>
+ *
+ * <p><b>Inspectable Properties</b></p>
+ * <p>
+ * The inspectable properties of the DropdownMenu component are:<ul>
+ * <li><i>autoSize</i>: Determines if the button will scale to fit the text that it contains and which direction to align the resized button. Setting the autoSize property to {@code autoSize="none"} will leave its current size unchanged.</li>
+ * <li><i>dropdown</i>: Symbol name of the list component (ScrollingList or TileList) to use with the DropdownMenu component.</li>
+ * <li><i>enabled</i>: Disables the button if set to false.</li>
+ * <li><i>focusable</i>: By default buttons receive focus for user interactions. Setting this property to false will disable focus acquisition.</li>
+ * <li><i>menuDirection:</i>The list open direction. Valid values are "up" and "down".</li>
+ * <li><i>menuMargin</i>: The margin between the boundary of the list component and the list items created internally. This margin also affects the automatically generated scrollbar.</li>
+ * <li><i>menuOffset</i>: Horizontal and vertical offsets of the dropdown list from the dropdown button position. A positive horizontal value moves the list to the right of the dropdown button horizontal position. A positive vertical value moves the list away from the button.</li>
+ * <li><i>menuPadding</i>: Extra padding at the top, bottom, left, and right for the list items. Does not affect the automatically generated scrollbar.</li>
+ * <li><i>menuRowCount</i>: The number of rows that the list should display.</li>
+ * <li><i>menuWidth</i>: If set, this number will be enforced as the width of the menu.</li> 
+ * <li><i>thumbOffset</i>: Scrollbar thumb top and bottom offsets. This property has no effect if the list does not automatically create a scrollbar instance.</li>
+ * <li><i>scrollBar</i>: Symbol name of the dropdown list’s scroll bar. Created by the dropdown list instance. If value is empty, then the dropdown list will have no scroll bar.</li>
+ * <li><i>visible</i>: Hides the component if set to false.</li>
+ * </p>
+ * 
+ * <p><b>States</b></p>
+ * <p>
+ * The DropdownMenu is toggled when opened, and therefore needs the same states as a ToggleButton or CheckBox that denote the selected state. These states include <ul>
+ * <li>an up or default state.</li>
+ * <li>an over state when the mouse cursor is over the component, or when it is focused.</li>
+ * <li>a down state when the button is pressed.</li>
+ * <li>a disabled state.</li>
+ * <li>a selected_up or default state.</li>
+ * <li>a selected_over state when the mouse cursor is over the component, or when it is focused.</li>
+ * <li>a selected_down state when the button is pressed.</li>
+ * <li>a selected_disabled state.</li></ul>
+ * </p>
+ * 
+ * <p><b>Events</b></p>
+ * <p>
+ * All event callbacks receive a single Object parameter that contains relevant information about the event. The following properties are common to all events. <ul>
+ * <li><i>type</i>: The event type.</li>
+ * <li><i>target</i>: The target that generated the event.</li></ul>
+ *
+ * <ul>
+ *  <li><i>ComponentEvent.SHOW</i>: The visible property has been set to true at runtime.</li>
+ *  <li><i>ComponentEvent.HIDE</i>: The visible property has been set to false at runtime.</li>
+ *  <li><i>FocusHandlerEvent.FOCUS_IN</i>: The component has received focus.</li>
+ *  <li><i>FocusHandlerEvent.FOCUS_OUT</i>: The component has lost focus.</li>
+ *  <li><i>Event.SELECT</i>: The selected property has changed.</li>
+ *  <li><i>ButtonEvent.PRESS</i>: The button has been pressed.</li>
+ *  <li><i>ButtonEvent.CLICK</i>: The button has been clicked.</li>
+ *  <li><i>ButtonEvent.DRAG_OVER</i>: The mouse cursor has been dragged over the button (while the left mouse button is pressed).</li>
+ *  <li><i>ButtonEvent.DRAG_OUT</i>: The mouse cursor has been dragged out of the button (while the left mouse button is pressed).</li>
+ *  <li><i>ButtonEvent.RELEASE_OUTSIDE</i>: The mouse cursor has been dragged out of the button and the left mouse button has been released.</li>
+ *  <li><i>ListEvent.INDEX_CHANGE</i>: The selected index has changed.</li>
+ * </ul>
+ * </p>
+*/
     
-    <b>States</b>
-    The DropdownMenu is toggled when opened, and therefore needs the same states as a ToggleButton or CheckBox that denote the selected state. These states include <ul>
-    <li>an up or default state.</li>
-    <li>an over state when the mouse cursor is over the component, or when it is focused.</li>
-    <li>a down state when the button is pressed.</li>
-    <li>a disabled state.</li>
-    <li>a selected_up or default state.</li>
-    <li>a selected_over state when the mouse cursor is over the component, or when it is focused.</li>
-    <li>a selected_down state when the button is pressed.</li>
-    <li>a selected_disabled state.</li></ul>
-    
-    <b>Events</b>
-    All event callbacks receive a single Object parameter that contains relevant information about the event. The following properties are common to all events. <ul>
-    <li><i>type</i>: The event type.</li>
-    <li><i>target</i>: The target that generated the event.</li></ul>
-    
-    <ul>
-        <li><i>ComponentEvent.SHOW</i>: The visible property has been set to true at runtime.</li>
-        <li><i>ComponentEvent.HIDE</i>: The visible property has been set to false at runtime.</li>
-        <li><i>FocusHandlerEvent.FOCUS_IN</i>: The component has received focus.</li>
-        <li><i>FocusHandlerEvent.FOCUS_OUT</i>: The component has lost focus.</li>
-        <li><i>Event.SELECT</i>: The selected property has changed.</li>
-        <li><i>ButtonEvent.PRESS</i>: The button has been pressed.</li>
-        <li><i>ButtonEvent.CLICK</i>: The button has been clicked.</li>
-        <li><i>ButtonEvent.DRAG_OVER</i>: The mouse cursor has been dragged over the button (while the left mouse button is pressed).</li>
-        <li><i>ButtonEvent.DRAG_OUT</i>: The mouse cursor has been dragged out of the button (while the left mouse button is pressed).</li>
-        <li><i>ButtonEvent.RELEASE_OUTSIDE</i>: The mouse cursor has been dragged out of the button and the left mouse button has been released.</li>
-        <li><i>ListEvent.INDEX_CHANGE</i>: The selected index has changed.</li>
-    </ul>
- */
-
 /**************************************************************************
 
 Filename    :   DropdownMenu.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -61,17 +67,22 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.controls {
-    
-    import flash.display.*;
-    import flash.events.*;
-    import flash.utils.getDefinitionByName;
+package scaleform.clik.controls 
+{
+    import flash.display.MovieClip;
+    import flash.display.DisplayObject;
+    import flash.events.Event;
+    import flash.events.MouseEvent;
     import flash.system.ApplicationDomain;
     
-    import scaleform.clik.constants.*;
+    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.constants.InputValue;
+    import scaleform.clik.constants.NavigationCode;
+    import scaleform.clik.constants.WrappingMode
     import scaleform.clik.controls.Button;
     import scaleform.clik.data.DataProvider;
-    import scaleform.clik.events.*;
+    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.events.ListEvent;
     import scaleform.clik.interfaces.IDataProvider;
     import scaleform.clik.managers.PopUpManager;
     import scaleform.clik.ui.InputDetails;
@@ -79,19 +90,19 @@ package scaleform.clik.controls {
     
     [Event(name="change", type="flash.events.Event")]
     
-    public class DropdownMenu extends Button {
-    
+    public class DropdownMenu extends Button 
+    {
     // Constants:
     
     // Public Properties:
         /** Symbol name of the list component (ScrollingList or TileList) to use with the DropdownMenu component. */
-        [Inspectable(type="String", defaultValue="DefaultScrollingList")]
-        public var dropdown:* = "DefaultScrollingList";
-        [Inspectable(type="String", defaultValue="DefaultListItemRenderer")]
-        public var itemRenderer:* = "DefaultListItemRenderer";
+        [Inspectable(type="String", defaultValue="CLIKScrollingList")]
+        public var dropdown:Object = "CLIKScrollingList";
+        [Inspectable(type="String", defaultValue="CLIKListItemRenderer")]
+        public var itemRenderer:Object = "CLIKListItemRenderer";
         /** Symbol name of the dropdown list’s scroll bar. Created by the dropdown list instance. If value is empty, then the dropdown list will have no scroll bar. */
         [Inspectable(type="String")]
-        public var scrollBar:*;
+        public var scrollBar:Object;
         
         /** 
          * Determines how focus "wraps" when the end or beginning of the component is reached.
@@ -112,7 +123,7 @@ package scaleform.clik.controls {
         public var menuMargin:Number = 1;
         [Inspectable(defaultValue = "5")]
         public var menuRowCount:Number = 5;
-		[Inspectable(defaultFixedLength = "true")]
+        [Inspectable(defaultFixedLength = "true")]
         public var menuRowsFixed:Boolean = true;
         // Inspectable menuPadding is handled by inspectableMenuPadding setter
         public var menuPadding:Padding;
@@ -123,11 +134,22 @@ package scaleform.clik.controls {
         public var thumbOffsetBottom:Number;
         
     // Protected Properties:
-        protected var _selectedIndex:int = -1, _dataProvider:IDataProvider, _labelField:String = "label", _labelFunction:Function, _popup:MovieClip;
+        protected var _selectedIndex:int = -1;
+        protected var _dataProvider:IDataProvider;
+        protected var _labelField:String = "label";
+        protected var _labelFunction:Function;
+        protected var _popup:MovieClip;
         
     // UI Elements
-        private var _dropdownRef:MovieClip;
-		
+        protected var _dropdownRef:MovieClip = null;
+        
+    // Initialization:
+        /**
+         * The constructor is called when a DropdownMenu or a sub-class of DropdownMenu is instantiated on stage or by using {@code attachMovie()} in ActionScript. This component can <b>not</b> be instantiated using {@code new} syntax. When creating new components that extend DropdownMenu, ensure that a {@code super()} call is made first in the constructor.
+         */
+        public function DropdownMenu() { 
+            super();
+        }
         
         override protected function initialize():void {
             dataProvider = new DataProvider(); // Default Data.
@@ -140,8 +162,8 @@ package scaleform.clik.controls {
         // ** Override inspectables from base class
         override public function get autoRepeat():Boolean { return false; }
         override public function set autoRepeat(value:Boolean):void  { }
-        override public function get data():* { return null; }
-        override public function set data(value:*):void { }
+        override public function get data():Object { return null; }
+        override public function set data(value:Object):void { }
         override public function get label():String { return ""; }
         override public function set label(value:String):void { }
         
@@ -170,7 +192,7 @@ package scaleform.clik.controls {
         }
         
         /**
-         * Scrollbar thumb top and bottom offsets. This property has no effect if the list does not automatically create a scrollbar instance.</li>
+         * Scrollbar thumb top and bottom offsets. This property has no effect if the list does not automatically create a scrollbar instance.
          */
         [Inspectable(name="thumbOffset", defaultValue="top:0,bottom:0")]
         public function set inspectableThumbOffset(value:Object):void {
@@ -202,8 +224,8 @@ package scaleform.clik.controls {
             if (_dropdownRef != null) { 
                 var dd:CoreList = _dropdownRef as CoreList;
                 var offset:uint = (dd is ScrollingList) ? (dd as ScrollingList).scrollPosition : 0;
-                dispatchEvent(new ListEvent(ListEvent.INDEX_CHANGE, true, false, _selectedIndex, 
-                                            -1, -1, dd.getRendererAt(_selectedIndex, offset), _dataProvider[_selectedIndex]));
+                dispatchEventAndSound(new ListEvent(ListEvent.INDEX_CHANGE, true, false, _selectedIndex, 
+                                            -1, -1, dd.getRendererAt(_selectedIndex, offset), _dataProvider ? _dataProvider[_selectedIndex] : -1));
             }
         }
         
@@ -216,17 +238,21 @@ package scaleform.clik.controls {
          * @see IDataProvider
          */
         public function get dataProvider():IDataProvider { return _dataProvider; }
-        public function set dataProvider($v:IDataProvider):void {
-			var l:uint;
-			
-            if (_dataProvider == $v)	return;
-            if (_dataProvider)	_dataProvider.removeEventListener(Event.CHANGE, handleDataChange, false);
-            _dataProvider = $v;
-			l = $v.length;
-			if (!menuRowsFixed && l > 0 && l < menuRowCount)
-				menuRowCount = l;
-            if (!$v)	return;
-			$v.addEventListener(Event.CHANGE, handleDataChange, false, 0, true);
+        public function set dataProvider(value:IDataProvider):void {
+            if (_dataProvider == value) { return; }
+            if (_dataProvider != null) {
+                _dataProvider.removeEventListener(Event.CHANGE, handleDataChange, false);
+            }
+            _dataProvider = value;
+           // check the length and fix the menuRowCount if needed
+            var len:int = _dataProvider == null ? 0 : _dataProvider.length;
+            
+            if (!menuRowsFixed && len > 0 && len < menuRowCount)
+                menuRowCount = len;
+            
+            if(_dataProvider != null)
+                _dataProvider.addEventListener(Event.CHANGE, handleDataChange, false, 0, true);
+            
             invalidateData();
         }
         
@@ -247,8 +273,8 @@ package scaleform.clik.controls {
          * @see #itemToLabel()
          */
         public function get labelFunction():Function { return _labelFunction; }
-        public function set labelFunction($v:Function):void {
-            _labelFunction = $v;
+        public function set labelFunction(value:Function):void {
+            _labelFunction = value;
             invalidateData();
         }
         
@@ -259,11 +285,16 @@ package scaleform.clik.controls {
          * @see #labelField
          * @see #labelFunction
          */
-        public function itemToLabel(item:*):String {
-            if (!item)	return "";
-            if (Boolean(_labelFunction))	return _labelFunction(item);
-            else if ( item is String )	return item.toString();
-			else if (_labelField && item[_labelField])	return item[_labelField];
+        public function itemToLabel(item:Object):String {
+            if (item == null) { return ""; }
+            if (_labelFunction != null) {
+                return _labelFunction(item);
+            } else if ( item is String ) {
+                return item.toString();
+            }
+            else if (_labelField != null && item[_labelField] != null) {
+                return item[_labelField];
+            }
             return item.toString();
         }
         
@@ -288,6 +319,13 @@ package scaleform.clik.controls {
             stage.removeEventListener(MouseEvent.MOUSE_DOWN, handleStageClick, false);
             
             hideDropdown();
+        }
+        
+        /**
+         * Returns {@code true} if the dropdown list is open, {@code false} if not.
+         */
+        public function isOpen():Boolean {
+            return (_dropdownRef != null);
         }
         
         /** Mark the selectedIndex as invalid and schedule a draw() on next Stage.INVALIDATE event. */
@@ -319,10 +357,18 @@ package scaleform.clik.controls {
             }
         }
         
+        /** @exclude */
+        override public function toString():String { 
+            return "[CLIK DropdownMenu " + name + "]";
+        }
+        
     // Protected Methods:
         override protected function draw():void {
             if (isInvalid(InvalidationType.SELECTED_INDEX) || isInvalid(InvalidationType.DATA)) {
-                _dataProvider.requestItemAt(_selectedIndex, populateText);
+				if (_dataProvider != null)
+				{
+					_dataProvider.requestItemAt(_selectedIndex, populateText);
+				}
                 invalidateData(); // Button will update label only when data is invalid
             }
             
@@ -347,35 +393,39 @@ package scaleform.clik.controls {
         }
         
         
-        protected function populateText(item:*):void {
+        protected function populateText(item:Object):void {
             updateLabel(item);
-            dispatchEvent(new Event(Event.CHANGE));
+            dispatchEventAndSound(new Event(Event.CHANGE));
         }
         
-        protected function updateLabel(item:*):void {
+        protected function updateLabel(item:Object):void {
             _label = itemToLabel(item);
         }
         
         protected function handleStageClick(event:MouseEvent):void {
-            if (contains(event.target as DisplayObject)) { return; }
-            if (_dropdownRef.contains(event.target as DisplayObject))	return;
+            if (this.contains(event.target as DisplayObject)) { return; }
+            if (this._dropdownRef.contains(event.target as DisplayObject)) { return; }
             close();
         }
         
         protected function showDropdown():void {
             if (dropdown == null) { return; }
+
+            var domain:ApplicationDomain = ApplicationDomain.currentDomain;
+            if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
             
             var dd:MovieClip;
             if (dropdown is String && dropdown != "") {
-                var classRef:Class = getDefinitionByName(dropdown.toString()) as Class;
+                var classRef:Class = domain.getDefinition(dropdown.toString()) as Class;
+                
                 if (classRef != null) { dd = new classRef() as CoreList; }
             }
-			
+            
             if (dd) {
-                if (itemRenderer is String && itemRenderer) { dd.itemRenderer = getDefinitionByName(itemRenderer.toString()) as Class; }
+                if (itemRenderer is String && itemRenderer != "") { dd.itemRenderer = domain.getDefinition(itemRenderer.toString()) as Class; }
                 else if (itemRenderer is Class) { dd.itemRenderer = itemRenderer as Class; }
                 
-                if (scrollBar is String && scrollBar) { dd.scrollBar = getDefinitionByName(scrollBar.toString()) as Class; }
+                if (scrollBar is String && scrollBar != "") { dd.scrollBar = domain.getDefinition(scrollBar.toString()) as Class; }
                 else if (scrollBar is Class) { dd.scrollBar = scrollBar as Class; }
                 
                 dd.selectedIndex = _selectedIndex;
@@ -392,14 +442,16 @@ package scaleform.clik.controls {
                 dd.addEventListener(ListEvent.ITEM_CLICK, handleMenuItemClick, false, 0, true);
                 
                 _dropdownRef = dd;
-                PopUpManager.show(dd, x + menuOffset.left, (menuDirection == "down") ? y + height + menuOffset.top : y - _dropdownRef.height + menuOffset.bottom, parent);
+                PopUpManager.show(dd, x + menuOffset.left, 
+                    (menuDirection == "down") ? y + height + menuOffset.top : y - _dropdownRef.height + menuOffset.bottom,
+                    parent);
             }
         }
         
         protected function hideDropdown():void {
             if (_dropdownRef) {
                 _dropdownRef.parent.removeChild(_dropdownRef);
-                _dropdownRef = undefined;
+                _dropdownRef = null;
             }
         }
         

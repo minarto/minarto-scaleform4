@@ -29,16 +29,16 @@
 
 Filename    :   TextArea.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
 otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
- 
-package scaleform.clik.controls {
-    
+
+package scaleform.clik.controls 
+{
     import flash.display.DisplayObject;
     import flash.display.MovieClip;
     import flash.display.Sprite;
@@ -46,7 +46,7 @@ package scaleform.clik.controls {
     import flash.events.KeyboardEvent;
     import flash.events.MouseEvent;
     import flash.text.TextField;
-    import flash.utils.getDefinitionByName;
+    import flash.system.ApplicationDomain;
     
     import scaleform.gfx.Extensions; // Allows for a basic ifScalefrom() check in draw().
     
@@ -63,7 +63,8 @@ package scaleform.clik.controls {
     import scaleform.clik.utils.Constraints;
     import scaleform.clik.utils.Padding;
     
-    public class TextArea extends TextInput {
+    public class TextArea extends TextInput
+    {
         
     // Constants:
     
@@ -251,7 +252,7 @@ package scaleform.clik.controls {
                 }
                 updateAfterStateChange();
                 updateTextField();
-                dispatchEvent(new ComponentEvent(ComponentEvent.STATE_CHANGE));
+                dispatchEventAndSound(new ComponentEvent(ComponentEvent.STATE_CHANGE));
                 invalidate(InvalidationType.SIZE);
             }
             // If the State isn't invalid but the Data (text) has changed, just updated the textField.
@@ -314,7 +315,10 @@ package scaleform.clik.controls {
                     sb = parent.getChildByName(_scrollBarValue.toString()) as IScrollBar;
                 }
                 if (sb == null) {
-                    var classRef:Class = getDefinitionByName(_scrollBarValue.toString()) as Class;
+                    var domain : ApplicationDomain = ApplicationDomain.currentDomain;
+                    if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
+                    var classRef:Class = domain.getDefinition(_scrollBarValue.toString()) as Class;                    
+                    
                     if (classRef) { 
                         sb = new classRef() as IScrollBar; 
                     }

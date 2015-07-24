@@ -1,7 +1,3 @@
-/**
-    Definitions for the available "track modes" for use with ScrollBar.
-*/
-    
 /**************************************************************************
 
 Filename    :   ScrollBarTrackMode.as
@@ -13,11 +9,14 @@ agreement provided at the time of installation or download, or which
 otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
- 
-package scaleform.clik.constants {
-    
-    public class ScrollBarTrackMode {
-        
+
+package scaleform.clik.constants 
+{
+    /**
+     * Definitions for the available "track modes" for use with ScrollBar.
+     */
+    public class ScrollBarTrackMode 
+    {
     // Constants:
         /** If SCROLL_PAGE is used, when the track is clicked, the scroll bar will be scrolled by one page. */
         public static const SCROLL_PAGE:String = "scrollPage";

@@ -1,7 +1,3 @@
-/**
-    Definitions for the track directions to be used by ScrollBar.
-*/
-    
 /**************************************************************************
 
 Filename    :   ScrollBarDirection.as
@@ -14,10 +10,13 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
  
-package scaleform.clik.constants {
-    
-    public class ScrollBarDirection {
-        
+package scaleform.clik.constants 
+{
+    /**
+     * Definitions for the track directions to be used by ScrollBar.
+     */
+    public class ScrollBarDirection 
+    {
     // Constants:
         /** If HORIZONTAL is used, the ScrollBar will scroll horizontally. */
         public static const HORIZONTAL:String = "horizontal";

@@ -51,7 +51,7 @@ package scaleform.clik.controls {
     import flash.display.MovieClip;
     import flash.events.Event;
     import flash.events.MouseEvent;
-    import flash.utils.getDefinitionByName;
+    import flash.system.ApplicationDomain;
     import scaleform.clik.events.ResizeEvent;
     
     import scaleform.clik.constants.InvalidationType;
@@ -109,7 +109,7 @@ package scaleform.clik.controls {
         public function get title():String     { return _title; }
         public function set title(value:String):void {
             _title = value;
-            if (titleBtn.initialized) { titleBtn.label = _title; }
+            if (titleBtn != null && titleBtn.initialized) { titleBtn.label = _title; }
         }
         
         [Inspectable(defaultValue="")]
@@ -185,7 +185,10 @@ package scaleform.clik.controls {
                     removeChild(_content); 
                 }
                 
-                var classRef:Class = getDefinitionByName(_src) as Class;
+                var domain : ApplicationDomain = ApplicationDomain.currentDomain;
+                if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
+                var classRef:Class = domain.getDefinition(_src) as Class;
+                
                 if (classRef) { _content = new classRef(); }
                 else {
                     _content = null;
@@ -243,7 +246,7 @@ package scaleform.clik.controls {
             var h:Number = Math.max(minHeight, Math.min(maxHeight, parent.mouseY - y - _dragProps[1]));
             if (w != _width || h != _height) {
                 setSize(w, h);
-                dispatchEvent( new ResizeEvent(ResizeEvent.RESIZE, scaleX, scaleY) );
+                dispatchEventAndSound( new ResizeEvent(ResizeEvent.RESIZE, scaleX, scaleY) );
                 //validateNow();
             } else {
                 // trace("Mouse move called: parent.mouseX=" + parent.mouseX + ", parent.mouseY=" + parent.mouseY);
@@ -252,7 +255,7 @@ package scaleform.clik.controls {
         
         protected function onCloseButtonClick(e:MouseEvent):void {
             parent.removeChild(this);
-            dispatchEvent(new ComponentEvent(ComponentEvent.HIDE));
+            dispatchEventAndSound(new ComponentEvent(ComponentEvent.HIDE));
         }
     }
 }

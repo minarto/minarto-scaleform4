@@ -15,7 +15,11 @@ otherwise accompanies this software in either electronic or hard copy form.
 **************************************************************************/
 
 package scaleform.clik.interfaces {
+    
+    import flash.display.Sprite;
+    
     import scaleform.clik.core.UIComponent;
+    import scaleform.clik.data.ListData;
 
     public interface IListItemRenderer extends IUIComponent {
         
@@ -36,9 +40,9 @@ package scaleform.clik.interfaces {
         function set displayFocus(value:Boolean):void;
         
     // Public Methods:
-        function setListData($index:uint, $label:String, $selected:Boolean):void;
+        function setListData(listData:ListData):void;
         
-        function setData(data:*):void;
+        function setData(data:Object):void;
         
     }
     

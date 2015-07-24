@@ -10,10 +10,11 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.constants {
+package scaleform.clik.constants 
+{
     
-    public class LayoutMode {
-        
+    public class LayoutMode 
+    {
     // Constants:
         public static const ALIGN_NONE:String = "none";
         public static const ALIGN_LEFT:String = "left";
@@ -21,10 +22,6 @@ package scaleform.clik.constants {
         public static const ALIGN_CENTER:String = "center";
         public static const ALIGN_TOP:String = "top";
         public static const ALIGN_BOTTOM:String = "bottom";
-		public static const ALIGN_TOP_BORDERS:String = "top_borders";
-		public static const ALIGN_BOTTOM_BORDERS:String = "bottom_borders";
-		public static const ALIGN_LEFT_BORDERS:String = "left_borders";
-		public static const ALIGN_RIGHT_BORDERS:String = "right_borders";
     }
     
 }

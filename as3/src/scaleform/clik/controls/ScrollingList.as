@@ -53,7 +53,7 @@
 
 Filename    :   ScrollingList.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -64,15 +64,21 @@ otherwise accompanies this software in either electronic or hard copy form.
 package scaleform.clik.controls {
     
     import flash.display.DisplayObject;
-    import flash.events.*;
+    import flash.events.Event;
+    import flash.events.MouseEvent;
     import flash.geom.Rectangle;
-    import flash.utils.getDefinitionByName;
+    import flash.system.ApplicationDomain;
     
-    import scaleform.clik.constants.*;
+    import scaleform.clik.constants.WrappingMode;
     import scaleform.clik.controls.ScrollBar;
+    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.data.ListData;
     import scaleform.clik.events.InputEvent;
-    import scaleform.clik.interfaces.*;
+    import scaleform.clik.interfaces.IScrollBar;
+    import scaleform.clik.interfaces.IListItemRenderer;
+    import scaleform.clik.constants.InputValue;
     import scaleform.clik.ui.InputDetails;
+    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.utils.Padding;
     
     [Event(name="change", type="flash.events.Event")]
@@ -172,6 +178,7 @@ package scaleform.clik.controls {
          */
         public function get scrollPosition():Number { return _scrollPosition; }
         public function set scrollPosition(value:Number):void {
+			if (_dataProvider == null) { return; }
             value = Math.max(0, Math.min(_dataProvider.length - _totalRenderers, Math.round(value)));
             if (_scrollPosition == value) { return; }
             _scrollPosition = value;
@@ -248,6 +255,7 @@ package scaleform.clik.controls {
         /** @exclude */
         override public function handleInput(event:InputEvent):void {
             if (event.handled) { return; } // Already Handled.
+			if (_dataProvider == null) { return; } // No valid data provider
             
             // Pass on to selected renderer first
             var renderer:IListItemRenderer = getRendererAt(_selectedIndex, _scrollPosition);
@@ -378,7 +386,10 @@ package scaleform.clik.controls {
                     sb = parent.getChildByName(_scrollBarValue.toString()) as IScrollBar;
                 }
                 if (sb == null) {
-                    var classRef:Class = getDefinitionByName(_scrollBarValue.toString()) as Class;
+                    var domain : ApplicationDomain = ApplicationDomain.currentDomain;
+                    if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
+                    var classRef:Class = domain.getDefinition(_scrollBarValue.toString()) as Class;                    
+                    
                     if (classRef) { 
                         sb = new classRef() as IScrollBar; 
                     }
@@ -427,7 +438,7 @@ package scaleform.clik.controls {
         }
         
         protected function updateScrollBar():void {
-            if (_scrollBar == null) { return; }
+            if (_scrollBar == null || _dataProvider == null) { return; }
             var max:Number = Math.max(0, _dataProvider.length - _totalRenderers);
             if (_scrollBar is ScrollIndicator) {
                 var scrollIndicator:ScrollIndicator = _scrollBar as ScrollIndicator;
@@ -450,15 +461,19 @@ package scaleform.clik.controls {
         }
         
         override protected function refreshData():void {
-            _scrollPosition = Math.min(Math.max(0, _dataProvider.length - _totalRenderers), _scrollPosition);
-            selectedIndex = Math.min(_dataProvider.length - 1, _selectedIndex);
-            updateSelectedIndex();
-            _dataProvider.requestItemRange(_scrollPosition, Math.min(_dataProvider.length - 1, _scrollPosition + _totalRenderers - 1), populateData);
+			if (_dataProvider != null)
+			{			
+				_scrollPosition = Math.min(Math.max(0, _dataProvider.length - _totalRenderers), _scrollPosition);
+				selectedIndex = Math.min(_dataProvider.length - 1, _selectedIndex);
+				updateSelectedIndex();
+				_dataProvider.requestItemRange(_scrollPosition, Math.min(_dataProvider.length - 1, _scrollPosition + _totalRenderers - 1), populateData);
+			}
         }
         
         override protected function updateSelectedIndex():void {
             if (_selectedIndex == _newSelectedIndex) { return; }
             if (_totalRenderers == 0) { return; } // Return if there are no renderers
+			if (_dataProvider == null) { return; } // No valid data provider
             
             var renderer:IListItemRenderer = getRendererAt(_selectedIndex, scrollPosition);
             if (renderer != null) {
@@ -495,18 +510,17 @@ package scaleform.clik.controls {
             scrollPosition = _scrollBar.position;
         }
     
-        protected function populateData($datas:Array):void {
-            var dl:uint = $datas.length, l:uint = _renderers.length, i:uint, r:IListItemRenderer, d:*, index:uint;
-			
-            for (i = 0; i < l; ++i) {
-                r = getRendererAt(i);
-				d = $datas[i];
-				
-                index = _scrollPosition + i;
-                r.enabled = (i < dl);
-                r.setListData(index, itemToLabel(d), selectedIndex == index); //LM: Consider passing renderer position also. (Support animation)
-                r.setData(d);
-                r.validateNow();
+        protected function populateData(data:Array):void {
+            var dl:uint = data.length;
+            var l:uint = _renderers.length;
+            for (var i:uint = 0; i < l; i++) {
+                var renderer:IListItemRenderer = getRendererAt(i);
+                var index:uint = _scrollPosition + i;
+                var listData:ListData = new ListData(index, itemToLabel(data[i]), _selectedIndex == index);
+                renderer.enabled = (i >= dl) ? false : true;
+                renderer.setListData(listData); //LM: Consider passing renderer position also. (Support animation)
+                renderer.setData(data[i]);
+                renderer.validateNow();
             }
         }
         

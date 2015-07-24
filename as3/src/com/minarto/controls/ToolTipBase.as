@@ -1,4 +1,5 @@
-package com.minarto.controls {
+package com.minarto.controls
+{
 	import scaleform.clik.core.UIComponent;
 
 	

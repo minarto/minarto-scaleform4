@@ -6,7 +6,7 @@
 
 Filename    :   CLIK.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -14,8 +14,8 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
  
-package scaleform.clik.core {
-    
+package scaleform.clik.core 
+{
     import flash.display.DisplayObject;
     import flash.display.DisplayObjectContainer;
     import flash.display.MovieClip;
@@ -30,8 +30,8 @@ package scaleform.clik.core {
     
     import scaleform.gfx.Extensions;
     
-    dynamic public class CLIK {
-        
+    dynamic public class CLIK 
+    {
     // Constants:
         
     // Public Properties:
@@ -51,18 +51,24 @@ package scaleform.clik.core {
         public static var useImmediateCallbacks:Boolean = false; 
         
     // Protected Properties:
-        /** Whether the fireInitCallback listener is active (optimization). */
+        /** 
+         * Whether the fireInitCallback listener is active (optimization). 
+         * @private
+         */
         protected static var isInitListenerActive:Boolean = false;
         /** 
          * Whether fireInitCallback() is currently running. Used to avoid multiple fireInitCallback() calls occuring simulatenously
          * which will corrupt the Dictionaries they're sharing.
+         * @private
          */
         protected static var firingInitCallbacks:Boolean = false;
         /** 
          * A dictionary of dictionaries so that we can use weak references and order the queue by number of parents.
          * initQueue[ number of parents ] = weak ref dictionary of objects with number of parents[ weak reference to an object as key ] = path to object.
+         * @private
          */
         protected static var initQueue:Dictionary;
+        /** @private */
         protected static var validDictIndices:Vector.<uint>;
         
     // Initialization:
@@ -126,6 +132,7 @@ package scaleform.clik.core {
         }
         
     // Protected Methods:
+        /** @private */
         protected static function fireInitCallback(e:Event):void {
             firingInitCallbacks = true;
             stage.removeEventListener(Event.EXIT_FRAME, fireInitCallback, false);
@@ -147,20 +154,21 @@ package scaleform.clik.core {
             firingInitCallbacks = false;
         }
         
-        /** Removes all of the references to the Dictionaries used to track callbacks. */
+        /** Removes all of the reference to the Dictionaries used to track callbacks. @private */
         protected static function clearQueue():void {
             for (var numDict:* in initQueue) {
                 initQueue[numDict] = null;
             }
         }
         
-        /** Basic sorting function for the validDictIndices Vector. */
+        /** Basic sorting function for the validDictIndices Vector. @private */
         protected static function sortFunc(a:uint, b:uint):Number {
             if (a < b) { return -1; }
             else if (a > b) { return 1; }
             else { return 0; }
         }
         
+        /** @private */
         protected static function getTargetPathImpl(clip:DisplayObjectContainer, targetPath:String = ""):String {
             if (!clip) {
                 return targetPath; 

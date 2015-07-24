@@ -37,7 +37,7 @@
 
 Filename    :   NumericStepper.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -54,18 +54,18 @@ package scaleform.clik.controls {
     import flash.text.TextField;
     
     import scaleform.clik.constants.ConstrainMode;
-    import scaleform.clik.constants.ControllerType;
-    import scaleform.clik.constants.InputValue;
     import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.core.UIComponent;
-    import scaleform.clik.events.ButtonEvent;
-    import scaleform.clik.events.ComponentEvent;
-    import scaleform.clik.events.IndexEvent;
     import scaleform.clik.events.InputEvent;
+    import scaleform.clik.events.ButtonEvent;
+    import scaleform.clik.events.IndexEvent;
+    import scaleform.clik.events.ComponentEvent;
+    import scaleform.clik.constants.ControllerType;
     import scaleform.clik.ui.InputDetails;
-    import scaleform.clik.utils.ConstrainedElement;
+    import scaleform.clik.constants.InputValue;
+    import scaleform.clik.constants.NavigationCode;
     import scaleform.clik.utils.Constraints;
+    import scaleform.clik.utils.ConstrainedElement;
     
     public class NumericStepper extends UIComponent {
         
@@ -264,7 +264,7 @@ package scaleform.clik.controls {
                 }
                 
                 updateAfterStateChange();
-                dispatchEvent(new ComponentEvent(ComponentEvent.STATE_CHANGE));
+                dispatchEventAndSound(new ComponentEvent(ComponentEvent.STATE_CHANGE));
             }
             
             if (isInvalid(InvalidationType.DATA)) {

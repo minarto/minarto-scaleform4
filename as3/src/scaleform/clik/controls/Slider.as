@@ -1,4 +1,4 @@
-/**
+﻿/**
 *   The Slider displays a numerical value in range, with a thumb to represent the value, as well as modify it via dragging.
     <b>Inspectable Properties</b>
         The inspectable properties of the Slider component are:
@@ -6,8 +6,8 @@
             <li><i>enabled</i>: Disables the Slider if set to false.</li>
             <li><i>focusable</i>: By default, Slider can receive focus for user interactions. Setting this property to false will disable focus acquisition.</li>
             <li><i>value</i>: The numeric value displayed by the Slider.</li>
-            <li><i>minimum</i>: The minimum value of the Slider's range.</li>
-            <li><i>maximum</i>: The maximum value of the Slider's range.</li>
+            <li><i>minimum</i>: The minimum value of the Slider’s range.</li>
+            <li><i>maximum</i>: The maximum value of the Slider’s range.</li>
             <li><i>snapping</i>: If set to true, then the thumb will snap to values that are multiples of snapInterval.</li>
             <li><i>snapInterval</i>: The snapping interval which determines which multiples of values the thumb snaps to. It has no effect if snapping is set to false.</li>
             <li><i>liveDragging</i>: If set to true, then the Slider will generate a change event when dragging the thumb. If false, then the Slider will only generate a change event after the dragging is over.</li>
@@ -55,19 +55,20 @@ package scaleform.clik.controls {
     import flash.events.MouseEvent;
     import flash.geom.Point;
     
-    import scaleform.clik.constants.ConstrainMode;
-    import scaleform.clik.constants.ControllerType;
-    import scaleform.clik.constants.InputValue;
-    import scaleform.clik.constants.InvalidationType;
-    import scaleform.clik.constants.NavigationCode;
-    import scaleform.clik.core.UIComponent;
-    import scaleform.clik.events.ComponentEvent;
-    import scaleform.clik.events.InputEvent;
-    import scaleform.clik.events.SliderEvent;
-    import scaleform.clik.ui.InputDetails;
-    import scaleform.clik.utils.Constraints;
     import scaleform.gfx.FocusManager;
     import scaleform.gfx.MouseEventEx;
+    
+    import scaleform.clik.constants.ConstrainMode;
+    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.core.UIComponent;
+    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.events.ComponentEvent;
+    import scaleform.clik.events.SliderEvent;
+    import scaleform.clik.constants.ControllerType;
+    import scaleform.clik.ui.InputDetails;
+    import scaleform.clik.constants.InputValue;
+    import scaleform.clik.constants.NavigationCode;
+    import scaleform.clik.utils.Constraints;
     
     [Event(name = "change", type = "flash.events.Event")]
     
@@ -151,7 +152,7 @@ package scaleform.clik.controls {
         public function get value():Number { return _value; }
         public function set value(value:Number):void {
             _value = lockValue(value);
-            dispatchEvent( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
+            dispatchEventAndSound( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
             draw();
         }
         
@@ -299,6 +300,7 @@ package scaleform.clik.controls {
         protected function updateThumb():void {
             if (!enabled) { return; }
             var trackWidth:Number = (_width - offsetLeft - offsetRight);
+			trace("track width " + trackWidth);
             thumb.x = ((_value - _minimum) / (_maximum - _minimum) * trackWidth) - thumb.width / 2 + offsetLeft;
         }
         
@@ -324,7 +326,7 @@ package scaleform.clik.controls {
             updateThumb();
             
             if (liveDragging) {
-                dispatchEvent( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
+                dispatchEventAndSound( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
             }
         }
         
@@ -333,7 +335,7 @@ package scaleform.clik.controls {
             stage.removeEventListener(MouseEvent.MOUSE_UP, endDrag, false);
             
             if (!liveDragging) { 
-                dispatchEvent( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) ); 
+                dispatchEventAndSound( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) ); 
             }
             
             // If the thumb became draggable on a track press,
@@ -365,7 +367,7 @@ package scaleform.clik.controls {
             value = newValue;
             
             if (!liveDragging) { 
-                dispatchEvent( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
+                dispatchEventAndSound( new SliderEvent(SliderEvent.VALUE_CHANGE, false, true, _value) );
             }
             
             // Pressing on the track moves the grip to the cursor and the thumb becomes draggable.
@@ -386,7 +388,7 @@ package scaleform.clik.controls {
         protected function scrollWheel(delta:Number):void {
             if (_focused) {
                 value -= delta * _snapInterval;
-                dispatchEvent( new Event(Event.CHANGE) ); 
+                dispatchEventAndSound( new Event(Event.CHANGE) ); 
             }
         }
     }

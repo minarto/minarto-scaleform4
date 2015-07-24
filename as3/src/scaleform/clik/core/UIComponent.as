@@ -6,7 +6,7 @@
 
 Filename    :   UIComponent.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -14,49 +14,67 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.core {
-
+package scaleform.clik.core 
+{
     import flash.display.MovieClip;
-    import flash.events.*;
+    import flash.events.Event;
+    import flash.events.FocusEvent;
+    import flash.events.MouseEvent;
     import flash.external.ExternalInterface;
     import flash.system.Capabilities;
-    import flash.utils.getDefinitionByName;
     
-    import scaleform.clik.constants.InvalidationType;
+    import scaleform.gfx.FocusManager;
+    import scaleform.gfx.Extensions;
+    
     import scaleform.clik.core.CLIK;
-    import scaleform.clik.events.*;
-    import scaleform.clik.layout.*;
+    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.events.ComponentEvent;
+    import scaleform.clik.events.InputEvent;
+    import scaleform.clik.layout.Layout;
+    import scaleform.clik.layout.LayoutData;
     import scaleform.clik.managers.FocusHandler;
     import scaleform.clik.utils.Constraints;
-    import scaleform.gfx.*;
     
-    [Event(name="show", type="scaleform.clik.events.ComponentEvent")]
-    [Event(name="hide", type="scaleform.clik.events.ComponentEvent")]
+    [Event(name="SHOW", type="scaleform.clik.events.ComponentEvent")]
+    [Event(name="HIDE", type="scaleform.clik.events.ComponentEvent")]
     
-    public class UIComponent extends MovieClip {
-        
+    public class UIComponent extends MovieClip 
+    {
     // Constants:
         
     // Public Properties:
         public var initialized:Boolean = false;
         
     // Private Properties:
-        protected var _invalidHash:*;
+        /** @private */
+        protected var _invalidHash:Object;
+        /** @private */
         protected var _invalid:Boolean = false;
-        
+        /** @private */
         protected var _width:Number = 0; // internal width
+        /** @private */
         protected var _height:Number = 0; // internal height
+        /** @private */
         protected var _originalWidth:Number = 0;
+        /** @private */
         protected var _originalHeight:Number = 0;
+        /** @private */
         protected var _focusTarget:UIComponent;
+        /** @private */
         protected var _focusable:Boolean = true;
+        /** @private */
         protected var _focused:Number = 0;
+        /** @private */
         protected var _displayFocus:Boolean = false;
+        /** @private */
         protected var _mouseWheelEnabled:Boolean = true;
+        /** @private */
         protected var _inspector:Boolean = false;
-        protected var _labelHash:*;
-        
+        /** @private */
+        protected var _labelHash:Object;
+        /** @private */
         protected var _layoutData:LayoutData;
+        /** @private */
         protected var _enableInitCallback:Boolean = false;
         
     // UI Elements:
@@ -87,21 +105,24 @@ package scaleform.clik.core {
             invalidate();
         }
         
-        public static function generateLabelHash(target:MovieClip):* {
-            var hash:* = {}, labels:Array, i:*;
-            
-			if (!target)	return hash;
-			
-            labels = target.currentLabels;
-            for (i in labels)	hash[labels[i].name] = true;
+        public static function generateLabelHash(target:MovieClip):Object {
+            var hash:Object = {};
+            if (!target) { return hash; }
+            var labels:Array = target.currentLabels;
+            var l:uint = labels.length;
+            for (var i:uint=0; i<l; i++) { hash[labels[i].name] = true; }
             return hash;
         }
         
-        protected function addedToStage($e:Event):void {
+        protected function addedToStage(event:Event):void {
             removeEventListener(Event.ADDED_TO_STAGE, addedToStage, false);
-            if ( !CLIK.initialized )	CLIK.initialize(stage, this);
+            if ( !CLIK.initialized ) {
+                CLIK.initialize(stage, this);
+            }
             
-            if (_enableInitCallback && Boolean(Extensions.CLIK_addedToStageCallback))	CLIK.queueInitCallback(this);
+            if (_enableInitCallback && Extensions.CLIK_addedToStageCallback != null) {
+                CLIK.queueInitCallback(this);
+            }
         }
         
     // Public Getter / Setters:
@@ -126,13 +147,13 @@ package scaleform.clik.core {
         override public function get scaleX():Number { return _width/_originalWidth; }
         override public function set scaleX(value:Number):void {
             super.scaleX = value;
-            if (rotation == 0)	width = super.width;
+            if (rotation == 0) { width = super.width; }
         }
         
         override public function get scaleY():Number { return _height/_originalHeight; }
         override public function set scaleY(value:Number):void {
             super.scaleY = value;
-            if (rotation == 0)	height = super.height;
+            if (rotation == 0) { height = super.height; }
         }
         
         /**
@@ -141,12 +162,12 @@ package scaleform.clik.core {
          */
         [Inspectable(defaultValue="true")]
         override public function get enabled():Boolean { return super.enabled; }
-        override public function set enabled($v:Boolean):void {
-            if ($v == super.enabled)	return;
+        override public function set enabled(value:Boolean):void {
+            if (value == super.enabled) { return; }
             
-            super.enabled = $v;
-            tabEnabled = (!$v) ? false : _focusable;
-            mouseEnabled = $v;
+            super.enabled = value;
+            tabEnabled = (!enabled) ? false : _focusable;
+            mouseEnabled = value;
         }
         
         /**
@@ -156,8 +177,9 @@ package scaleform.clik.core {
         [Inspectable(defaultValue="true")]
         override public function get visible():Boolean { return super.visible; }
         override public function set visible(value:Boolean):void {
+            
             super.visible = value;
-            dispatchEvent(new Event(value ? ComponentEvent.SHOW : ComponentEvent.HIDE));
+            dispatchEventAndSound(new ComponentEvent(value ? ComponentEvent.SHOW : ComponentEvent.HIDE));
         }
         
         public function get hasFocus():Boolean { return _focused > 0; }
@@ -169,13 +191,16 @@ package scaleform.clik.core {
          */
         public function get focusable():Boolean { return _focusable; }
         public function set focusable(value:Boolean):void { 
+			var changed:Boolean = (_focusable != value);
             _focusable = value;
             
             // If the component is no longer focusable but currently enabled, disable tabbing.
             // If the component is no longer focusable but it is already disabled, do nothing.
             if (!_focusable && enabled) { tabEnabled = tabChildren = false; }
             else if (_focusable && enabled) { tabEnabled = true; } 
-            changeFocus();
+			
+			// PPS: We may not need to call changeFocus(), and it may in fact cause visual artifacts..
+			if (changed) changeFocus();
         }
         
         /**
@@ -209,7 +234,9 @@ package scaleform.clik.core {
                 }
             }
             else {
-                if (stage && _focused > 0)	stage.focus = this; 
+                if (stage != null && _focused > 0) {
+                    stage.focus = this; 
+                }
             }
             
             changeFocus();
@@ -295,7 +322,7 @@ package scaleform.clik.core {
         /**
          * Handle input from the game, via controllers or keyboard. The default handleInput will handle standalone
          * and composite components.
-         * @param event An {@code InputEvent} containing details about the interaction.
+         * @param event An InputEvent containing details about the interaction.
          * @see InputEvent
          * @see FocusHandler
          * @see InputDetails
@@ -323,7 +350,7 @@ package scaleform.clik.core {
         /**
          * Draw the component after it has been invalidated.  Use this method to reflow component 
          * size and position, redraw data, etc. When appropriate, ensure that a call to 
-         * {@code super.draw()} is made when extending a component and overriding this method.
+         * super.draw() is made when extending a component and overriding this method.
          */
         protected function draw():void { } // Abstract
         
@@ -440,9 +467,19 @@ package scaleform.clik.core {
         }
         
         public function dispatchEventAndSound(event:Event):Boolean {
-            var ok:Boolean = super.dispatchEvent(event);
+            
+            if (Extensions.gfxProcessSound != null)
+            {
+                Extensions.gfxProcessSound(this, "default", event.type);
+            }
+
+            return super.dispatchEvent(event);
+
+            /*
+            var ok:Boolean = super.dispatchEventAndSound(event);
             // playSound(event.type);
             return ok;
+            */
         }
         
     }

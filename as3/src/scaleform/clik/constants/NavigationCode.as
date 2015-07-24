@@ -1,12 +1,8 @@
-﻿/**
- * An enumeration of common navigation equivalents.
- */
-
-/**************************************************************************
+﻿/**************************************************************************
 
 Filename    :   NavigationCode.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -14,19 +10,22 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.constants {
-    
-    public class NavigationCode {
-    
+package scaleform.clik.constants 
+{
+    /**
+     * An enumeration of common navigation equivalents.
+     */
+    public class NavigationCode 
+    {
     // Constants
         public static var UP:String = "up";
         public static var DOWN:String = "down";
         public static var LEFT:String = "left";
         public static var RIGHT:String = "right";
-    
+        
         public static var START:String = "start";
         public static var BACK:String = "back";
-    
+        
         /** Constants representing the typical gamepad keys. */
         public static var GAMEPAD_A:String  = "enter-gamepad_A";
         public static var GAMEPAD_B:String  = "escape-gamepad_B";

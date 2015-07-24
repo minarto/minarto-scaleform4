@@ -26,7 +26,7 @@ package scaleform.clik.utils {
     import flash.events.Event;
     import flash.events.EventDispatcher;
     import flash.text.TextField;
-    
+
     import scaleform.clik.constants.ConstrainMode;
     import scaleform.clik.controls.ScrollBar;
     import scaleform.clik.core.UIComponent;

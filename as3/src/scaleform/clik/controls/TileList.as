@@ -1,15 +1,87 @@
-﻿package scaleform.clik.controls {
+﻿/**
+    The TileList is a list component that can scroll its elements. It can instantiate list items by itself 
+    or use existing list items on the stage. A ScrollIndicator or ScrollBar component can also be attached to this
+    list component to provide scoll feedback and control. This component is populated via a DataProvider. The 
+    dataProvider is assigned via code, as shown in the example below:
+    <i>tileList.dataProvider = ["item1", "item2", "item3", "item4", ];</i>
+
+    <b>Inspectable Properties</b>
+    A MovieClip that derives from the TileList component will have the following inspectable properties:
+    <ul>
+        <li><i>columnWidth</i>: The width of list item instances created internally. This value has no effect if the rendererInstanceName property is set.</li>
+        <li><i>direction</i>: The scrolling direction. The semantics of rows and columns do not change depending on this value.</li>
+        <li><i>enabled</i>: Disables the component if set to false. This disables both the attached scrollbar and the list items (both internally created and external renderers).</li>
+        <li><i>externalColumnCount</i>: When the rendererInstanceName property is set, this value is used to notify the TileList of the number of columns used by the external renderers.</li>
+        <li><i>focusable</i>: By default, TileList can receive focus for user interactions. Setting this property to false will disable focus acquisition.</li>
+        <li><i>itemRenderer</i>: The symbol name of the ListItemRenderer. Used to create list item instances internally. Has no effect if the rendererInstanceName property is set.</li>
+        <li><i>rendererInstanceName</i>: Prefix of the external list item renderers to use with this TileList component. The list item instances on the stage must be prefixed with this property value. If this property is set to the value ‘r’, then all list item instances to be used with this component must have the following values: ‘r1’, ‘r2’, ‘r3’,… The first item should have the number 1.</li>
+        <li><i>margin</i>: The margin between the boundary of the list component and the list items created internally. This value has no effect if the rendererInstanceName property is set. This margin also affects the automatically generated scrollbar.</li>
+        <li><i>rowHeight</i>: The height of list item instances created internally. This value has no effect if the rendererInstanceName property is set.</li>
+        <li><i>padding:</i> Extra padding at the top, bottom, left, and right for the list items. This value has no effect if the rendererInstanceName property is set. Does not affect the automatically generated scrollbar.</li>
+        <li><i>thumbOffset:</i> ScrollIndicator thumb offset for top and bottom. Passed through to ScrollIndicator. This property has no effect if the list does not automatically create a scrollbar instance.</li>
+        <li><i>thumbSizeFactor:</i> Page size factor for the scrollbar thumb. A value greater than 1.0 will increase the thumb size by the given factor. This positive value has no effect if a scrollbar is not attached to the list.</li>
+        <li><i>scrollBar</i>: Instance name of a ScrollBar component on the stage or a symbol name. If an instance name is specified, then the TileList will hook into that instance. If a symbol name is specified, an instance of the symbol will be created by the TileList.</li>
+        <li><i>visible</i>: Hides the component if set to false. This does not hide the attached scrollbar or any external list item renderers.</li>
+    </ul>
+    
+    <b>States</b>
+    The TileList component supports three states based on its focused and disabled properties.
+    <ul>
+        <li>default or enabled state.</li>
+        <li>focused state, that typically highlights the component’s border area.</li>
+        <li>disabled state.</li>
+    </ul>
+    
+    <b>Events</b>
+    All event callbacks receive a single Object parameter that contains relevant information about the event. The following properties are common to all events. <ul>
+    <li><i>type</i>: The event type.</li>
+    <li><i>target</i>: The target that generated the event.</li></ul>
+    
+    <ul>
+        <li><i>ComponentEvent.SHOW</i>: The visible property has been set to true at runtime.</li>
+        <li><i>ComponentEvent.HIDE</i>: The visible property has been set to false at runtime.</li>
+        <li><i>FocusHandlerEvent.FOCUS_IN</i>: The button has received focus.</li>
+        <li><i>FocusHandlerEvent.FOCUS_OUT</i>: The button has lost focus.</li>
+        <li><i>ComponentEvent.STATE_CHANGE</i>: The button's state has changed.</li>
+        <li><i>ListEvent.ITEM_PRESS</i>: A list item has been pressed down.</li>
+        <li><i>ListEvent.ITEM_CLICK</i>: A list item has been clicked.</li>
+        <li><i>ListEvent.ITEM_ROLL_OVER</i>: The mouse cursor has rolled over a list item.</li>
+        <li><i>ListEvent.ITEM_ROLL_OUT</i>: The mouse cursor has rolled out of a list item.</li>
+        <li><i>ListEvent.ITEM_DOUBLE_CLICK</i>: The mouse cursor has been double clicked on a list item.</li>
+        <li><i>ListEvent.INDEX_CHANGE</i>: The selected index has changed.</li>
+    </ul>
+ */
+
+/**************************************************************************
+
+Filename    :   TileList.as
+
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+
+**************************************************************************/
+
+package scaleform.clik.controls {
     
     import flash.display.DisplayObject;
     import flash.events.Event;
     import flash.events.MouseEvent;
     import flash.geom.Rectangle;
-    import flash.utils.getDefinitionByName;
+    import flash.system.ApplicationDomain;
     
-    import scaleform.clik.constants.*;
+    import scaleform.clik.constants.DirectionMode;
+    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.constants.InputValue;
+    import scaleform.clik.constants.NavigationCode;
+    import scaleform.clik.constants.WrappingMode;
     import scaleform.clik.controls.ScrollBar;
+    import scaleform.clik.data.ListData;
     import scaleform.clik.events.InputEvent;
-    import scaleform.clik.interfaces.*;
+    import scaleform.clik.interfaces.IScrollBar;
+    import scaleform.clik.interfaces.IListItemRenderer;
     import scaleform.clik.ui.InputDetails;
     import scaleform.clik.utils.Padding;
     
@@ -137,7 +209,7 @@
          * The amount of visible rows.  Setting this property will immediately change the height of the component
          * to accomodate the specified amount of rows. The {@code rowCount} property is not stored or maintained.
          */
-        public function get rowCount():uint { return _totalRenderers; }
+        public function get rowCount():uint { return _totalRows; }
         public function set rowCount(value:uint):void {
             var h:Number = rowHeight;
             if (isNaN(h)) { 
@@ -213,12 +285,12 @@
         
         /** Retireve the available width of the component. */
         override public function get availableWidth():Number {
-            return Math.round(_width) - (margin * 2) - ((_direction == DirectionMode.VERTICAL && _autoScrollBar) ? Math.round(_siWidth) : 0);
+            return Math.round(_width) - (padding.horizontal) - (margin * 2) - ((_direction == DirectionMode.VERTICAL && _autoScrollBar) ? Math.round(_siWidth) : 0);
         }
         
         /** Retrieve the available height of the component. */
         override public function get availableHeight():Number {
-            return Math.round(_height) - (margin * 2) - ((_direction == DirectionMode.HORIZONTAL && _autoScrollBar) ? Math.round(_siWidth) : 0);
+            return Math.round(_height) - (padding.vertical) - (margin * 2) - ((_direction == DirectionMode.HORIZONTAL && _autoScrollBar) ? Math.round(_siWidth) : 0);
         }
         
         /** The scroll position of the list. */
@@ -275,7 +347,7 @@
             // Only allow actions on key down, but still set handled=true when it would otherwise be handled.
             var details:InputDetails = event.details;
             var keyPress:Boolean = (details.value == InputValue.KEY_DOWN || details.value == InputValue.KEY_HOLD);
-            var nextIndex:int = NaN;
+			var nextIndex:int = -1;
             var nav:String = details.navEquivalent;
             
             // Directional navigation commands differ depending on layout direction.
@@ -312,7 +384,7 @@
                 }
             }
             
-            if (isNaN(nextIndex)) {
+            if (nextIndex == -1) {
                 // These navigation commands don't change depending on direction.
                 switch (nav) {
                     case NavigationCode.HOME:
@@ -330,7 +402,8 @@
                 }
             }
 
-            if (!isNaN(nextIndex)) {
+            // PPS: This is not an else clause. The previous block computes a new index if possible.
+			if (nextIndex != -1) {
                 if (!keyPress) { 
                     event.handled = true;
                     return; // If the event is a Key.UP, bail now to avoid changing the selectedIndex.
@@ -407,7 +480,10 @@
                     sb = parent.getChildByName(_scrollBarValue.toString()) as IScrollBar;
                 }
                 if (sb == null) {
-                    var classRef:Class = getDefinitionByName(_scrollBarValue.toString()) as Class;
+                    var domain : ApplicationDomain = ApplicationDomain.currentDomain;
+                    if (loaderInfo != null && loaderInfo.applicationDomain != null) domain = loaderInfo.applicationDomain;
+                    var classRef:Class = domain.getDefinition(_scrollBarValue.toString()) as Class;                    
+                    
                     if (classRef) { 
                         sb = new classRef() as IScrollBar; 
                     }
@@ -486,8 +562,10 @@
             } else {
                 scrollToIndex(_selectedIndex); // Will redraw
                 renderer = getRendererAt(_selectedIndex, scrollPosition);
-                renderer.selected = true; // Item is in range. Just set it.
-                renderer.validateNow();
+                if (renderer) {
+                    renderer.selected = true; // Item is in range. Just set it.
+                    renderer.validateNow();
+                }
             }
         }
         
@@ -519,12 +597,12 @@
             for (var i:uint = 0; i < l; i++) {
                 var renderer:IListItemRenderer = getRendererAt(i);
                 
-                if (direction == DirectionMode.HORIZONTAL) {
-                    renderer.y = (i % _totalRows) * h + margin;
-                    renderer.x = (i / _totalRows >> 0) * w + margin;
+                if (direction == DirectionMode.VERTICAL) {
+                    renderer.y = (i % _totalRows) * h + ry;
+                    renderer.x = (i / _totalRows >> 0) * w + rx;
                 } else {
-                    renderer.x = (i % _totalColumns) * w + margin;
-                    renderer.y = (i / _totalColumns >> 0) * h + margin;
+                    renderer.x = (i % _totalColumns) * w + rx;
+                    renderer.y = (i / _totalColumns >> 0) * h + ry;
                 }
                 
                 renderer.width = w;
@@ -545,17 +623,18 @@
             }
         }
         
-        protected function populateData($datas:Array):void {
-            var dl:uint = $datas.length, l:uint = _renderers.length, i:uint, r:IListItemRenderer, d:*, index:uint, _index:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns);
-			
-            for (i = 0; i < l; ++i) {
-                r = getRendererAt(i);
-				d = $datas[i];
-                index = _index + i;
-                r.enabled = (i < dl);
-                r.setListData(index, itemToLabel(d), selectedIndex == index); //LM: Consider passing renderer position also. (Support animation)
-                r.setData(d);
-                r.validateNow();
+        protected function populateData(data:Array):void {
+            var dl:uint = data.length;
+            var l:uint = _renderers.length;
+            for (var i:uint = 0; i < l; i++) {
+                
+                var renderer:IListItemRenderer = getRendererAt(i);
+                var index:uint = _scrollPosition * ((_direction == DirectionMode.HORIZONTAL) ? _totalRows : _totalColumns) + i;
+                var listData:ListData = new ListData(index, itemToLabel(data[i]), _selectedIndex == index);
+                renderer.enabled = (i >= dl) ? false : true;
+                renderer.setListData(listData);
+                renderer.setData(data[i]);
+                renderer.validateNow();
             }
         }
         
@@ -568,12 +647,12 @@
                 sb.rotation = 0;
                 sb.x = _width - sb.width + margin;
                 sb.y = margin;
-                sb.height = availableHeight;
+                sb.height = availableHeight + padding.vertical;
             } else {
                 sb.rotation = -90;
                 sb.x = margin;
                 sb.y = _height - margin; // @TODO: No need for _scrollBar.height here?
-                sb.width = availableWidth; // When the ScrollBar is rotated, we can set its width instead.
+                sb.width = availableWidth + padding.horizontal; // When the ScrollBar is rotated, we can set its width instead.
             }
             
             _scrollBar.validateNow();

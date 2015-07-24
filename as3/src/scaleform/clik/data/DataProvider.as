@@ -41,14 +41,6 @@ package scaleform.clik.data {
     // Public getter / setters:
         
     // Public Methods:
-		public function setSource( source:Array ):void {
-			trace( "AS " + this + " :: setSource( " + source + " )" );
-			parseSource(source);
-		}
-		
-		public function testFunc1():void { trace(" *** AS testFunc1() called!"); }
-		public function testFunc2( param:Object ):void { trace(" *** AS testFunc2() called!"); }
-		
         public function indexOf(item:Object, callBack:Function=null):int {
             var index:int = super.indexOf(item);
             if (callBack != null) { callBack(index); }
@@ -76,14 +68,22 @@ package scaleform.clik.data {
             dispatcher.dispatchEvent(new Event(Event.CHANGE));
         }
         
+        /** Convenient way to set the source from native code or game script without using the constructor. */
+        public function setSource(source:Array):void {
+            parseSource(source);
+        }
+        
         public function toString():String {
             return "[CLIK DataProvider " + this.join(",") + "]";
         }
         
     // Protected Methods:
         protected function parseSource(source:Array):void {
-			length = source ? source.length : 0;
-            for (var i:* in source)	this[i] = source[i];
+            if (source == null) { return; }
+            var l:uint = source.length;
+            for (var i:uint=0; i<l; i++) {
+                this[i] = source[i];
+            }
         }
     
     // EventDispatcher Mix-in    

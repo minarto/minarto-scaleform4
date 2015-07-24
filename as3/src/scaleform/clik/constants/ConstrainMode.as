@@ -6,7 +6,7 @@
 
 Filename    :   ConstrainMode.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -14,10 +14,11 @@ otherwise accompanies this software in either electronic or hard copy form.
 
 **************************************************************************/
 
-package scaleform.clik.constants {
+package scaleform.clik.constants 
+{
     
-    public class ConstrainMode {
-        
+    public class ConstrainMode 
+    {
     // Constants:
         public static const COUNTER_SCALE:String = "counterScale";
         public static const REFLOW:String = "reflow";

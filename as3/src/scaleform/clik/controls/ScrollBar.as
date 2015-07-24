@@ -33,7 +33,7 @@
 
 Filename    :   ScrollBar.as
 
-Copyright   :   Copyright 2011 Autodesk, Inc. All Rights reserved.
+Copyright   :   Copyright 2012 Autodesk, Inc. All Rights reserved.
 
 Use of this software is subject to the terms of the Autodesk license
 agreement provided at the time of installation or download, or which
@@ -301,8 +301,8 @@ package scaleform.clik.controls {
                 var percent:Number = (mouseY - thumb.height/2 - track.y) / availableHeight;
                 position = Math.round(percent * (_maxPosition - _minPosition) + _minPosition);
                 
-                thumb.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_OVER));
-                thumb.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_DOWN));
+                thumb.dispatchEventAndSound(new MouseEvent(MouseEvent.MOUSE_OVER));
+                thumb.dispatchEventAndSound(new MouseEvent(MouseEvent.MOUSE_DOWN));
                 handleThumbPress(event);
                 _dragOffset = new Point(0, thumb.height/2);
             }
@@ -322,7 +322,10 @@ package scaleform.clik.controls {
         
         protected function updateScrollTarget():void {
             if (_scrollTarget == null || !enabled) { return; }
-            _scrollTarget.scrollV = _position;
+            var target:TextField = _scrollTarget as TextField;
+            if (target != null) {
+                _scrollTarget.scrollV = _position;
+            }
         }
         
         protected function handleMouseWheel(event:MouseEvent):void {

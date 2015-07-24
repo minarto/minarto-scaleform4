@@ -23,16 +23,16 @@ otherwise accompanies this software in either electronic or hard copy form.
     import scaleform.gfx.FocusManager;
     
     public class PopUpManager {
-   		protected static var initialized:Boolean = false;
+        protected static var initialized:Boolean = false;
         public static function init(stage:Stage):void {
-			if (initialized) { return; }
+            if (initialized) { return; }
             PopUpManager._stage = stage;
             _defaultPopupCanvas = new MovieClip();
             // Listen to children being removed from the _defaultPopupCanvas to track whether we need to actively keep
             // _defaultPopupCanvas on top of everything else.
             _defaultPopupCanvas.addEventListener(Event.REMOVED, handleRemovePopup, false, 0, true);
             _stage.addChild(_defaultPopupCanvas);
-			initialized = true;
+            initialized = true;
         }
         
     // Constants:
@@ -40,9 +40,9 @@ otherwise accompanies this software in either electronic or hard copy form.
     // Protected Properties:
         protected static var _stage:Stage;
         protected static var _defaultPopupCanvas:MovieClip;
-		
-		protected static var _modalMc:Sprite;
-		protected static var _modalBg:Sprite;
+        
+        protected static var _modalMc:Sprite;
+        protected static var _modalBg:Sprite;
         
     // Public Methods:
         public static function show(mc:DisplayObject, x:Number = 0, y:Number = 0, scope:DisplayObjectContainer = null):void {
@@ -62,8 +62,9 @@ otherwise accompanies this software in either electronic or hard copy form.
             
             var p:Point = new Point(x, y);
             p = scope.localToGlobal(p);
-            mc.x = p.x;
-            mc.y = p.y;
+            
+			mc.x = p.x / _stage.scaleX;
+            mc.y = p.y / _stage.scaleY;
             
             _stage.setChildIndex(_defaultPopupCanvas, _stage.numChildren - 1);
             _stage.addEventListener(Event.ADDED, PopUpManager.handleStageAddedEvent, false, 0, true);
@@ -72,14 +73,14 @@ otherwise accompanies this software in either electronic or hard copy form.
         public static function showModal(mc:Sprite, mcX:Number = 0, mcY:Number = 0, bg:Sprite = null, controllerIdx:uint = 0, newFocus:Sprite = null):void {
             if (!_stage) { trace("PopUpManager has not been initialized. Automatic initialization has not occured or has failed; call PopUpManager.init() manually."); return; }
                        
-			// Remove previous modal mc and bg if applicable
-			// - Background is removed via event listener automatically
-			if (_modalMc) { 
+            // Remove previous modal mc and bg if applicable
+            // - Background is removed via event listener automatically
+            if (_modalMc) { 
                 _defaultPopupCanvas.removeChild(_modalMc); 
             }
-			
-			// If mc is null, return (Useful to clear a modal mc)
-			if (mc == null) {
+            
+            // If mc is null, return (Useful to clear a modal mc)
+            if (mc == null) {
                 return;
             }
             
@@ -91,21 +92,21 @@ otherwise accompanies this software in either electronic or hard copy form.
                 bg.graphics.drawRect(0, 0, _stage.stageWidth, _stage.stageHeight);
                 bg.graphics.endFill();
             }
-			
-			// Track current modal mc and bg
-			_modalMc = mc;
-			_modalBg = bg;
-			
+            
+            // Track current modal mc and bg
+            _modalMc = mc;
+            _modalBg = bg;
+            
             // Reparent to popup canvas layer
             _modalMc.x = mcX;
             _modalMc.y = mcY;
-			_defaultPopupCanvas.addChild(_modalBg);
+            _defaultPopupCanvas.addChild(_modalBg);
             _defaultPopupCanvas.addChild(_modalMc);
             FocusHandler.getInstance().setFocus(newFocus, controllerIdx, false);
             FocusManager.setModalClip(_modalMc, controllerIdx);
             
             // Get notified when the modal mc is removed for cleanup purposes
-			_modalMc.addEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false, 0, true);			
+            _modalMc.addEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false, 0, true);			
             _stage.addEventListener(Event.ADDED, PopUpManager.handleStageAddedEvent, false, 0, true);
         }
         
@@ -118,20 +119,23 @@ otherwise accompanies this software in either electronic or hard copy form.
         protected static function handleRemovePopup(e:Event):void {
             removeAddedToStageListener();
         }
-		
-		protected static function handleRemoveModalMc(e:Event):void {
-			_modalBg.removeEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false);
-			if (_modalBg) {
-				// Remove modal background if applicable
-				_defaultPopupCanvas.removeChild(_modalBg);
-			}
+        
+        protected static function handleRemoveModalMc(e:Event):void {
+            _modalBg.removeEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false);
+            if (_modalBg) {
+                // Remove modal background if applicable
+                _defaultPopupCanvas.removeChild(_modalBg);
+            }
             
-			// Clear tracking variables
-			_modalMc = null;
-			_modalBg = null;
+            // Clear tracking variables
+            _modalMc = null;
+            _modalBg = null;
+            
+            // Remove from FocusManager
+            FocusManager.setModalClip(null);
             
             removeAddedToStageListener();
-		}
+        }
         
         protected static function removeAddedToStageListener():void {
             if (_defaultPopupCanvas.numChildren == 0 && _modalMc == null) { 

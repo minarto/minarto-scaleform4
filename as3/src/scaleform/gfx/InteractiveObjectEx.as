@@ -14,7 +14,7 @@ package scaleform.gfx
 {
    import flash.display.InteractiveObject;
 
-   public final class InteractiveObjectEx
+   public class InteractiveObjectEx extends DisplayObjectEx
    {   	   
 
        static public function setHitTestDisable(o:InteractiveObject, f:Boolean) : void { }

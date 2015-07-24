@@ -43,8 +43,9 @@ package scaleform.clik.motion {
             lastTime = t;
             var tween:Tween = firstTween;
             while (tween) {
+                var nextTween:Tween = tween.next;
                 tween.updatePosition(tween.frameBased ? 1 : delta);
-                tween = tween.next;
+                tween = nextTween;
             }
         }
         

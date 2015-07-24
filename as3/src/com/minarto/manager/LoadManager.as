@@ -1,11 +1,19 @@
-package com.minarto.manager {
+package com.minarto.manager
+{
+	import com.minarto.data.Binding;
+	
 	import flash.display.*;
 	import flash.events.*;
 	import flash.net.*;
 	
-
-	public class LoadManager {
-		static private const _DA_LOADER:URLLoader = new URLLoader, _REQUEST:URLRequest = new URLRequest, _RESERVATIONS:Array = [];
+	
+	/**
+	 * @author minarto
+	 */
+	public class LoadManager 
+	{
+		static private const _DA_LOADER:URLLoader = new URLLoader, _REQUEST:URLRequest = new URLRequest, 
+			_RESERVATIONS:Array = [];
 		
 		
 		static private var _CURRENT_LOAD_ITEM:Array, _DO_LOADER:Loader = new Loader, _LOAD_ID:Number = 0;
@@ -21,13 +29,15 @@ package com.minarto.manager {
 		 * @return 
 		 * 
 		 */		
-		static public function ADD($type:String, $src:String, $onComplete:Function, $onError:Function=null, ...$args):Number{
+		static public function ADD($type:String, $src:String, $onComplete:Function, $onError:Function=null, ...$args):Number
+		{
 			var info:LoaderInfo;
 			
 			$args.unshift($type, $src, $onComplete, $onError, ++ _LOAD_ID);
 			_RESERVATIONS.push($args);
 			
-			if(!_CURRENT_LOAD_ITEM){
+			if(!_CURRENT_LOAD_ITEM)
+			{
 				_DA_LOADER.addEventListener(Event.COMPLETE, _OnComplete);
 				_DA_LOADER.addEventListener(IOErrorEvent.IO_ERROR, _OnError);
 				
@@ -48,13 +58,18 @@ package com.minarto.manager {
 		 * @param $loadID
 		 * 
 		 */		
-		static public function DEL($loadID:Number):void{
+		static public function DEL($loadID:Number):void
+		{
 			var i:uint;
 			
-			if(_CURRENT_LOAD_ITEM){
-				if($loadID){
-					if(_CURRENT_LOAD_ITEM[4] == $loadID){
-						switch(_CURRENT_LOAD_ITEM[0]){
+			if(_CURRENT_LOAD_ITEM)
+			{
+				if($loadID)
+				{
+					if(_CURRENT_LOAD_ITEM[4] == $loadID)
+					{
+						switch(_CURRENT_LOAD_ITEM[0])
+						{
 							case "xml" :
 							case "txt" :
 								_DA_LOADER.close();
@@ -65,21 +80,26 @@ package com.minarto.manager {
 						}
 						_ADD();
 					}
-					else{
+					else
+					{
 						i = _RESERVATIONS.length;
-						while(i --){
+						while(i --)
+						{
 							arguments = _RESERVATIONS[i];
-							if(arguments[4] == $loadID){
+							if(arguments[4] == $loadID)
+							{
 								_RESERVATIONS.splice(i, 1);
 								return;
 							}
 						}
 					}
 				}
-				else{
+				else
+				{
 					_RESERVATIONS.length = 0;
 					
-					switch(_CURRENT_LOAD_ITEM[0]){
+					switch(_CURRENT_LOAD_ITEM[0])
+					{
 						case "xml" :
 						case "txt" :
 							_DA_LOADER.close();
@@ -100,13 +120,18 @@ package com.minarto.manager {
 		 * @param $url
 		 * 
 		 */		
-		static public function DEL_URL($url:String):void{
+		static public function DEL_URL($url:String):void
+		{
 			var i:uint;
 			
-			if(_CURRENT_LOAD_ITEM){
-				if($url){
-					if(_CURRENT_LOAD_ITEM[1] == $url){
-						switch(_CURRENT_LOAD_ITEM[0]){
+			if(_CURRENT_LOAD_ITEM)
+			{
+				if($url)
+				{
+					if(_CURRENT_LOAD_ITEM[1] == $url)
+					{
+						switch(_CURRENT_LOAD_ITEM[0])
+						{
 							case "xml" :
 							case "txt" :
 								_DA_LOADER.close();
@@ -117,18 +142,25 @@ package com.minarto.manager {
 						}
 						_ADD();
 					}
-					else{
+					else
+					{
 						i = _RESERVATIONS.length;
-						while(i --){
+						while(i --)
+						{
 							arguments = _RESERVATIONS[i];
-							if(arguments[1] == $url)	_RESERVATIONS.splice(i, 1);
+							if(arguments[1] == $url)
+							{
+								_RESERVATIONS.splice(i, 1);
+							}
 						}
 					}
 				}
-				else{
+				else
+				{
 					_RESERVATIONS.length = 0;
 					
-					switch(_CURRENT_LOAD_ITEM[0]){
+					switch(_CURRENT_LOAD_ITEM[0])
+					{
 						case "xml" :
 						case "txt" :
 							_DA_LOADER.close();
@@ -144,15 +176,22 @@ package com.minarto.manager {
 		}
 		
 		
-		static private function _OnComplete($e:Event):void{
+		static private function _OnComplete($e:Event):void
+		{
 			var data:*;
 			
-			switch(_CURRENT_LOAD_ITEM[0]){
+			arguments = _CURRENT_LOAD_ITEM.slice(4);
+			
+			switch(_CURRENT_LOAD_ITEM[0])
+			{
 				case "xml" :
-					try{
+					try
+					{
 						data = XML(_DA_LOADER.data);
 					}
-					catch($error:Error){}
+					catch($error:Error)
+					{
+					}
 					
 					break;
 				
@@ -164,7 +203,7 @@ package com.minarto.manager {
 					data = _DO_LOADER.content;
 			}
 			
-			arguments = _CURRENT_LOAD_ITEM.slice(4);
+			
 			arguments[0] = data;
 			_CURRENT_LOAD_ITEM[2].apply(null, arguments);
 			
@@ -172,10 +211,17 @@ package com.minarto.manager {
 		}
 		
 		
-		static private function _OnError($e:IOErrorEvent):void {
+		/**
+		 * io error 이벤트 핸들러 
+		 * @param $e
+		 * 
+		 */		
+		static private function _OnError($e:IOErrorEvent):void 
+		{
 			var f:Function = _CURRENT_LOAD_ITEM[3];
 			
-			if(f){
+			if(f)
+			{
 				arguments = _CURRENT_LOAD_ITEM.slice(4);
 				arguments[0] = null;
 				f.apply(null, arguments);
@@ -184,24 +230,29 @@ package com.minarto.manager {
 		}
 		
 		
-		static private function _ADD():void {
+		static private function _ADD():void 
+		{
 			var info:LoaderInfo, type:String;
 			
-			if(_CURRENT_LOAD_ITEM){
+			if(_CURRENT_LOAD_ITEM)
+			{
 				type = _CURRENT_LOAD_ITEM[0];
 				
-				if(type != "xml" && type != "txt"){
+				if(type != "xml" && type != "txt")
+				{
 					info = _DO_LOADER.contentLoaderInfo;
 					info.removeEventListener(Event.COMPLETE, _OnComplete);
 					info.removeEventListener(IOErrorEvent.IO_ERROR, _OnError);
 				}
 			}
 			
-			if(_CURRENT_LOAD_ITEM = _RESERVATIONS.shift()){
+			if(_CURRENT_LOAD_ITEM = _RESERVATIONS.shift())
+			{
 				type = _CURRENT_LOAD_ITEM[0];
 				_REQUEST.url = _CURRENT_LOAD_ITEM[1];
 				
-				switch(type){
+				switch(type)
+				{
 					case "xml" :
 					case "txt" :
 						_DA_LOADER.load(_REQUEST);
@@ -216,7 +267,9 @@ package com.minarto.manager {
 						info.addEventListener(IOErrorEvent.IO_ERROR, _OnError);
 				}
 			}
-			else{
+			else
+			{
+				_DO_LOADER = null;
 				_DA_LOADER.removeEventListener(Event.COMPLETE, _OnComplete);
 				_DA_LOADER.removeEventListener(IOErrorEvent.IO_ERROR, _OnError);
 			}

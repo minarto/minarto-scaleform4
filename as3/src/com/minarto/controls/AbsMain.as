@@ -1,5 +1,6 @@
-package com.minarto.controls {
-	import com.minarto.data.Binding;
+package com.minarto.controls
+{
+	import com.minarto.data.*;
 	import com.minarto.manager.*;
 	
 	import flash.display.*;
@@ -15,12 +16,12 @@ package com.minarto.controls {
 	/**
 	 * @author minarto
 	 */
-	public class AbsMain extends Sprite {
+	public class AbsMain extends Sprite
+	{
 		/**
 		 * Binding
 		 */
-		public var setValue:Function = Binding.SET_Values, setItemProp:Function = Binding.SET_ItemP, setListItem:Function = Binding.SET_ListItem,
-					toolTipContainer:Sprite;
+		public var setValue:Function = BindingDic.setValues, event:Function = BindingDic.event;
 					
 					
 		public function setVisible($b:Boolean):void{
@@ -28,7 +29,8 @@ package com.minarto.controls {
 		}
 		
 		
-		public function AbsMain() {
+		public function AbsMain()
+		{
 			Extensions.enabled = true;
 			CLIK.initialize(stage, null);
 		}
@@ -57,7 +59,6 @@ package com.minarto.controls {
 		 */
 		protected function configUI($e:Event=null):void{
 			stage.doubleClickEnabled = false;
-			stageResizeManager();
 		}
 	}
 }

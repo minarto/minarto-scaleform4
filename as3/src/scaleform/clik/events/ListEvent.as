@@ -84,11 +84,11 @@ package scaleform.clik.events {
         
     // Public Methods:
         override public function clone():Event {
-            return new ListEvent(type, bubbles, cancelable, index, columnIndex, rowIndex, itemRenderer, isKeyboard);
+            return new ListEvent(type, bubbles, cancelable, index, columnIndex, rowIndex, itemRenderer, itemData, controllerIdx, buttonIdx, isKeyboard);
         }
         
         override public function toString():String {
-            return formatToString("ListEvent", "type", "bubbles", "cancelable", "index", "columnIndex", "rowIndex", "controllerIdx", "buttonIdx", "isKeyboard");
+            return formatToString("ListEvent", "type", "bubbles", "cancelable", "index", "columnIndex", "rowIndex", "itemRenderer", "itemData", "controllerIdx", "buttonIdx", "isKeyboard");
         }
         
     // Protected Methods:
