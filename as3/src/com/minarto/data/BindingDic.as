@@ -11,7 +11,7 @@ package com.minarto.data
 		/**
 		 * 클라와 바인딩 매핑
 		 */		
-		static public function same($uid0:*, $uid1:String):Binding
+		static public function same($uid0:*, $uid1:*):Binding
 		{
 			var b:Binding = _dic[$uid0] || _dic[$uid1] || new Binding;
 			
@@ -34,7 +34,7 @@ package com.minarto.data
 		/**
 		 * 값 설정
 		 */	
-		static public function setValues($uid:*, $key:String, ...$values):void
+		static public function setValues($uid:*, $key:*, ...$values):void
 		{
 			var b:Binding = get($uid);
 			
@@ -46,7 +46,7 @@ package com.minarto.data
 		/**
 		 * 이벤트 발생
 		 */	
-		static public function event($uid:*, $key:String, ...$values):void
+		static public function event($uid:*, $key:*, ...$values):void
 		{
 			var b:Binding = get($uid);
 			

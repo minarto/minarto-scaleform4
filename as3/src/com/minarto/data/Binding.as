@@ -67,7 +67,7 @@ package com.minarto.data
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		private function _set($key:String, $values:Array):void 
+		private function _set($key:*, $values:Array):void 
 		{
 			var dic:Dictionary = _handlerDic[$key], f:*;
 			
@@ -91,7 +91,7 @@ package com.minarto.data
 		 * @param $key	이벤트 키
 		 * @param $value	이벤트 값
 		 */
-		public function event($key:String, ...$values):void 
+		public function event($key:*, ...$values):void 
 		{
 			_set($key, $values);
 		}
@@ -129,7 +129,7 @@ package com.minarto.data
 		 * @param $handler	바인딩 핸들러 또는 CoreList
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addValuePlay($key:String, $handler:Function, ...$args):void 
+		public function addValuePlay($key:*, $handler:Function, ...$args):void 
 		{
 			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true)), values:Array;
 			
@@ -150,7 +150,7 @@ package com.minarto.data
 		 * @param $handler	바인딩 핸들러 또는 CoreList
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addValuePlayGC($key:String, $handler:Function, ...$args):void 
+		public function addValuePlayGC($key:*, $handler:Function, ...$args):void 
 		{
 			var values:Array, dic:Dictionary;
 			
@@ -173,7 +173,7 @@ package com.minarto.data
 		 * @param $uiOrHandler	바인딩 uicomponent or 핸들러
 		 * 
 		 */			
-		public function del($key:String=null, $uiOrHandler:*=null):void 
+		public function del($key:*=null, $uiOrHandler:*=null):void 
 		{
 			var dic:Dictionary, f:*;
 			
@@ -246,7 +246,7 @@ package com.minarto.data
 		 * @return 바인딩 값
 		 * 
 		 */
-		public function get($key:String):Array 
+		public function get($key:*):Array 
 		{
 			return	_valueDic[$key];
 		}
@@ -259,7 +259,7 @@ package com.minarto.data
 		 * @return 바인딩 값
 		 * 
 		 */
-		public function getAt($key:String, $index:uint=0):* 
+		public function getAt($key:*, $index:uint=0):* 
 		{
 			arguments = _valueDic[$key];
 			
@@ -273,7 +273,7 @@ package com.minarto.data
 		 * @return 바인딩 값
 		 * 
 		 */
-		public function getFnResult($key:String, ...$args):* 
+		public function getFnResult($key:*, ...$args):* 
 		{
 			var dic:Dictionary = _getHandlerDic[$key], fn:*;
 			
