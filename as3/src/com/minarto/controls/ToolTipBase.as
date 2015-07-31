@@ -1,36 +1,21 @@
 package com.minarto.controls
 {
+	import com.minarto.interfaces.IContent;
+	
 	import scaleform.clik.core.UIComponent;
 
 	
 	/**
 	 * @author KIMMINHWAN
 	 */
-	public class ToolTipBase extends UIComponent {
-		protected var data:*;
+	public class ToolTipBase extends UIComponent implements IContent
+	{
+		protected var datas:*;
 		
 		
-		public function setData($d:*) : void {
-			delBind();
-			data = $d;
-			addBind();
-		}
-		
-		
-		protected function delBind():void{
-			if(data && !(data as String)){
-				//ListBinding.delDataBind(data, invalidate, HashKeyManager.url);
-			}
-		}
-		
-		
-		protected function addBind():void{
-			if(data as String){
-				invalidate();
-			}
-			else if(data){
-				//ListBinding.addDataBind(data, invalidate, HashKeyManager.url);
-			}
+		public function setData(...$datas) : void
+		{
+			datas = $datas;
 		}
 	}
 }
