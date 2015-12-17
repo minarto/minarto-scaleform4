@@ -7,13 +7,7 @@ class com.minarto.utils.Utils {
 	
 	
 	public static var point = { x:0, y:0 };
-	
-	
-	public static function error($type:String, $msg:String):Void {
-		ExternalInterface.call("error", $type, $msg);
-		trace("error - " + $type + " : " + $msg);
-	}
-	
+
 	
 	public static function addComma($n:Number, $cipher:Number):String {
 		var r:String, s:String, c:Number, i:Number, t:String;
@@ -48,7 +42,7 @@ class com.minarto.utils.Utils {
 			if(!r){
 				r = "" + ExternalInterface.call("locale", $msg);
 				if(r)	dic[$msg] = r;
-				else	error("locale", $msg);
+				else	trace("locale:" + $msg);
 			}
 			
 			return	r;
