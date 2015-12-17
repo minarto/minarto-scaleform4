@@ -1,156 +1,272 @@
-﻿import flash.external.ExternalInterface;
+import flash.external.ExternalInterface;
 
 
 class com.minarto.data.Binding {
-	public static function init($delegateObj):Void {
-		if(_init)	_init();
-		
-		if ($delegateObj)	$delegateObj.setValue = Binding.set;
-		else ExternalInterface.call("Binding", Binding);
-		
-		delete init;
-	}
+	private var _valueDic = { }, _reservations = { }, _handlerDic = {}, _gcHandlerDic = {}, _getHandlerDic = {};
 	
-	
-	public static function dateInit($key:String, $interval:Number):Void {
-		var keys = { };
-		
-		if(_init)	_init();
-		
-		dateInit = function($key:String, $interval:Number) {
-			clearInterval(keys[$key]);
-			
-			if ($interval) {
-				Binding.set($key, new Date);
-				
-				keys[$key] = setInterval(function() {
-					Binding.set($key, new Date);
-				}, $interval * 1000);
-			}
-		};
-		
-		dateInit($key, $interval);
-	}
-	
-	
-	private static function _init():Void {
-		var valueDic = { }, bindingDic = { };
-		
-		
-		Binding.set = function ($key, $value) {
-			var i:Number, a:Array = bindingDic[$key], item, arg:Array;
 
-			valueDic[$key] = $value;
-			
-			for (i = 0, $key = a ? a.length : 0; i < $key; ++ i) {
-				item = a[i];
-				arg = item[3];
-				arg[0] = $value;
-				item[1].apply(item[2], arg);
-			}
+	public function set($key, $value):Void
+	{
+		var values:Array = arguments.slice(1), dic:Array = _handlerDic[$key], i, a:Array;
+		
+		_valueDic[$key] = values;
+		
+		for(i in dic)
+		{
+			_set($key, values);
+			return;
 		}
 		
-		
-		add = function ($key:String, $handler:Function, $scope) {
-			var a:Array = arguments.slice(2), item;
-		
-			a[0] = valueDic[$key];
-			arguments[3] = a;
-			
-			a = bindingDic[$key];
-			
-			if (a) {
-				for ($key in a) {
-					item = a[$key];
-					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arguments;
-						return;
-					}
-				}
-				a.push(arguments);
-			}
-			else bindingDic[$key] = a = [arguments];
+		dic = _gcHandlerDic[$key];
+		for(i in dic)
+		{
+			_set($key, values);
+			return;
 		}
 		
-		
-		addNPlay = function ($key:String, $handler:Function, $scope) {
-			var a:Array = arguments.slice(2), item;
-			
-			a[0] = valueDic[$key];
-			arguments[3] = a;
-			
-			a = bindingDic[$key];
-			
-			if (a) {
-				for ($key in a) {
-					item = a[$key];
-					if (item[1] == $handler && item[2] == $scope) {
-						a[$key] = arguments;
-						$handler.apply($scope, arguments[3]);
-						return;
-					}
-				}
-				a.push(arguments);
-			}
-			else bindingDic[$key] = a = [arguments];
+		a = _reservations[$key] || (_reservations[$key] = [])
+		a.push(values);
+	}
+	
 
-			$handler.apply($scope, arguments[3]);
+	public function event($key, $value):Void
+	{
+		var values:Array = arguments.slice(1), dic:Array = _handlerDic[$key], i, a:Array;
+		
+		for(i in dic)
+		{
+			_set($key, values);
+			return;
 		}
 		
+		dic = _gcHandlerDic[$key];
+		for(i in dic)
+		{
+			_set($key, values);
+			return;
+		}
 		
-		del = function ($key:String, $handler:Function, $scope) {
-			var a:Array, i, item;
+		a = _reservations[$key] || (_reservations[$key] = [])
+		a.push(values);
+	}
 		
-			if($key){
-				a = bindingDic[$key];
-				for (i in a) {
-					item = a[i];
-					if (item[1] == $handler && item[2] == $scope) {
-						a.splice(i, 1);
-						if(!a.length)	delete	bindingDic[$key];
-						return;
+		
+	private function _set($key:String, $values:Array):Void
+	{
+		var dic:Array = _handlerDic[$key], i, args:Array, func:Function;
+			
+		for(i in dic)
+		{
+			args = dic[i];
+			func = args.handler;
+			func.apply(args.scope, $values.concat(args));
+		}
+		
+		dic = _gcHandlerDic[$key];
+		for(i in dic)
+		{
+			args = dic[i];
+			func = args.handler;
+			func.apply(args.scope, $values.concat(args));
+		}
+		
+		delete	_gcHandlerDic[$key];
+	}
+	
+	
+	public function add($key:String, $scope, $handler:Function):Void
+	{
+		var dic:Array = _handlerDic[$key] || (_handlerDic[$key] = [] ), args:Array = arguments.slice(3);
+		
+		args.scope = $scope;
+		args.handler = $handler;
+		
+		dic.push(args);
+		
+		delete	_reservations[$key];
+	}
+	
+	
+	public function addFn($key:String, $scope, $handler:Function):Void
+	{
+		var dic:Array = _getHandlerDic[$key] || (_getHandlerDic[$key] = [] );
+		
+		dic.push(arguments);
+	}
+	
+	
+	public function addGC($key:String, $scope, $handler:Function):Void
+	{
+		var dic:Array = _gcHandlerDic[$key] || (_gcHandlerDic[$key] = [] ), args:Array = arguments.slice(3);
+		
+		args.scope = $scope;
+		args.handler = $handler;
+		
+		dic.push(args);
+		
+		delete	_reservations[$key];
+		
+		del.apply(this, arguments);
+	}
+	
+	
+	public function addNPlay($key:String, $scope, $handler:Function):Void
+	{
+		var args:Array = arguments.slice(3), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array = _valueDic[$key];
+		
+		add.apply(this, arguments);
+		
+		if (l)
+		{
+			for (i = 0; i < l; ++i)
+			{
+				values = a[i];
+				$handler.apply($scope, values.concat(args));
+			}
+			
+			delete	_reservations[$key];
+		}
+		else if(values)
+		{
+			$handler.apply($scope, values.concat(args));
+		}
+	}
+	
+	
+	public function addNPlayGC($key:String, $scope, $handler:Function):Void
+	{
+		var args:Array = arguments.slice(3), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array;
+		
+		if (l)
+		{
+			for (i = 0; i < l; ++i)
+			{
+				values = a[i];
+				$handler.apply($scope, values.concat(args));
+			}
+			
+			delete	_reservations[$key];
+		}
+		else if(values)
+		{
+			values = _valueDic[$key];
+			$handler.apply($scope, values.concat(args));
+		}
+		else
+		{
+			addGC.apply(this, arguments);
+		}
+	}
+		
+	
+	public function del($key:String, $scope, $handler:Function):Void
+	{
+		var dic:Array = _handlerDic[$key], i, args:Array;
+		
+		if ($key)
+		{
+			if ($scope || $handler)
+			{
+				dic = _handlerDic[$key];
+				if ($scope && $handler)
+				{
+					for(i in dic)
+					{
+						args = dic[i];
+						if (args.scope == $scope && args.handler == $handler)
+						{
+							delete	dic[i];
+						}
+					}
+				}
+				else if($handler)
+				{
+					for(i in dic)
+					{
+						args = dic[i];
+						if (args.handler == $handler)
+						{
+							delete	dic[i];
+						}
+					}
+				}
+				else
+				{
+					for(i in dic)
+					{
+						args = dic[i];
+						if (args.scope == $scope)
+						{
+							delete	dic[i];
+						}
 					}
 				}
 			}
-			else	bindingDic = {};
+			else
+			{
+				delete	_handlerDic[$key];
+			}
 		}
-		
-		
-		Binding.get = function($key:String) {
-			return	valueDic[$key];
-		}
-		
-		
-		delete _init;
+		else
+		{
+			if ($scope || $handler)
+			{
+				for ($key in _handlerDic)
+				{
+					dic = _handlerDic[$key];
+					if ($scope && $handler)
+					{
+						for(i in dic)
+						{
+							args = dic[i];
+							if (args.scope == $scope && args.handler == $handler)
+							{
+								delete	dic[i];
+							}
+						}
+					}
+					else if($handler)
+					{
+						for(i in dic)
+						{
+							args = dic[i];
+							if (args.handler == $handler)
+							{
+								delete	dic[i];
+							}
+						}
+					}
+					else
+					{
+						for(i in dic)
+						{
+							args = dic[i];
+							if (args.scope == $scope)
+							{
+								delete	dic[i];
+							}
+						}
+					}
+				}			
+			}
+			else
+			{
+				_handlerDic = {};
+			}
+		}		
 	}
 		
 		
-	public static function set($key:String, $value):Void {
-		_init();
-		Binding.set($key, $value);
-	}
-	
-	
-	public static function add($key:String, $handler:Function, $scope):Void {
-		_init();
-		add.apply(Binding, arguments);
-	}
-	
-	
-	public static function addNPlay($key:String, $handler:Function, $scope):Void {
-		_init();
-		addNPlay.apply(Binding, arguments);
-	}
+	public function getAt($key:String, $index:Number)
+	{
+		var values:Array = _valueDic[$key];
 		
-	
-	public static function del($key:String, $handler:Function, $scope):Void {
-		_init();
-		del($key, $handler, $scope);
+		return	values ? values[$index || 0] : undefined;
 	}
 		
 		
-	public static function get($key:String) {
-		_init();
-		return	Binding.get($key);
+	public function get($key:String):Array
+	{
+		return	_valueDic[$key];
 	}
 }
