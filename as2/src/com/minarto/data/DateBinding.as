@@ -121,7 +121,7 @@ class com.minarto.data.DateBinding
 	
 	public function del($scope, $handler:Function):Void
 	{
-		_binding.del("" + _delay, $handler);
+		_binding.del("" + _delay, $scope, $handler);
 	}
 	
 	
