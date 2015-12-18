@@ -45,14 +45,14 @@ class com.minarto.loader.SLoader
 			_add();
 		}
 	
-		add = function($target:MovieClip, $src:String, $onComplete:Function, $onError:Function):Void
+		add = function():Void
 		{
 			dic.push(arguments);
 			if (loadItems)	return;
 			_add();
 		}
 	
-		_add = function($target:MovieClip, $src:String, $onComplete:Function, $onError:Function):Void
+		_add = function():Void
 		{
 			loadItems = dic.shift();
 		
