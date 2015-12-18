@@ -25,6 +25,7 @@ class com.minarto.data.DateBinding
 		
 		DateBinding.get = function($delay:Number):DateBinding
 		{
+			if (!($delay > 0))	$delay = 0.1;
 			return	_dic[$delay] || (_dic[$delay] = new DateBinding($delay));
 		}
 		
@@ -35,10 +36,11 @@ class com.minarto.data.DateBinding
 		
 		init =  function($api:String):Void
 		{
+			var args:Array = arguments;
 			ExternalInterface.call.apply(ExternalInterface, arguments);
 			
 			if(intervalID)	clearInterval(intervalID);
-			intervalID = setInterval(function():Void {	ExternalInterface.call.apply(ExternalInterface, arguments);	}, 60000);
+			intervalID = setInterval(function():Void {	ExternalInterface.call.apply(ExternalInterface, args);	}, 60000);
 		}
 		
 		delete	_init;
@@ -100,27 +102,25 @@ class com.minarto.data.DateBinding
 	}
 		
 		
-	public function add($scope, $handler:Function):Void
+	public function add($handler:Function):Void
 	{
 		arguments.unshift("" + _delay);
 		_binding.add.apply(_binding, arguments);
 	}
 	
 	
-	public function addPlay($scope, $handler:Function):Void
+	public function addPlay($handler:Function):Void
 	{
-		var a:Array = arguments.slice(1);
-		
 		add.apply(this, arguments);
 		
-		a[0] = getDate();
-		$handler.apply($scope, a);
+		arguments[0] = getDate();
+		$handler.apply(null, arguments);
 	}
 	
 	
-	public function del($scope, $handler:Function):Void
+	public function del($handler:Function):Void
 	{
-		_binding.del("" + _delay, $scope, $handler);
+		_binding.del("" + _delay, $handler);
 	}
 	
 	
