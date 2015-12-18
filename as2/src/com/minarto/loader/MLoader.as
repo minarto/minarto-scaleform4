@@ -1,23 +1,52 @@
 class com.minarto.loader.MLoader
 {
-	static private var _dic = {};
-	
-	
 	public function MLoader()
 	{
-		throw	new Error("don't create instance")
+		trace("don't create instance")
 	}
 	
 	
 	static private function _init():Void
 	{
-		var loader:MovieClipLoader = new MovieClipLoader;
+		var loader:MovieClipLoader = new MovieClipLoader, dic = {}, f = arguments.callee;
 		
-		loader.addListener(MLoader);
+		loader.addListener(f);
 		
-		load = function($target:MovieClip, $src:String, $onScope, $onComplete:Function, $onError:Function):Void
+		f.onLoadInit = function ($mc:MovieClip):Void
 		{
-			_dic[targetPath($target)] = arguments;
+			var path:String = targetPath($mc), loadItems:Array = dic[path], onComplete:Function = loadItems[2], args:Array;
+			
+			delete	dic[path];
+			
+			if (onComplete)
+			{
+				args = loadItems.slice(3);
+				args[0] = $mc;
+				
+				onComplete.apply(null, args);
+			}
+		}
+		
+		f.onLoadError = function ($mc:MovieClip, $errorCode:String, $httpStatus:Number):Void
+		{
+			var path:String = targetPath($mc), loadItems:Array = dic[path], onError:Function = loadItems[3], args:Array;
+			
+			delete	dic[path];
+			
+			if (onError)
+			{
+				args = loadItems.slice(1);
+				args[0] = $mc;
+				args[1] = $errorCode;
+				args[2] = $httpStatus;
+				
+				onError.apply(null, args);
+			}
+		}
+	
+		load = function($target:MovieClip, $src:String, $onComplete:Function, $onError:Function):Void
+		{
+			dic[targetPath($target)] = arguments;
 			loader.loadClip($src, $target);
 		}
 		
@@ -25,49 +54,14 @@ class com.minarto.loader.MLoader
 		{
 			loader.unloadClip($target);
 			
-			delete	_dic[targetPath($target)];
+			delete	dic[targetPath($target)];
 		}
 		
 		delete	_init;
 	}
 	
 	
-	static private function onLoadInit($mc:MovieClip):Void
-	{
-		var path:String = targetPath($mc), loadItems:Array = _dic[path], onComplete:Function = loadItems[3], args:Array;
-		
-		delete	_dic[path];
-		
-		if (onComplete)
-		{
-			args = loadItems.slice(4);
-			args[0] = $mc;
-			
-			onComplete.apply(loadItems[2], args);
-		}
-	}
-	
-	
-	static private function onLoadError($mc:MovieClip, $errorCode:String, $httpStatus:Number):Void
-	{
-		var path:String = targetPath($mc), loadItems:Array = _dic[path], onError:Function = loadItems[4], onScope, args:Array;
-		
-		delete	_dic[path];
-		
-		if (onError)
-		{
-			onScope = loadItems[2];
-			args = loadItems.slice(2);
-			args[0] = $mc;
-			args[1] = $errorCode;
-			args[2] = $httpStatus;
-			
-			onError.apply(onScope, args);
-		}
-	}
-	
-	
-	static public function load($target:MovieClip, $src:String, $onScope, $onComplete:Function, $onError:Function):Void
+	static public function load($target:MovieClip, $src:String, $onComplete:Function, $onError:Function):Void
 	{
 		_init();
 		load.apply(MLoader, arguments);
