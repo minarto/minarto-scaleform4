@@ -1,7 +1,5 @@
-import flash.external.ExternalInterface;
-
-
-class com.minarto.data.Binding {
+class com.minarto.data.Binding
+{
 	private var _valueDic = { }, _reservations = { }, _handlerDic = {}, _gcHandlerDic = {}, _getHandlerDic = {};
 	
 
@@ -53,13 +51,13 @@ class com.minarto.data.Binding {
 		
 	private function _set($key:String, $values:Array):Void
 	{
-		var dic:Array = _handlerDic[$key], i, args:Array, func:Function;
+		var dic:Array = _handlerDic[$key], i, args:Array, func:Function, no = null;
 			
 		for(i in dic)
 		{
 			args = dic[i];
 			func = args.handler;
-			func.apply(args.scope, $values.concat(args));
+			func.apply(no, $values.concat(args));
 		}
 		
 		dic = _gcHandlerDic[$key];
@@ -67,18 +65,17 @@ class com.minarto.data.Binding {
 		{
 			args = dic[i];
 			func = args.handler;
-			func.apply(args.scope, $values.concat(args));
+			func.apply(no, $values.concat(args));
 		}
 		
 		delete	_gcHandlerDic[$key];
 	}
 	
 	
-	public function add($key:String, $scope, $handler:Function):Void
+	public function add($key:String, $handler:Function):Void
 	{
-		var dic:Array = _handlerDic[$key] || (_handlerDic[$key] = [] ), args:Array = arguments.slice(3);
+		var dic:Array = _handlerDic[$key] || (_handlerDic[$key] = [] ), args:Array = arguments.slice(2);
 		
-		args.scope = $scope;
 		args.handler = $handler;
 		
 		dic.push(args);
@@ -87,7 +84,7 @@ class com.minarto.data.Binding {
 	}
 	
 	
-	public function addFn($key:String, $scope, $handler:Function):Void
+	public function addFn($key:String, $handler:Function):Void
 	{
 		var dic:Array = _getHandlerDic[$key] || (_getHandlerDic[$key] = [] );
 		
@@ -95,11 +92,10 @@ class com.minarto.data.Binding {
 	}
 	
 	
-	public function addGC($key:String, $scope, $handler:Function):Void
+	public function addGC($key:String, $handler:Function):Void
 	{
-		var dic:Array = _gcHandlerDic[$key] || (_gcHandlerDic[$key] = [] ), args:Array = arguments.slice(3);
+		var dic:Array = _gcHandlerDic[$key] || (_gcHandlerDic[$key] = [] ), args:Array = arguments.slice(2);
 		
-		args.scope = $scope;
 		args.handler = $handler;
 		
 		dic.push(args);
@@ -110,9 +106,9 @@ class com.minarto.data.Binding {
 	}
 	
 	
-	public function addNPlay($key:String, $scope, $handler:Function):Void
+	public function addPlay($key:String, $handler:Function):Void
 	{
-		var args:Array = arguments.slice(3), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array = _valueDic[$key];
+		var args:Array = arguments.slice(2), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array = _valueDic[$key];
 		
 		add.apply(this, arguments);
 		
@@ -121,28 +117,28 @@ class com.minarto.data.Binding {
 			for (i = 0; i < l; ++i)
 			{
 				values = a[i];
-				$handler.apply($scope, values.concat(args));
+				$handler.apply(null, values.concat(args));
 			}
 			
 			delete	_reservations[$key];
 		}
 		else if(values)
 		{
-			$handler.apply($scope, values.concat(args));
+			$handler.apply(null, values.concat(args));
 		}
 	}
 	
 	
-	public function addNPlayGC($key:String, $scope, $handler:Function):Void
+	public function addPlayGC($key:String, $handler:Function):Void
 	{
-		var args:Array = arguments.slice(3), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array;
+		var args:Array = arguments.slice(2), a:Array = _reservations[$key], i:Number, l:Number = a ? a.length : 0, values:Array;
 		
 		if (l)
 		{
 			for (i = 0; i < l; ++i)
 			{
 				values = a[i];
-				$handler.apply($scope, values.concat(args));
+				$handler.apply(null, values.concat(args));
 			}
 			
 			delete	_reservations[$key];
@@ -150,7 +146,7 @@ class com.minarto.data.Binding {
 		else if(values)
 		{
 			values = _valueDic[$key];
-			$handler.apply($scope, values.concat(args));
+			$handler.apply(null, values.concat(args));
 		}
 		else
 		{
@@ -159,46 +155,22 @@ class com.minarto.data.Binding {
 	}
 		
 	
-	public function del($key:String, $scope, $handler:Function):Void
+	public function del($key:String, $handler:Function):Void
 	{
-		var dic:Array = _handlerDic[$key], i, args:Array;
+		var dic:Array, i, args:Array;
 		
 		if ($key)
 		{
-			if ($scope || $handler)
+			if ($handler)
 			{
 				dic = _handlerDic[$key];
-				if ($scope && $handler)
+				i = dic.length;
+				while(i --)
 				{
-					for(i in dic)
+					args = dic[i];
+					if (args.handler == $handler)
 					{
-						args = dic[i];
-						if (args.scope == $scope && args.handler == $handler)
-						{
-							delete	dic[i];
-						}
-					}
-				}
-				else if($handler)
-				{
-					for(i in dic)
-					{
-						args = dic[i];
-						if (args.handler == $handler)
-						{
-							delete	dic[i];
-						}
-					}
-				}
-				else
-				{
-					for(i in dic)
-					{
-						args = dic[i];
-						if (args.scope == $scope)
-						{
-							delete	dic[i];
-						}
+						dic.splice(i, 1);
 					}
 				}
 			}
@@ -209,42 +181,18 @@ class com.minarto.data.Binding {
 		}
 		else
 		{
-			if ($scope || $handler)
+			if ($handler)
 			{
 				for ($key in _handlerDic)
 				{
 					dic = _handlerDic[$key];
-					if ($scope && $handler)
+					i = dic.length;
+					while(i --)
 					{
-						for(i in dic)
+						args = dic[i];
+						if (args.handler == $handler)
 						{
-							args = dic[i];
-							if (args.scope == $scope && args.handler == $handler)
-							{
-								delete	dic[i];
-							}
-						}
-					}
-					else if($handler)
-					{
-						for(i in dic)
-						{
-							args = dic[i];
-							if (args.handler == $handler)
-							{
-								delete	dic[i];
-							}
-						}
-					}
-					else
-					{
-						for(i in dic)
-						{
-							args = dic[i];
-							if (args.scope == $scope)
-							{
-								delete	dic[i];
-							}
+							dic.splice(i, 1);
 						}
 					}
 				}			
