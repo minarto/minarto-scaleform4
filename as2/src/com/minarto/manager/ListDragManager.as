@@ -40,7 +40,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDrag($dragID:String, $scope, $handler:Function):Void
+	static public function addDrag($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drag");
 		
@@ -48,7 +48,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDragOver($dragID:String, $scope, $handler:Function):Void
+	static public function addDragOver($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.dragOver");
 		
@@ -56,7 +56,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDragOut($dragID:String, $scope, $handler:Function):Void
+	static public function addDragOut($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.dragOut");
 		
@@ -64,7 +64,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addMove($dragID:String, $scope, $handler:Function):Void
+	static public function addMove($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.move");
 		
@@ -72,7 +72,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDrop($dragID:String, $scope, $handler:Function):Void
+	static public function addDrop($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drop");
 		
@@ -80,7 +80,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addCancel($dragID:String, $scope, $handler:Function):Void
+	static public function addCancel($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.cancel");
 		
@@ -88,26 +88,26 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function del($dragID:String, $scope, $handler:Function):Void
+	static public function del($dragID:String, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drag");
 		
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.dragOver");
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.dragOut");
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.move");
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.drop");
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.cancel");
-		b.del($dragID, $scope, $handler);
+		b.del($dragID, $handler);
 	}
 	
 	
@@ -131,14 +131,14 @@ class com.minarto.managers.ListDragManager
 	
 	static public function delList($dragID:String, $list:CoreList):Void
 	{
-		var path:String = targetPath($list), listData = _listDic[path], list, i:Number;
+		var path:String, listData, list, i:Number;
 			
-		listData = _listDic[path];
-		
 		if($list)
 		{
+			path = targetPath($list);
 			if($dragID)
 			{
+				listData = _listDic[path];
 				if(listData)
 				{
 					delete	listData[$dragID];
@@ -277,7 +277,7 @@ class com.minarto.managers.ListDragManager
 	
 	static private function _onDragOver($toR:ListItemRenderer):Void
 	{
-		var path:String, listData, obj, dragID:String, toEvt, b:Binding = BindingDic.get("__ListDragManager__.dragOver");
+		var path:String, listData, obj, dragID:String, toEvt, b:Binding;
 			
 		if($toR)
 		{
@@ -287,6 +287,7 @@ class com.minarto.managers.ListDragManager
 			
 			toEvt = { type:EventTypes.ITEM_ROLL_OVER, target:$toR, item:$toR.data, renderer:$toR, index:$toR.index, controllerIdx:_fromListEvt["controllerIdx"] };
 			
+			b = BindingDic.get("__ListDragManager__.dragOver");
 			for(dragID in _fromListEvtData)
 			{
 				obj = _fromListEvtData[dragID];
@@ -305,7 +306,7 @@ class com.minarto.managers.ListDragManager
 	
 	static private function _onDragOut($toR:ListItemRenderer):Void
 	{
-		var path:String, listData, obj, dragID:String, toEvt, b:Binding = BindingDic.get("__ListDragManager__.dragOut");
+		var path:String, listData, obj, dragID:String, toEvt, b:Binding;
 			
 		if($toR)
 		{
@@ -315,6 +316,7 @@ class com.minarto.managers.ListDragManager
 			
 			toEvt = { type:EventTypes.ITEM_ROLL_OUT, target:$toR, item:$toR.data, renderer:$toR, index:$toR.index, controllerIdx:_fromListEvt["controllerIdx"] };
 			
+			b = BindingDic.get("__ListDragManager__.dragOut");
 			for(dragID in _fromListEvtData)
 			{
 				obj = _fromListEvtData[dragID];
@@ -337,6 +339,8 @@ class com.minarto.managers.ListDragManager
 	 */		
 	static private function _reset():Void
 	{
+		var path:String, list:CoreList;
+		
 		if(_dragContainer)
 		{
 			_dragContainer.visible = false;
@@ -350,12 +354,20 @@ class com.minarto.managers.ListDragManager
 		_fromListEvtData = null;
 		_fromListEvt = null;
 		_isDrag = false;
+		
+		for (path in _listDic)
+		{
+			if (!eval(path))
+			{
+				delete	_listDic[path];
+			}
+		}
 	}
 	
 	
 	static public function cancel():Void
 	{
-		var dragID:String, obj, b:Binding = BindingDic.get("__ListDragManager__.cancel");
+		var dragID:String, obj, b:Binding;
 			
 		if(!_fromListEvtData)
 		{
@@ -363,6 +375,7 @@ class com.minarto.managers.ListDragManager
 			return;
 		}
 		
+		b = BindingDic.get("__ListDragManager__.cancel");
 		for(dragID in _fromListEvtData)
 		{
 			obj = _fromListEvtData[dragID];
@@ -376,7 +389,7 @@ class com.minarto.managers.ListDragManager
 	static private function _onDrop($button:Number, $path:String, $mouseIDx:Number):Void
 	{
 		var toR:ListItemRenderer = ListItemRenderer(Mouse.getTopMostEntity()), listData, obj, isDrop:Boolean, dragID:String
-			, toEvt, b:Binding = BindingDic.get("__ListDragManager__.drop");
+			, toEvt, b:Binding;
 		
 		if(toR)
 		{
@@ -386,6 +399,7 @@ class com.minarto.managers.ListDragManager
 			
 			toEvt = { type:EventTypes.ITEM_CLICK, target:toR, item:toR.data, renderer:toR, index:toR.index, controllerIdx:$mouseIDx, button:$button };
 			
+			b = BindingDic.get("__ListDragManager__.drop");
 			for(dragID in _fromListEvtData)
 			{
 				obj = _fromListEvtData[dragID];
