@@ -40,7 +40,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDrag($dragID:String, $handler:Function):Void
+	static public function addDrag($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drag");
 		
@@ -48,7 +48,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDragOver($dragID:String, $handler:Function):Void
+	static public function addDragOver($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.dragOver");
 		
@@ -56,7 +56,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDragOut($dragID:String, $handler:Function):Void
+	static public function addDragOut($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.dragOut");
 		
@@ -64,7 +64,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addMove($dragID:String, $handler:Function):Void
+	static public function addMove($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.move");
 		
@@ -72,7 +72,7 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function addDrop($dragID:String, $handler:Function):Void
+	static public function addDrop($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drop");
 		
@@ -88,26 +88,26 @@ class com.minarto.managers.ListDragManager
 	}
 	
 	
-	static public function del($dragID:String, $handler:Function):Void
+	static public function del($dragID:String, $scope, $handler:Function):Void
 	{
 		var b:Binding = BindingDic.get("__ListDragManager__.drag");
 		
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.dragOver");
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.dragOut");
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.move");
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.drop");
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 		
 		b = BindingDic.get("__ListDragManager__.cancel");
-		b.del($dragID, $handler);
+		b.del($dragID, $scope, $handler);
 	}
 	
 	
