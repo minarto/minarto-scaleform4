@@ -103,25 +103,30 @@ class com.minarto.data.DateBinding
 	}
 		
 		
-	public function add($scope, $handler:Function):Void
+	public function add($scope, $handler:Function):Number
 	{
-		arguments.unshift("" + _delay);
+		var uid:Number = arguments.unshift("" + _delay);
+		
 		_binding.add.apply(_binding, arguments);
+		
+		return	uid;
 	}
 	
 	
-	public function addPlay($scope, $handler:Function):Void
+	public function addPlay($scope, $handler:Function):Number
 	{
-		add.apply(null, arguments);
+		var uid:Number = add.apply(null, arguments);
 		
 		arguments[0] = getDate();
 		$handler.apply(null, arguments);
+		
+		return	uid;
 	}
 	
 	
-	public function del($scope, $handler:Function):Void
+	public function del($scope, $handler:Function, $uid:Number):Void
 	{
-		_binding.del("" + _delay, $scope, $handler);
+		_binding.del("" + _delay, $scope, $handler, $uid);
 	}
 	
 	
