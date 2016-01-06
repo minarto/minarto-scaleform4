@@ -105,11 +105,9 @@ class com.minarto.data.DateBinding
 		
 	public function add($scope, $handler:Function):Number
 	{
-		var uid:Number = arguments.unshift("" + _delay);
+		arguments.unshift("" + _delay);
 		
-		_binding.add.apply(_binding, arguments);
-		
-		return	uid;
+		return	_binding.add.apply(_binding, arguments);
 	}
 	
 	
