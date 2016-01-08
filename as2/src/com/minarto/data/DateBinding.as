@@ -42,17 +42,17 @@ class com.minarto.data.DateBinding
 	
 	public function toString():String
 	{
-		return "[blueside.data.DateBinding1 delay:" + _delay + "sec]";
+		return "[blueside.data.DateBinding1 interval:" + _interval + "sec]";
 	}
 	
 	
-	private var _binding:Binding, _delay:Number = 0.1, _intervalID:Number, _bindingKey:String;
+	private var _binding:Binding, _interval:Number = 0.1, _intervalID:Number, _bindingKey:String;
 	
 	
-	public function DateBinding($delay:Number)
+	public function DateBinding($interval:Number)
 	{
-		if (!($delay > 0))	$delay = 0.1;
-		_delay = $delay;
+		if (!($interval > 0))	$interval = 0.1;
+		_interval = $interval;
 		
 		_getOffsetTime();
 		
@@ -67,7 +67,7 @@ class com.minarto.data.DateBinding
 			{
 				$binding.event($key, new Date(_offsetTime + getTimer()));
 			}
-			, _delay * 1000, _binding, _bindingKey
+			, _interval * 1000, _binding, _bindingKey
 		);
 	}
 		
@@ -104,9 +104,9 @@ class com.minarto.data.DateBinding
 	}
 	
 	
-	public function getDelay():Number
+	public function getInterval():Number
 	{
-		return	_delay;
+		return	_interval;
 	}
 	
 	
