@@ -46,7 +46,7 @@ class com.minarto.data.DateBinding
 	}
 	
 	
-	private var _binding:Binding, _delay:Number = 0.1, _intervalID:Number, _isPlay:Boolean, _bindingKey:String;
+	private var _binding:Binding, _delay:Number = 0.1, _intervalID:Number, _bindingKey:String;
 	
 	
 	public function DateBinding($delay:Number)
@@ -69,14 +69,13 @@ class com.minarto.data.DateBinding
 			}
 			, _delay * 1000, _binding, _bindingKey
 		);
-		_isPlay = true;
 	}
 		
 		
 	public function stop():Void
 	{
 		clearInterval(_intervalID);
-		_isPlay = false;
+		_intervalID = NaN;
 	}
 		
 		
@@ -108,5 +107,11 @@ class com.minarto.data.DateBinding
 	public function getDelay():Number
 	{
 		return	_delay;
+	}
+	
+	
+	public function getIsPlaying():Boolean
+	{
+		return	Boolean(_intervalID);
 	}
 }
