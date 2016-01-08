@@ -3,7 +3,7 @@ import com.minarto.data.*;
 
 class com.minarto.DateBindingDic
 {
-  static private var _dic = { };
+  	static private var _dic = { };
 	
 	
 	static public function get($delay:Number):DateBinding
