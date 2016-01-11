@@ -3,7 +3,7 @@ import com.minarto.loader.*;
 
 class com.minarto.loader.SLoader
 {
-  public function SLoader()
+  	public function SLoader()
 	{
 		trace("don't create instance")
 	}
