@@ -89,7 +89,7 @@ class com.minarto.managers.KeyManager extends Key
 		_lastKey = null;
 		if (TextField(f) || TextInput(f) || TextArea(f))
 		{
-			if (e != "keyDown." + Key.ENTER + ".false.false.false")	return;
+			if (e != "keyDown.13.false.false.false")	return;
 		}
 		
 		f = keyMap[e];
