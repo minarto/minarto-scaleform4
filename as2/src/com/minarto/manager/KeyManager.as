@@ -159,14 +159,16 @@ class com.minarto.managers.KeyManager extends Key
 	}
 	
 	
-	static public function add($binding:String, $scope, $handler:Function):Number
+	static public function add($keyBinding:String, $scope, $handler:Function):Number
 	{
+		binding = BindingDic.get("KeyManager");
 		return	binding.add.apply(binding, arguments);
 	}
 	
 	
-	static public function del($binding:String, $scope, $handler:Function):Void
+	static public function del($keyBinding:String, $scope, $handler:Function):Void
 	{
+		binding = BindingDic.get("KeyManager");
 		binding.del.apply(binding, arguments);
 	}
 }
