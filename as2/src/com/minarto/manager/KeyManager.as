@@ -7,13 +7,13 @@ import gfx.managers.FocusHandler;
 
 class com.minarto.managers.KeyManager extends Key
 {
-	static private var binding:Binding, keyMap = {}, _isShift:Boolean, _isControl:Boolean, _isAlt:Boolean, _lastKey:String, _isEnable:Boolean;
+	static private var binding:Binding, keyMap = {}, _isShift:Boolean = false, _isControl:Boolean = false, _isAlt:Boolean = false, _lastKey:String, _isEnable:Boolean;
 	
 	
 	static public var repeat:Boolean;
 	
 
-	static public function enable($enable:Boolean):Void
+	static public function init($enable:Boolean):Void
 	{
 		binding = BindingDic.get("KeyManager");
 		
@@ -85,11 +85,11 @@ class com.minarto.managers.KeyManager extends Key
 				break;
 		}
 		
-		e = "keyDown." + keyCode + "." + _isControl + "." + _isAlt + "." + _isShift;
+		e = "keyUp." + keyCode + "." + _isControl + "." + _isAlt + "." + _isShift;
 		_lastKey = null;
 		if (TextField(f) || TextInput(f) || TextArea(f))
 		{
-			if (e != "keyDown.13.false.false.false")	return;
+			if (e != "keyDown.13.false.false.false")	return;	//	enter 예외
 		}
 		
 		f = keyMap[e];
@@ -109,13 +109,13 @@ class com.minarto.managers.KeyManager extends Key
 	 * @param	$altKey
 	 * @param	$shiftKey
 	 */
-	static public function setKey($binding:String, $type:String, $keyCode:Number, $ctrlKey:Boolean, $altKey:Boolean, $shiftKey:Boolean):Void
+	static public function setKey($keyBinding:String, $type:String, $keyCode:Number, $ctrlKey:Boolean, $altKey:Boolean, $shiftKey:Boolean):Void
 	{
-		var e:String = $type + "." + $keyCode + "." + $ctrlKey + "." + $altKey + "." + $shiftKey;
+		var e:String = $type + "." + $keyCode + "." + Boolean($ctrlKey) + "." + Boolean($altKey) + "." + Boolean($shiftKey);
 		
-		if ($binding)
+		if ($keyBinding)
 		{
-			keyMap[e] = $binding;
+			keyMap[e] = $keyBinding;
 		}
 		else
 		{
@@ -128,13 +128,13 @@ class com.minarto.managers.KeyManager extends Key
 	 * 
 	 * @param	$bindingKey
 	 */
-	static public function delKey($binding:String):Void
+	static public function delKey($keyBinding:String):Void
 	{
 		var e:String;
 		
 		for (e in keyMap)
 		{
-			if (keyMap[e] == $binding)
+			if (keyMap[e] == $keyBinding)
 			{
 				delete	keyMap[e];
 			}
@@ -142,13 +142,13 @@ class com.minarto.managers.KeyManager extends Key
 	}
 	
 	
-	static public function getKey($binding:String):Array
+	static public function getKey($keyBinding:String):Array
 	{
 		var e:String, a:Array = [], a1:Array;
 		
 		for (e in keyMap)
 		{
-			if (keyMap[e] == $binding)
+			if (keyMap[e] == $keyBinding)
 			{
 				a1 = e.split(".");
 				a.push({type:a1[0], keyCode:a1[1], ctrlKey:a1[2], altKey:a1[3], shiftKey:a1[4]});
