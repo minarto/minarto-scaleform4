@@ -8,10 +8,7 @@ package com.minarto.data
 		static private const _dic:* = {};
 		
 		
-		/**
-		 * 클라와 바인딩 매핑
-		 */		
-		static public function same($uid0:*, $uid1:*):Binding
+		static public function set($uid0:*, $uid1:*):Binding
 		{
 			var b:Binding = _dic[$uid0] || _dic[$uid1] || new Binding;
 			
@@ -34,7 +31,7 @@ package com.minarto.data
 		/**
 		 * 값 설정
 		 */	
-		static public function setValues($uid:*, $key:*, ...$values):void
+		static public function setValue($uid:*, $key:*, ...$values):void
 		{
 			var b:Binding = get($uid);
 			
