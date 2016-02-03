@@ -126,10 +126,10 @@ package com.minarto.data
 		/**
 		 * 바인딩 
 		 * @param $key		바인딩 키
-		 * @param $handler	바인딩 핸들러 또는 CoreList
+		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addValuePlay($key:*, $handler:Function, ...$args):void 
+		public function addPlay($key:*, $handler:Function, ...$args):void 
 		{
 			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true)), values:Array;
 			
@@ -147,10 +147,10 @@ package com.minarto.data
 		/**
 		 * 바인딩 후 바로 삭제
 		 * @param $key		바인딩 키
-		 * @param $handler	바인딩 핸들러 또는 CoreList
+		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addValuePlayGC($key:*, $handler:Function, ...$args):void 
+		public function addPlayGC($key:*, $handler:Function, ...$args):void 
 		{
 			var values:Array, dic:Dictionary;
 			
@@ -170,43 +170,43 @@ package com.minarto.data
 		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
-		 * @param $uiOrHandler	바인딩 uicomponent or 핸들러
+		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public function del($key:*=null, $uiOrHandler:*=null):void 
+		public function del($key:*=null, $handler:*=null):void 
 		{
 			var dic:Dictionary, f:*;
 			
 			if($key)
 			{
-				if($uiOrHandler)
+				if($handler)
 				{
 					if(dic = _handlerDic[$key])
 					{
-						delete	dic[$uiOrHandler];
+						delete	dic[$handler];
 						
-						$uiOrHandler = null;
+						$handler = null;
 						for(f in dic)
 						{
-							$uiOrHandler = f;
+							$handler = f;
 							break;
 						}
-						if(!$uiOrHandler)
+						if(!$handler)
 						{
 							delete	_handlerDic[$key];
 						}
 					}
 					if(dic = _gcHandlerDic[$key])
 					{
-						delete	dic[$uiOrHandler];
+						delete	dic[$handler];
 						
-						$uiOrHandler = null;
+						$handler = null;
 						for(f in dic)
 						{
-							$uiOrHandler = f;
+							$handler = f;
 							break;
 						}
-						if(!$uiOrHandler)
+						if(!$handler)
 						{
 							delete	_gcHandlerDic[$key];
 						}
@@ -218,18 +218,18 @@ package com.minarto.data
 					delete	_gcHandlerDic[$key];
 				}
 			}
-			else if($uiOrHandler)
+			else if($handler)
 			{
 				for($key in _handlerDic)
 				{
 					dic = _handlerDic[$key];
-					delete	dic[$uiOrHandler];
+					delete	dic[$handler];
 				}
 				
 				for($key in _gcHandlerDic)
 				{
 					dic = _gcHandlerDic[$key];
-					delete	dic[$uiOrHandler];
+					delete	dic[$handler];
 				}
 			}
 			else
