@@ -31,7 +31,7 @@ package com.minarto.data
 		/**
 		 * 값 설정
 		 */	
-		static public function setValue($uid:*, $key:*, ...$values):void
+		static public function setValue($uid:*, $key:String, ...$values):void
 		{
 			var b:Binding = get($uid);
 			
@@ -43,7 +43,7 @@ package com.minarto.data
 		/**
 		 * 이벤트 발생
 		 */	
-		static public function event($uid:*, $key:*, ...$values):void
+		static public function event($uid:*, $key:String, ...$values):void
 		{
 			var b:Binding = get($uid);
 			

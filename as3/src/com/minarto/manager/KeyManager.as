@@ -3,11 +3,12 @@
  */
 package com.minarto.manager 
 {
-	import com.minarto.data.*;
+	import com.minarto.data.Binding;
 	
 	import flash.display.Stage;
 	import flash.events.KeyboardEvent;
 	import flash.text.TextField;
+	import flash.ui.Keyboard;
 	
 	import scaleform.clik.controls.*;
 	import scaleform.clik.managers.FocusHandler;
@@ -15,7 +16,7 @@ package com.minarto.manager
 	
 	public class KeyManager 
 	{
-		static private const _binding:Binding = BindingDic.get("__KeyManager__");
+		static private const _binding:Binding = new Binding, _keyMap:* = {};
 		
 		
 		static private var _lastKey:String, _stage:Stage, _enable:Boolean;
@@ -29,10 +30,32 @@ package com.minarto.manager
 		 * @param $e
 		 *  
 		 */		
-		static private function _onKey($e:KeyboardEvent):void
+		static private function _keyDown($e:KeyboardEvent):void
 		{
-			var f:* = FocusHandler.getInstance().getFocus(0), obj:*, bindingKey:String;
+			var f:* = FocusHandler.getInstance().getFocus(0), bindingKey:String;
 
+			if (($e.keyCode != Keyboard.ENTER) && (f as TextField || f as TextInput || f as TextArea))	return;
+			
+			f = _getKey($e);
+			
+			if(!repeat && (_lastKey == f))	return;
+			
+			_lastKey = f;
+			
+			bindingKey = _keyMap[f];
+			if(bindingKey)	_binding.event(bindingKey, $e);
+		}
+		
+		
+		/**
+		 * 키 핸들러
+		 * @param $e
+		 *  
+		 */		
+		static private function _keyUp($e:KeyboardEvent):void
+		{
+			var f:* = FocusHandler.getInstance().getFocus(0), bindingKey:String;
+			
 			if (f as TextField || f as TextInput || f as TextArea)
 			{
 				return;
@@ -40,15 +63,9 @@ package com.minarto.manager
 			
 			f = _getKey($e);
 			
-			if(!repeat && (_lastKey == f))
-			{
-				return;
-			}
+			_lastKey = null;
 			
-			_lastKey = f;
-			
-			obj = _binding.getAt("__keyMap__");
-			bindingKey = obj[f];
+			bindingKey = _keyMap[f];
 			if(bindingKey)	_binding.event(bindingKey, $e);
 		}
 		
@@ -61,18 +78,7 @@ package com.minarto.manager
 		
 		static public function enable($enable:Boolean):void
 		{
-			var obj:* = _binding.getAt("__keyMap__");
-			
-			if(!obj)
-			{
-				obj = {};
-				_binding.set("__keyMap__", obj);
-			}
-			
-			if(_enable == $enable)
-			{
-				return;
-			}
+			if(_enable == $enable)	return;
 
 			_enable = $enable;
 			
@@ -80,13 +86,13 @@ package com.minarto.manager
 			{
 				if($enable)
 				{
-					_stage.addEventListener(KeyboardEvent.KEY_DOWN, _onKey);
-					_stage.addEventListener(KeyboardEvent.KEY_UP, _onKey);
+					_stage.addEventListener(KeyboardEvent.KEY_DOWN, _keyDown);
+					_stage.addEventListener(KeyboardEvent.KEY_UP, _keyUp);
 				}
 				else
 				{
-					_stage.removeEventListener(KeyboardEvent.KEY_DOWN, _onKey);
-					_stage.removeEventListener(KeyboardEvent.KEY_UP, _onKey);
+					_stage.removeEventListener(KeyboardEvent.KEY_DOWN, _keyDown);
+					_stage.removeEventListener(KeyboardEvent.KEY_UP, _keyUp);
 				}
 			}	
 		}
@@ -110,27 +116,17 @@ package com.minarto.manager
 		 * @param $binding
 		 *  
 		 */
-		static public function set($bindingKey:String, $type:String, $keyCode:uint, $ctrlKey:Boolean=false, $altKey:Boolean=false
-								   , $shiftKey:Boolean=false):void 
+		static public function setKey($bindingKey:String, $e:KeyboardEvent):void 
 		{
-			var obj:* = _binding.getAt("__keyMap__")
-				, e:String = $type + "." + $keyCode + "." + $ctrlKey + "." + $altKey + "." + $shiftKey;
-			
-			if(!obj)
-			{
-				obj = {};
-				_binding.set("__keyMap__", obj);
-			}
-
-			//var e:String = _getKey($e);
+			var  e:String = _getKey($e);
 			
 			if($bindingKey)
 			{
-				obj[e] = $bindingKey;
+				_keyMap[e] = $bindingKey;
 			}
 			else
 			{
-				delete	obj[e];
+				delete	_keyMap[e];
 			}
 		}
 		
@@ -141,15 +137,15 @@ package com.minarto.manager
 		 * @return
 		 * 
 		 */		
-		static public function get($bindingKey:String=null):Vector.<KeyboardEvent> 
+		static public function getKey($bindingKey:String=null):Vector.<KeyboardEvent> 
 		{
-			var obj:* = _binding.getAt("__keyMap__"), e:String, v:Vector.<KeyboardEvent> = new Vector.<KeyboardEvent>([]);
+			var e:String, v:Vector.<KeyboardEvent> = new Vector.<KeyboardEvent>([]);
 			
 			if($bindingKey)
 			{
-				for(e in obj)
+				for(e in _keyMap)
 				{
-					if(obj[e] == $bindingKey)
+					if(_keyMap[e] == $bindingKey)
 					{
 						arguments = e.split(".");
 						v.push(new KeyboardEvent(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5],
@@ -159,7 +155,7 @@ package com.minarto.manager
 			}
 			else
 			{
-				for(e in obj)
+				for(e in _keyMap)
 				{
 					arguments = e.split(".");
 					v.push(new KeyboardEvent(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5],
@@ -179,9 +175,7 @@ package com.minarto.manager
 		 */			
 		static public function getBindingKey($e:KeyboardEvent):String 
 		{
-			var obj:* = _binding.getAt("__keyMap__");
-			
-			return	obj ? obj[_getKey($e)] : obj;
+			return	_keyMap[_getKey($e)];
 		}
 		
 		

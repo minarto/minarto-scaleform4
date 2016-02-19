@@ -1,6 +1,6 @@
 package com.minarto.manager 
 {
-	import com.minarto.data.*;
+	import com.minarto.data.Binding;
 	
 	import flash.display.*;
 	import flash.events.*;
@@ -9,15 +9,17 @@ package com.minarto.manager
 	import scaleform.clik.controls.*;
 	import scaleform.clik.core.CLIK;
 	import scaleform.clik.events.ListEvent;
+	import scaleform.clik.managers.PopUpManager;
 	import scaleform.gfx.*;
 
 	
 	/**
 	 * @author minarto
 	 */
-	public class ListDragManager
+	public class ListManager
 	{
-		static private const _listDic:Dictionary = new Dictionary(true);
+		static private const _listDic:Dictionary = new Dictionary(true), _bDrag:Binding = new Binding, _bOver:Binding = new Binding
+			, _bOut:Binding = new Binding, _bCancel:Binding = new Binding, _bMove:Binding = new Binding, _bDrop:Binding = new Binding;
 		
 		
 		static private var _fromListEvt:ListEvent, _dragContainer:DisplayObjectContainer, _offsetX:Number, _offsetY:Number
@@ -30,12 +32,17 @@ package com.minarto.manager
 		 * @param $container
 		 * 
 		 */		
-		static public function init($container:DisplayObjectContainer):void
+		static public function init():void
 		{
-			InteractiveObjectEx.setHitTestDisable($container, true);
-			_dragContainer = $container;
+			var container:DisplayObjectContainer, stage:Stage = CLIK.stage;
 			
-			CLIK.stage.addEventListener(MouseEvent.MOUSE_DOWN, _onDown);
+			PopUpManager.init(stage);
+			
+			container = stage.getChildAt(stage.numChildren - 1) as DisplayObjectContainer;
+			
+			InteractiveObjectEx.setHitTestDisable(container, true);
+			stage.addEventListener(MouseEvent.MOUSE_DOWN, _startDown);
+			stage.addEventListener(MouseEvent.CLICK, _startUp);
 		}
 		
 		
@@ -74,7 +81,7 @@ package com.minarto.manager
 		 * @param $drop
 		 * 
 		 */			
-		static public function add($dragID:*, $list:CoreList, $drag:Boolean=true, $drop:Boolean=true):void
+		static public function addList($dragID:*, $list:CoreList, $drag:Boolean=true, $drop:Boolean=true, $dragType:String="down&down"):void
 		{
 			var listData:*, obj:*;
 			
@@ -83,6 +90,7 @@ package com.minarto.manager
 			listData = _listDic[$list] || (_listDic[$list] = {});
 			
 			obj = listData[$dragID] || (listData[$dragID] = {});
+			obj["__dragType__"]	= $dragType;
 			obj["__drag__"] = $drag;
 			obj["__drop__"] = $drop;
 		}
@@ -95,12 +103,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addDragHandler($dragID:String, $handler:Function, ...$args):void
+		static public function addDrag($dragID:String, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.drag");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bDrag.add.apply(null, $args);
 		}
 		
 		
@@ -111,12 +117,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addDragOverHandler($dragID:String, $handler:Function, ...$args):void
+		static public function addOver($dragID:String, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.dragOver");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bOver.add.apply(null, $args);
 		}
 		
 		
@@ -127,12 +131,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addDragOutHandler($dragID:String, $handler:Function, ...$args):void
+		static public function addOut($dragID:String, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.dragOut");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bOut.add.apply(null, $args);
 		}
 		
 		
@@ -143,12 +145,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addMoveHandler($dragID:*, $handler:Function, ...$args):void
+		static public function addMove($dragID:*, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.move");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bMove.add.apply(null, $args);
 		}
 		
 		
@@ -159,12 +159,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addDropHandler($dragID:*, $handler:Function, ...$args):void
+		static public function addDrop($dragID:*, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.drop");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bDrop.add.apply(null, $args);
 		}
 		
 		
@@ -175,12 +173,10 @@ package com.minarto.manager
 		 * @param $args
 		 * 
 		 */		
-		static public function addCancelHandler($dragID:*, $handler:Function, ...$args):void
+		static public function addCancel($dragID:*, $handler:Function, ...$args):void
 		{
-			var b:Binding = BindingDic.get("__ListDragManager__.cancel");
-			
 			$args.unshift($dragID, $handler);
-			b.add.apply(null, $args);
+			_bCancel.add.apply(null, $args);
 		}
 		
 		
@@ -190,27 +186,14 @@ package com.minarto.manager
 		 * @param $dragID
 		 * 
 		 */			
-		static public function delHandler($dragID:*=null, $handler:Function = null):void
+		static public function del($dragID:*=null, $handler:Function = null):void
 		{
-			var b:Binding;
-			
-			b = BindingDic.get("__ListDragManager__.drag");
-			b.del($dragID, $handler);
-			
-			b = BindingDic.get("__ListDragManager__.move");
-			b.del($dragID, $handler);
-			
-			b = BindingDic.get("__ListDragManager__.dragOver");
-			b.del($dragID, $handler);
-			
-			b = BindingDic.get("__ListDragManager__.dragOut");
-			b.del($dragID, $handler);			
-			
-			b = BindingDic.get("__ListDragManager__.drop");
-			b.del($dragID, $handler);
-			
-			b = BindingDic.get("__ListDragManager__.cancel");
-			b.del($dragID, $handler);
+			_bDrag.del($dragID, $handler);
+			_bMove.del($dragID, $handler);
+			_bOver.del($dragID, $handler);
+			_bOut.del($dragID, $handler);			
+			_bDrop.del($dragID, $handler);
+			_bCancel.del($dragID, $handler);
 		}
 		
 		
@@ -244,7 +227,7 @@ package com.minarto.manager
 		 * @param $dragID
 		 * 
 		 */			
-		static public function del($dragID:*=null, $list:CoreList=null):void
+		static public function delList($dragID:*=null, $list:CoreList=null):void
 		{
 			var listData:*, list:*, i:int;
 			
@@ -291,13 +274,13 @@ package com.minarto.manager
 		 * @param $e
 		 * 
 		 */		
-		static private function _onDown($e:MouseEventEx):void
+		static private function _startDown($e:MouseEventEx):void
 		{
-			var fromR:ListItemRenderer = $e.target as ListItemRenderer, dragID:String, obj:*, stage:Stage;
+			var fromR:ListItemRenderer = $e.target as ListItemRenderer, list:CoreList, dragID:String, obj:*, stage:Stage;
 			
-			cancel();
 			if(!fromR || !fromR.data)	return;
 			
+			list = fromR.owner as CoreList;
 			_fromListEvtData = _listDic[fromR.owner as CoreList];
 			if(!_fromListEvtData)	return;
 			
@@ -314,8 +297,8 @@ package com.minarto.manager
 					_fromX = stage.mouseX;
 					_fromY = stage.mouseY;
 					
-					stage.addEventListener(Event.ENTER_FRAME, _onMove);
-					stage.addEventListener(MouseEvent.MOUSE_UP, _onDrop);
+					stage.addEventListener(Event.ENTER_FRAME, _move);
+					stage.addEventListener(MouseEvent.MOUSE_UP, _drop);
 					
 					return;
 				}
@@ -323,9 +306,47 @@ package com.minarto.manager
 		}
 		
 		
-		static private function _onMove($e:Event):void 
+		/**
+		 * 리스트 클릭 핸들러 
+		 * @param $e
+		 * 
+		 */		
+		static private function _startUp($e:MouseEventEx):void
 		{
-			var dragID:String, obj:*, b:Binding, stage:Stage, fromR:ListItemRenderer;
+			var fromR:ListItemRenderer = $e.target as ListItemRenderer, list:CoreList, dragID:String, obj:*, stage:Stage;
+			
+			cancel();
+			if(!fromR || !fromR.data)	return;
+			
+			list = fromR.owner as CoreList;
+			_fromListEvtData = _listDic[fromR.owner as CoreList];
+			if(!_fromListEvtData)	return;
+			
+			_fromListEvt = new ListEvent(ListEvent.ITEM_PRESS, false, true, fromR.index, - 1, - 1, fromR, fromR.data, $e.mouseIdx, $e.buttonIdx);
+			
+			//	드래그 실행 여부
+			for(dragID in _fromListEvtData)
+			{
+				obj = _fromListEvtData[dragID];
+				if(obj["__drag__"])
+				{
+					stage = CLIK.stage;
+					
+					_fromX = stage.mouseX;
+					_fromY = stage.mouseY;
+					
+					stage.addEventListener(Event.ENTER_FRAME, _move);
+					stage.addEventListener(MouseEvent.MOUSE_UP, _drop);
+					
+					return;
+				}
+			}
+		}
+		
+		
+		static private function _move($e:Event):void 
+		{
+			var dragID:String, obj:*, stage:Stage, fromR:ListItemRenderer;
 			
 			if(_isDrag)
 			{
@@ -335,25 +356,23 @@ package com.minarto.manager
 					_dragTarget.y = _dragContainer.mouseY - _offsetY;
 				}
 				
-				b = BindingDic.get("__ListDragManager__.move");
-				
 				for(dragID in _fromListEvtData)
 				{
 					obj = _fromListEvtData[dragID];
-					if(obj["__drag__"])	b.event(dragID, _fromListEvt);
+					if(obj["__drag__"])	_bMove.event(dragID, _fromListEvt);
 				}
 			}
 			else
 			{
 				stage = CLIK.stage;
 				
+				fromR = _fromListEvt.itemRenderer as ListItemRenderer;
+				
 				if(Math.abs(_fromX - stage.mouseX) > 5 || Math.abs(_fromY - stage.mouseY) > 5)
 				{
 					_isDrag = true;
 					
 					fromR = _fromListEvt.itemRenderer as ListItemRenderer;
-					
-					b = BindingDic.get("__ListDragManager__.drag");
 					
 					//	드래그 핸들러 실행
 					for(dragID in _fromListEvtData)
@@ -362,7 +381,7 @@ package com.minarto.manager
 						
 						if(obj["__drag__"])
 						{
-							b.event(dragID, _fromListEvt);
+							_bDrag.event(dragID, _fromListEvt);
 						}
 					}
 					
@@ -395,7 +414,7 @@ package com.minarto.manager
 		static private function _onDragOver($e:MouseEventEx):void
 		{
 			var toR:ListItemRenderer = $e.target as ListItemRenderer, listData:*, obj:*, dragID:String
-				, toEvt:ListEvent, b:Binding = BindingDic.get("__ListDragManager__.dragOver");
+				, toEvt:ListEvent;
 			
 			if(toR)
 			{
@@ -412,7 +431,7 @@ package com.minarto.manager
 						obj = listData[dragID];
 						if(obj && obj["__drop__"])
 						{
-							b.event(dragID, _fromListEvt, toEvt);
+							_bOver.event(dragID, _fromListEvt, toEvt);
 						}
 					}
 				}
@@ -428,7 +447,7 @@ package com.minarto.manager
 		static private function _onDragOut($e:MouseEventEx):void
 		{
 			var toR:ListItemRenderer = $e.target as ListItemRenderer, listData:*, obj:*, dragID:String
-				, toEvt:ListEvent, b:Binding = BindingDic.get("__ListDragManager__.dragOut");
+				, toEvt:ListEvent;
 			
 			if(toR)
 			{
@@ -445,7 +464,7 @@ package com.minarto.manager
 						obj = listData[dragID];
 						if(obj && obj["__drop__"])
 						{
-							b.event(dragID, _fromListEvt, toEvt);
+							_bOut.event(dragID, _fromListEvt, toEvt);
 						}
 					}
 				}
@@ -468,8 +487,8 @@ package com.minarto.manager
 				if(_dragTarget && _dragContainer.contains(_dragTarget))	_dragContainer.removeChild(_dragTarget);
 			}
 			
-			stage.removeEventListener(Event.ENTER_FRAME, _onMove);
-			stage.removeEventListener(MouseEvent.MOUSE_UP, _onDrop);
+			stage.removeEventListener(Event.ENTER_FRAME, _move);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, _drop);
 			
 			stage.removeEventListener(MouseEvent.ROLL_OVER, _onDragOver);
 			stage.removeEventListener(MouseEvent.ROLL_OUT, _onDragOut);
@@ -487,7 +506,7 @@ package com.minarto.manager
 		 */		
 		static public function cancel():void
 		{
-			var dragID:String, obj:*, b:Binding = BindingDic.get("__ListDragManager__.cancel");
+			var dragID:String, obj:*;
 			
 			if(!_fromListEvtData)
 			{
@@ -498,7 +517,7 @@ package com.minarto.manager
 			for(dragID in _fromListEvtData)
 			{
 				obj = _fromListEvtData[dragID];
-				if(obj["__drag__"])	b.event(dragID, _fromListEvt);
+				if(obj["__drag__"])	_bCancel.event(dragID, _fromListEvt);
 			}
 			
 			_reset();
@@ -510,39 +529,78 @@ package com.minarto.manager
 		 * @param $e
 		 * 
 		 */		
-		static private function _onDrop($e:MouseEventEx):void
+		static private function _drop($e:MouseEventEx):void
 		{
-			var toR:ListItemRenderer = $e.target as ListItemRenderer, listData:*, obj:*, isDrop:Boolean, dragID:String
-				, toEvt:ListEvent, b:Binding = BindingDic.get("__ListDragManager__.drop");
+			var r:ListItemRenderer = $e.target as ListItemRenderer, listData:*, obj:*, isDrop:Boolean, dragID:String
+				, toEvt:ListEvent, stage:Stage;
 			
-			if(toR)
+			if(_isDrag)
 			{
-				listData = _listDic[toR.owner as CoreList];
-				if(!listData)	return;
-				
-				toEvt = new ListEvent(ListEvent.ITEM_CLICK, false, true, toR.index, - 1, - 1, toR, toR.data, $e.mouseIdx, $e.buttonIdx);
-				
-				for(dragID in _fromListEvtData)
+				r = $e.target as ListItemRenderer;
+				if(r)
 				{
-					obj = _fromListEvtData[dragID];
-					if(obj["__drag__"])
+					listData = _listDic[r.owner as CoreList];
+					if(!listData)	return;
+					
+					toEvt = new ListEvent(ListEvent.ITEM_CLICK, false, true, r.index, - 1, - 1, r, r.data, $e.mouseIdx, $e.buttonIdx);
+					
+					for(dragID in _fromListEvtData)
 					{
-						obj = listData[dragID];
-						if(obj && obj["__drop__"])
+						obj = _fromListEvtData[dragID];
+						if(obj["__drag__"])
 						{
-							isDrop = true;
-							b.event(dragID, _fromListEvt, toEvt);
+							obj = listData[dragID];
+							if(obj && obj["__drop__"])
+							{
+								isDrop = true;
+								_bDrop.event(dragID, _fromListEvt, toEvt);
+							}
 						}
 					}
 				}
+				
+				if(isDrop)	_reset();
+				else	cancel();
 			}
-			
-			if(isDrop)	_reset();
-			else	cancel();
+			else if(_fromListEvt)
+			{
+				_isDrag = true;
+				stage = CLIK.stage;
+				
+				r = _fromListEvt.itemRenderer as ListItemRenderer;
+				
+				//	드래그 핸들러 실행
+				for(dragID in _fromListEvtData)
+				{
+					obj = _fromListEvtData[dragID];
+					
+					if(obj["__drag__"])
+					{
+						_bDrag.event(dragID, _fromListEvt);
+					}
+				}
+				
+				if(_dragTarget && _dragContainer)
+				{
+					_offsetX = r.mouseX;
+					_offsetY = r.mouseY;
+					
+					_offsetX = _dragTarget.width >> 1;
+					_offsetY = _dragTarget.height >> 1;
+					
+					_dragTarget.x = _dragContainer.mouseX - _offsetX;
+					_dragTarget.y = _dragContainer.mouseY - _offsetY;
+					
+					_dragContainer.visible = true;
+				}
+				
+				stage.addEventListener(MouseEvent.MOUSE_OVER, _onDragOver);
+				stage.addEventListener(MouseEvent.MOUSE_OUT, _onDragOut);
+			}
 		}
 		
 		
-		public function ListDragManager()
+		public function ListManager()
 		{
 			throw new Error("don't create ListManager instance")
 		}

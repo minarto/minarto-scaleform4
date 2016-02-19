@@ -22,7 +22,7 @@ package com.minarto.controls
 		public var toolTip:UIComponent;
 		
 		
-		protected const _binding:Binding = BindingDic.get("__ToolTip__"), _timer:Timer = new Timer(300, 1);
+		protected const binding:Binding = BindingDic.get("__ToolTip__"), _timer:Timer = new Timer(300, 1);
 		
 		
 		protected var currentToolTip:DisplayObject, _targetBtn:Button;
@@ -34,7 +34,7 @@ package com.minarto.controls
 			InteractiveObjectEx.setHitTestDisable(this, true);
 			addEventListener(Event.ADDED_TO_STAGE, _addToStage);
 			
-			_binding.addValuePlay("__disable__", _onDisableToolTip);
+			binding.addPlay("__disable__", _onDisableToolTip);
 			
 			if(toolTip)	removeChild(toolTip as DisplayObject);
 		}
@@ -61,7 +61,7 @@ package com.minarto.controls
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, _addToStage);
 			
-			_onDisableToolTip(_binding.getAt("__toolTipDisable__"));
+			_onDisableToolTip(binding.getAt("__toolTipDisable__"));
 		}
 		
 		

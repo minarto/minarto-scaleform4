@@ -121,7 +121,7 @@ otherwise accompanies this software in either electronic or hard copy form.
         }
         
         protected static function handleRemoveModalMc(e:Event):void {
-            _modalBg.removeEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false);
+            _modalMc.removeEventListener(Event.REMOVED_FROM_STAGE, handleRemoveModalMc, false);
             if (_modalBg) {
                 // Remove modal background if applicable
                 _defaultPopupCanvas.removeChild(_modalBg);

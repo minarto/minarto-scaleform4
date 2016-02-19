@@ -1,87 +1,99 @@
 package com.minarto.data
 {
-	import flash.events.TimerEvent;
-	import flash.external.ExternalInterface;
-	import flash.utils.Timer;
+	import flash.utils.*;
 	
 
 	public class DateBinding
 	{
-		static private const _dic:* = {}, _binding:Binding = BindingDic.get("__DateBinding__");
+		static private const _binding:Binding = new Binding;
 		
 		
-		static private var _offsetTime:Number = 0;
+		static private var _offsetTime:Number, _uid:uint;
 		
 		
-		static public function init(...$api):void
+		static private function _getOffsetTime():Number
 		{
-			var onTime:Function, timer:Timer = new Timer(60000);
-			
-			onTime = function($year:uint, $month:uint, $date:uint, $hour:uint, $sec:uint, $millisec:uint=0):void
+			if(isNaN(_offsetTime))
 			{
-				_offsetTime = (new Date).time - (new Date($year, $month, $date, $hour, $sec, $millisec)).time;
-			};
-			_binding.add("serverDate", onTime);
-			
-			timer.addEventListener(TimerEvent.TIMER, function($e:TimerEvent):void
+				var date:Date;
+				
+				var onTime:Function = function($year:uint, $month:uint, $date:uint, $hour:uint, $sec:uint, $millisec:uint=0):void
 				{
-					ExternalInterface.call.apply(null, $api);
-				}
-			);
-			timer.dispatchEvent(new TimerEvent(TimerEvent.TIMER));
-			timer.start();
+					var date:Date = new Date($year, $month, $date, $hour, $sec, $millisec);
+					
+					_offsetTime = date.time - getTimer();
+				};
+				
+				_binding.add("serverDate", onTime);
+				
+				date = new Date;
+				_binding.event("serverDate", date.fullYear, date.month, date.date, date.hours, date.minutes, date.seconds, date.milliseconds);
+			}
+			
+			return	_offsetTime;
 		}
 		
 		
-		static public function get($delay:Number=0.1):DateBinding
+		static public function getDate($delay:Number=0.1):Date
 		{
-			return	_dic[$delay] || (_dic[$delay] = new DateBinding($delay));
+			return	new Date(_getOffsetTime() + getTimer());
+		}
+		
+		
+		public function toString():String
+		{
+			return	"[com.minarto.data.DateBinding interval:" + getInterval() + "sec]"
+		}
+		
+		
+		private var _interval:uint = 100, _bindingKey:String, _intervalID:Number;
+		
+		
+		public function DateBinding($interval:Number=0.1)
+		{
+			_interval = $interval * 1000;
+			_bindingKey = "" + (++ _uid);
+		}
+		
+		
+		/**
+		 * 
+		 */		
+		private function _intervalFunc($binding:Binding, $key:String):void
+		{
+			_binding.event($key, new Date(_offsetTime + getTimer()));
 		}
 		
 		
 		/**
 		 * 알람 등록 
-		 * @param $date
-		 * @param $handler
-		 * @param $args
 		 * 
 		 */		
-		static public function getDate():Date
+		public function play():void
 		{
-			var date:Date = new Date;
-			
-			date.setTime(_offsetTime + date.time);
-			
-			return	date;
+			_getOffsetTime();
+			_intervalID = setInterval(_intervalFunc, _interval, _binding, _bindingKey);
 		}
 		
 		
-		private var _delay:Number = 0.1;
-		
-		
-		public function DateBinding($delay:Number=0.1)
+		/**
+		 * 알람 등록 
+		 * 
+		 */		
+		public function stop():void
 		{
-			var timer:Timer, key:String;
-			
-			if(_dic[$delay])	throw	new Error("don't create new instance");
-			
-			_delay = $delay;
-			_dic[$delay] = this;
-			
-			key = "" + $delay;
-			
-			timer = new Timer($delay * 1000);
-			timer.addEventListener(TimerEvent.TIMER, function($e:TimerEvent):void
-				{
-					var date:Date = new Date;
-				
-					date.setTime(_offsetTime + date.time);
-					_binding.event(key, date);
-				}
-			);
-			
-			timer.dispatchEvent(new TimerEvent(TimerEvent.TIMER));
-			timer.start();
+			clearInterval(_intervalID);
+			_intervalID = NaN;
+		}
+		
+		
+		/**
+		 * 알람 등록 
+		 * 
+		 */		
+		public function getIsPlaying():Boolean
+		{
+			return	_intervalID;
 		}
 		
 		
@@ -94,7 +106,7 @@ package com.minarto.data
 		 */		
 		public function add($handler:Function, ...$args):void
 		{
-			$args.unshift("" + _delay, $handler);
+			$args.unshift(_bindingKey, $handler);
 			_binding.add.apply(null, $args);
 		}
 		
@@ -120,13 +132,13 @@ package com.minarto.data
 		
 		public function del($handler:Function):void
 		{
-			_binding.del("" + _delay, $handler);
+			_binding.del(_bindingKey, $handler);
 		}
 		
 		
-		public function getDelay():Number
+		public function getInterval():Number
 		{
-			return	_delay;
+			return	_interval * 0.001;
 		}
 	}
 }

@@ -11,7 +11,7 @@ package com.minarto.data
 		private const _valueDic:* = {}, _reservations:* = {};
 		
 		
-		private var _handlerDic:* = {}, _getHandlerDic:* = {}, _gcHandlerDic:* = {};
+		private var _handlerDic:* = {}, _registerDic:* = {};
 		
 		
 		/**
@@ -19,7 +19,7 @@ package com.minarto.data
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		public function set($key:String, ...$values):void 
+		public function set($key:String, ...$values):void
 		{
 			var a:Array = _reservations[$key], f:*, i:uint, l:uint;
 			
@@ -30,34 +30,20 @@ package com.minarto.data
 				i = 1;
 				break;
 			}
-			for(f in _gcHandlerDic[$key])
-			{
-				i = 1;
-				break;
-			}
 			
 			if(i)
 			{
 				if(a)
 				{
-					for(i=0, l=a.push($values); i<l; ++i)
-					{
-						_set($key, a[i]);
-					}
+					for(i=0, l=a.push($values); i<l; ++i)	_set($key, a[i]);
 					delete	_reservations[$key];
 				}
-				else
-				{
-					_set($key, $values);
-				}
+				else	_set($key, $values);
 				
 				return;
 			}
 			
-			if(!a)
-			{
-				_reservations[$key] = a = [];
-			}
+			if(!a)	_reservations[$key] = a = [];
 			a.push($values);
 		}
 		
@@ -67,22 +53,11 @@ package com.minarto.data
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		private function _set($key:*, $values:Array):void 
+		private function _set($key:String, $values:Array):void 
 		{
 			var dic:Dictionary = _handlerDic[$key], f:*;
 			
-			for(f in dic)
-			{
-				f.apply(null, $values.concat(dic[f]));
-			}
-			
-			dic = _gcHandlerDic[$key];
-			for(f in dic)
-			{
-				f.apply(null, $values.concat(dic[f]));
-			}
-			
-			delete	_gcHandlerDic[$key];
+			for(f in dic)	f.apply(null, $values.concat(dic[f]));
 		}
 		
 		
@@ -91,7 +66,7 @@ package com.minarto.data
 		 * @param $key	이벤트 키
 		 * @param $value	이벤트 값
 		 */
-		public function event($key:*, ...$values):void 
+		public function event($key:String, ...$values):void 
 		{
 			_set($key, $values);
 		}
@@ -102,7 +77,7 @@ package com.minarto.data
 		 * @param $key		바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 */				
-		public function add($key:*, $handler:Function, ...$args):void 
+		public function add($key:String, $handler:Function, ...$args):void 
 		{
 			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
 			
@@ -114,22 +89,9 @@ package com.minarto.data
 		 * 바인딩 
 		 * @param $key		바인딩 키
 		 * @param $handler	바인딩 핸들러
-		 */				
-		public function addGetFn($key:*, $handler:Function):void 
-		{
-			var dic:Dictionary = _getHandlerDic[$key] || (_getHandlerDic[$key] = new Dictionary(true));
-			
-			dic[$handler] = true;
-		}
-		
-		
-		/**
-		 * 바인딩 
-		 * @param $key		바인딩 키
-		 * @param $handler	바인딩 핸들러
 		 * @param $args		바인딩 추가 인자
 		 */				
-		public function addPlay($key:*, $handler:Function, ...$args):void 
+		public function addPlay($key:String, $handler:Function, ...$args):void 
 		{
 			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true)), values:Array;
 			
@@ -145,35 +107,12 @@ package com.minarto.data
 		
 		
 		/**
-		 * 바인딩 후 바로 삭제
-		 * @param $key		바인딩 키
-		 * @param $handler	바인딩 핸들러
-		 * @param $args		바인딩 추가 인자
-		 */				
-		public function addPlayGC($key:*, $handler:Function, ...$args):void 
-		{
-			var values:Array, dic:Dictionary;
-			
-			if(values = _valueDic[$key])
-			{
-				$args.unshift.apply(null, values);
-				$handler.apply(null, $args);
-			}
-			else
-			{
-				dic = _gcHandlerDic[$key] || (_gcHandlerDic[$key] = new Dictionary(true));
-				dic[$handler] = $args;
-			}
-		}
-		
-		
-		/**
 		 * 바인딩 해제
 		 * @param $key	바인딩 키
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public function del($key:*=null, $handler:*=null):void 
+		public function del($key:String=null, $handler:*=null):void 
 		{
 			var dic:Dictionary, f:*;
 			
@@ -191,32 +130,10 @@ package com.minarto.data
 							$handler = f;
 							break;
 						}
-						if(!$handler)
-						{
-							delete	_handlerDic[$key];
-						}
-					}
-					if(dic = _gcHandlerDic[$key])
-					{
-						delete	dic[$handler];
-						
-						$handler = null;
-						for(f in dic)
-						{
-							$handler = f;
-							break;
-						}
-						if(!$handler)
-						{
-							delete	_gcHandlerDic[$key];
-						}
+						if(!$handler)	delete	_handlerDic[$key];
 					}
 				}
-				else
-				{
-					delete	_handlerDic[$key];
-					delete	_gcHandlerDic[$key];
-				}
+				else	delete	_handlerDic[$key];
 			}
 			else if($handler)
 			{
@@ -225,18 +142,8 @@ package com.minarto.data
 					dic = _handlerDic[$key];
 					delete	dic[$handler];
 				}
-				
-				for($key in _gcHandlerDic)
-				{
-					dic = _gcHandlerDic[$key];
-					delete	dic[$handler];
-				}
 			}
-			else
-			{
-				_handlerDic = {};
-				_gcHandlerDic = {};
-			}
+			else	_handlerDic = {};
 		}
 		
 		
@@ -246,7 +153,7 @@ package com.minarto.data
 		 * @return 바인딩 값
 		 * 
 		 */
-		public function get($key:*):Array 
+		public function get($key:String):Array 
 		{
 			return	_valueDic[$key];
 		}
@@ -259,30 +166,11 @@ package com.minarto.data
 		 * @return 바인딩 값
 		 * 
 		 */
-		public function getAt($key:*, $index:uint=0):* 
+		public function getAt($key:String, $index:uint=0):* 
 		{
 			arguments = _valueDic[$key];
 			
 			return	arguments ? arguments[$index] : undefined;
-		}
-		
-		
-		/**
-		 * 값을 가져온다 
-		 * @param $key	바인딩키
-		 * @return 바인딩 값
-		 * 
-		 */
-		public function getFnResult($key:*, ...$args):* 
-		{
-			var dic:Dictionary = _getHandlerDic[$key], fn:*;
-			
-			for(fn in dic)
-			{
-				return	fn.apply(null, $args);
-			}
-			
-			return	undefined;
 		}
 	}
 }

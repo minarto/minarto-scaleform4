@@ -10,6 +10,7 @@ package com.minarto.controls
 	
 	import scaleform.clik.controls.*;
 	import scaleform.clik.core.CLIK;
+	import scaleform.clik.managers.PopUpManager;
 	import scaleform.gfx.*;
 	
 
@@ -21,7 +22,7 @@ package com.minarto.controls
 		/**
 		 * Binding
 		 */
-		public var setValue:Function = BindingDic.setValues, event:Function = BindingDic.event;
+		public var setValue:Function = BindingDic.setValue, event:Function = BindingDic.event;
 					
 					
 		public function setVisible($b:Boolean):void{
@@ -32,6 +33,7 @@ package com.minarto.controls
 		public function AbsMain()
 		{
 			Extensions.enabled = true;
+			PopUpManager.init(stage);
 			CLIK.initialize(stage, null);
 		}
 		
@@ -59,6 +61,14 @@ package com.minarto.controls
 		 */
 		protected function configUI($e:Event=null):void{
 			stage.doubleClickEnabled = false;
+		}
+		
+		
+		/**
+		 * 
+		 */
+		public function add($src:String, $vars:*):void{
+			
 		}
 	}
 }
