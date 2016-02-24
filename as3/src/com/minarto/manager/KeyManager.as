@@ -3,7 +3,7 @@
  */
 package com.minarto.manager 
 {
-	import com.minarto.data.Binding;
+	import com.minarto.data.Bind;
 	
 	import flash.display.Stage;
 	import flash.events.KeyboardEvent;
@@ -16,7 +16,7 @@ package com.minarto.manager
 	
 	public class KeyManager 
 	{
-		static private const _binding:Binding = new Binding, _keyMap:* = {};
+		static private const _binding:Bind = new Bind, _keyMap:* = {};
 		
 		
 		static private var _lastKey:String, _stage:Stage, _enable:Boolean;
@@ -43,7 +43,7 @@ package com.minarto.manager
 			_lastKey = f;
 			
 			bindingKey = _keyMap[f];
-			if(bindingKey)	_binding.event(bindingKey, $e);
+			if(bindingKey)	_binding.evt(bindingKey, $e);
 		}
 		
 		
@@ -66,7 +66,7 @@ package com.minarto.manager
 			_lastKey = null;
 			
 			bindingKey = _keyMap[f];
-			if(bindingKey)	_binding.event(bindingKey, $e);
+			if(bindingKey)	_binding.evt(bindingKey, $e);
 		}
 		
 		

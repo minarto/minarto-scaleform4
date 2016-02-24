@@ -22,7 +22,7 @@ package com.minarto.controls
 		/**
 		 * Binding
 		 */
-		public var setValue:Function = BindingDic.setValue, event:Function = BindingDic.event;
+		public var set:Function = BindDic.set, event:Function = BindDic.evt;
 					
 					
 		public function setVisible($b:Boolean):void{

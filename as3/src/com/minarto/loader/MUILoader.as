@@ -10,34 +10,10 @@ package com.minarto.loader
 	 */
 	public class MUILoader 
 	{
-		protected const _urq:URLRequest = new URLRequest, contents:Array = [];
+		protected const urq:URLRequest = new URLRequest, reservations:Array = [];
 		
 		
-		protected var reservations:Array = [], currentLoadVars:Array, total:uint, allComplete:Function, allVar:*, loadedCount:uint;
-		
-		
-		public function getLoaded():uint
-		{
-			return	loadedCount;
-		}
-		
-		
-		public function getTotal():uint
-		{
-			return	total;
-		}
-		
-		
-		public function getContentAt($uint=0):DisplayObject
-		{
-			return	contents[$uint];
-		}
-		
-		
-		public function getContents():Array
-		{
-			return	contents.concat();
-		}
+		protected var allVar:*, loadedCount:uint;
 		
 		
 		/**
@@ -49,15 +25,16 @@ package com.minarto.loader
 		 */		
 		public function add($src:String, $completeOrVar:*=null):void
 		{
-			var onComplete:Function = $completeOrVar as Function, cVar:*;
+			var cVar:*;
 			
-			if(onComplete)
+			if(allVar)	throw	new Error("can't add on Loading");
+			
+			if($completeOrVar as Function)
 			{
 				cVar = {};
-				cVar.onComplete = onComplete;
+				cVar.onComplete = $completeOrVar;
 			}
-			else if($completeOrVar)	cVar = $completeOrVar;
-			else	cVar = {};
+			else	cVar = $completeOrVar || {};
 			
 			cVar.src = $src;
 			
@@ -72,36 +49,27 @@ package com.minarto.loader
 		 */		
 		public function del($key:String, $v:*):void
 		{
-			var i:uint = currentLoadVars.length, cVar:*, loader:Loader, info:LoaderInfo;
+			var i:uint = reservations.length, cVar:*, loader:Loader, info:LoaderInfo;
 			
 			while(i --)
 			{
-				cVar = currentLoadVars[i];
+				cVar = reservations[i];
 				if(cVar[$key] == $v)
 				{
 					loader = cVar.__loader__;
 					loader.close();
 					
 					info = loader.contentLoaderInfo;
-					info.removeEventListener(Event.COMPLETE, _complete);
-					info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
+					info.removeEventListener(Event.COMPLETE, complete);
+					info.removeEventListener(IOErrorEvent.IO_ERROR, error);
 					
-					-- total;
 					delete	cVar.__loader__;
 					
-					currentLoadVars.splice(i, 1);
+					reservations.splice(i, 1);
 				}
 			}
 			
-			i = reservations.length;
-			
-			while(i --)
-			{
-				cVar = reservations[i];
-				if(cVar[$key] == $v)	reservations.splice(i, 1);
-			}
-			
-			_checkAllComplete();
+			checkAllComplete();
 		}
 		
 		
@@ -113,69 +81,80 @@ package com.minarto.loader
 		 */		
 		public function load($complete:Function, $var:*=null):void
 		{
-			var i:*, cVar:*, loader:Loader, info:LoaderInfo, funcParams:Array, key:String = "onProgress";
-		
-			for(i in reservations)
+			var i:uint = reservations.length, cVar:*, loader:Loader, info:LoaderInfo, key:String = "onProgress", funcParams:Array;
+			
+			loadedCount = 0;
+			
+			if(!$var) $var = {};
+			$var.onComplete = $complete;
+			allVar = $var;
+			
+			$complete = $var[key];
+			if($complete)
+			{
+				funcParams = $var[key + "Params"];
+				if(funcParams)	funcParams.unshift(0, i);
+				else	$var[key + "Params"] = funcParams = [0, i];
+				$complete.apply(null, funcParams);
+			}
+			
+			while(i --)
 			{
 				cVar = reservations[i];
 				
 				loader = new Loader;
-						
+				
 				info = loader.contentLoaderInfo;
-				info.addEventListener(Event.COMPLETE, _complete);
-				info.addEventListener(IOErrorEvent.IO_ERROR, _error);
+				info.addEventListener(Event.COMPLETE, complete);
+				info.addEventListener(IOErrorEvent.IO_ERROR, error);
 				
 				cVar.__loader__ = loader;
-				_urq.url = cVar.src;
-				loader.load(_urq);
-				
-				++ total;
+				urq.url = cVar.src;
+				loader.load(urq);
 			}
-			
-			contents.length = 0;
-			currentLoadVars = currentLoadVars.concat(reservations);
-			reservations.length = 0;
-			allComplete = $complete;
-			allVar = $var = {};
-			
-			$complete = $var[key];
-			if($complete)	$complete.apply(null, $var[key + "Params"]);
 		}
 		
 		
-		private function _complete($e:Event):void
+		protected function complete($e:Event):void
 		{
 			var info:LoaderInfo = $e.target as LoaderInfo, loader:Loader = info.loader, i:*, cVar:*
-				, content:DisplayObject = info.content, k:String = "onComplete", onComplete:*, funcParams:Array;
+				, content:DisplayObject = info.content, key:String = "onProgress", func:Function, funcParams:Array;
 			
 			++ loadedCount;
 			
-			info.removeEventListener(Event.COMPLETE, _complete);
-			info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
+			info.removeEventListener(Event.COMPLETE, complete);
+			info.removeEventListener(IOErrorEvent.IO_ERROR, error);
 			
-			for(i in currentLoadVars)
+			for(i in reservations)
 			{
-				cVar = currentLoadVars[i];
+				cVar = reservations[i];
 				if(cVar.__loader__ == loader)
 				{
 					delete	cVar.__loader__;
 					
-					onComplete = cVar[k];
+					cVar.content = content;
 					
-					cVar.content = content = info.content;
-					
-					if(onComplete)
+					if(func)
 					{
-						funcParams = cVar[k + "Params"];
+						funcParams = allVar[key + "Params"];
+						funcParams[0] = loadedCount;
+						func.apply(null, funcParams);
+					}
+					
+					key = "onComplete";
+					func = cVar[key];
+					if(func)
+					{
+						funcParams = cVar[key + "Params"];
 						if(funcParams)
 						{
 							funcParams.unshift(content);
-							onComplete.apply(null, funcParams);
+							func.apply(null, funcParams);
 						}
-						else	onComplete(content);
+						else	func(content);
 					}
 					
-					_checkAllComplete();
+					checkAllComplete();
 					
 					return;
 				}
@@ -183,35 +162,37 @@ package com.minarto.loader
 		}
 		
 		
-		private function _error($e:IOErrorEvent):void
+		protected function error($e:IOErrorEvent):void
 		{
 			var info:LoaderInfo = $e.target as LoaderInfo, loader:Loader = info.loader, i:*, cVar:*
-				, onError:Function, funcParams:Array;
+				, key:String = "onProgress", func:Function, funcParams:Array;
 			
 			++ loadedCount;
 			
-			info.removeEventListener(Event.COMPLETE, _complete);
-			info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
+			info.removeEventListener(Event.COMPLETE, complete);
+			info.removeEventListener(IOErrorEvent.IO_ERROR, error);
 			
-			for(i in currentLoadVars)
+			for(i in reservations)
 			{
-				cVar = currentLoadVars[i];
+				cVar = reservations[i];
 				if(cVar.__loader__ == loader)
 				{
 					delete	cVar.__loader__;
 					
-					onError = cVar.onError;
+					cVar.content = null;
 					
-					cVar.content = undefined;
-					
-					if(onError)
+					if(func)
 					{
-						funcParams = cVar.onErrorParams;
-						if(funcParams)	onError.apply(null, funcParams);
-						else	onError();
+						funcParams = allVar[key + "Params"];
+						funcParams[0] = loadedCount;
+						func.apply(null, funcParams);
 					}
 					
-					_checkAllComplete();
+					key = "onError";
+					func = cVar[key];
+					if(func)	func.apply(null, cVar[key + "Params"]);
+					
+					checkAllComplete();
 					
 					return;
 				}
@@ -219,46 +200,34 @@ package com.minarto.loader
 		}
 		
 		
-		private function _checkAllComplete():void
+		protected function checkAllComplete():void
 		{
-			var i:*, func:Function, funcParams:Array, cVar:*, key:String = "onProgress";
+			var i:uint = reservations.length, key:String, func:Function, funcParams:Array, contents:Array, cVar:*;
 			
-			if(loadedCount < total)
+			if(loadedCount < i)	return;
+			
+			key = "onComplete";
+			func = allVar[key];
+			if(func)
 			{
-				if(allVar)
+				contents = [];
+				while(i --)
 				{
-					func = allVar[key];
-					if(func)	func.apply(null, allVar[key + "Params"]);
+					cVar = reservations[i];
+					contents[i] = cVar.content;
 				}
 				
-				return;
-			}
-			
-			contents.length = total;
-			for(i in currentLoadVars)
-			{
-				cVar = currentLoadVars[i];
-				contents[i] = cVar.content;
-			}
-			currentLoadVars.length = 0;
-			
-			if(allComplete)
-			{
-				if(allVar)	funcParams = allVar.onProgressParams;
-				else	funcParams = null;
-				
+				funcParams = allVar[key + "Params"];
 				if(funcParams)
 				{
-					funcParams[0] = contents;
-					allComplete.apply(null, funcParams);
+					funcParams.unshift(contents);
+					func.apply(null, funcParams);
 				}
-				else	allComplete(contents);
+				else	func(contents);
 			}
 			
-			contents.length = 0;
+			reservations.length = 0;
 			loadedCount = 0;
-			total = 0;
-			allComplete = null;
 			allVar = null;
 		}
 	}

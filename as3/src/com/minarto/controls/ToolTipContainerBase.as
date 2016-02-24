@@ -22,7 +22,7 @@ package com.minarto.controls
 		public var toolTip:UIComponent;
 		
 		
-		protected const binding:Binding = BindingDic.get("__ToolTip__"), _timer:Timer = new Timer(300, 1);
+		protected const binding:Bind = BindDic.get("__ToolTip__"), _timer:Timer = new Timer(300, 1);
 		
 		
 		protected var currentToolTip:DisplayObject, _targetBtn:Button;

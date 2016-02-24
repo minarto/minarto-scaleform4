@@ -1,6 +1,6 @@
 package com.minarto.manager 
 {
-	import com.minarto.data.Binding;
+	import com.minarto.data.Bind;
 	
 	import flash.display.*;
 	import flash.events.*;
@@ -18,8 +18,8 @@ package com.minarto.manager
 	 */
 	public class ListManager
 	{
-		static private const _listDic:Dictionary = new Dictionary(true), _bDrag:Binding = new Binding, _bOver:Binding = new Binding
-			, _bOut:Binding = new Binding, _bCancel:Binding = new Binding, _bMove:Binding = new Binding, _bDrop:Binding = new Binding;
+		static private const _listDic:Dictionary = new Dictionary(true), _bDrag:Bind = new Bind, _bOver:Bind = new Bind
+			, _bOut:Bind = new Bind, _bCancel:Bind = new Bind, _bMove:Bind = new Bind, _bDrop:Bind = new Bind;
 		
 		
 		static private var _fromListEvt:ListEvent, _dragContainer:DisplayObjectContainer, _offsetX:Number, _offsetY:Number
@@ -359,7 +359,7 @@ package com.minarto.manager
 				for(dragID in _fromListEvtData)
 				{
 					obj = _fromListEvtData[dragID];
-					if(obj["__drag__"])	_bMove.event(dragID, _fromListEvt);
+					if(obj["__drag__"])	_bMove.evt(dragID, _fromListEvt);
 				}
 			}
 			else
@@ -381,7 +381,7 @@ package com.minarto.manager
 						
 						if(obj["__drag__"])
 						{
-							_bDrag.event(dragID, _fromListEvt);
+							_bDrag.evt(dragID, _fromListEvt);
 						}
 					}
 					
@@ -431,7 +431,7 @@ package com.minarto.manager
 						obj = listData[dragID];
 						if(obj && obj["__drop__"])
 						{
-							_bOver.event(dragID, _fromListEvt, toEvt);
+							_bOver.evt(dragID, _fromListEvt, toEvt);
 						}
 					}
 				}
@@ -464,7 +464,7 @@ package com.minarto.manager
 						obj = listData[dragID];
 						if(obj && obj["__drop__"])
 						{
-							_bOut.event(dragID, _fromListEvt, toEvt);
+							_bOut.evt(dragID, _fromListEvt, toEvt);
 						}
 					}
 				}
@@ -517,7 +517,7 @@ package com.minarto.manager
 			for(dragID in _fromListEvtData)
 			{
 				obj = _fromListEvtData[dragID];
-				if(obj["__drag__"])	_bCancel.event(dragID, _fromListEvt);
+				if(obj["__drag__"])	_bCancel.evt(dragID, _fromListEvt);
 			}
 			
 			_reset();
@@ -553,7 +553,7 @@ package com.minarto.manager
 							if(obj && obj["__drop__"])
 							{
 								isDrop = true;
-								_bDrop.event(dragID, _fromListEvt, toEvt);
+								_bDrop.evt(dragID, _fromListEvt, toEvt);
 							}
 						}
 					}
@@ -576,7 +576,7 @@ package com.minarto.manager
 					
 					if(obj["__drag__"])
 					{
-						_bDrag.event(dragID, _fromListEvt);
+						_bDrag.evt(dragID, _fromListEvt);
 					}
 				}
 				

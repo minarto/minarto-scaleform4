@@ -6,12 +6,12 @@ package com.minarto.data
 	import flash.utils.Dictionary;
 	
 	
-	public class Binding 
+	public class Bind 
 	{
-		private const _valueDic:* = {}, _reservations:* = {};
+		protected const valueDic:* = {}, reservations:* = {};
 		
 		
-		private var _handlerDic:* = {}, _registerDic:* = {};
+		protected var handlerDic:* = {};
 		
 		
 		/**
@@ -21,11 +21,11 @@ package com.minarto.data
 		 */
 		public function set($key:String, ...$values):void
 		{
-			var a:Array = _reservations[$key], f:*, i:uint, l:uint;
+			var a:Array = reservations[$key], fn:*, i:uint, l:uint;
 			
-			_valueDic[$key] = $values;
+			valueDic[$key] = $values;
 			
-			for(f in _handlerDic[$key])
+			for(fn in handlerDic[$key])
 			{
 				i = 1;
 				break;
@@ -36,14 +36,14 @@ package com.minarto.data
 				if(a)
 				{
 					for(i=0, l=a.push($values); i<l; ++i)	_set($key, a[i]);
-					delete	_reservations[$key];
+					delete	reservations[$key];
 				}
 				else	_set($key, $values);
 				
 				return;
 			}
 			
-			if(!a)	_reservations[$key] = a = [];
+			if(!a)	reservations[$key] = a = [];
 			a.push($values);
 		}
 		
@@ -53,11 +53,11 @@ package com.minarto.data
 		 * @param $key	바인딩 키
 		 * @param $value	바인딩 값
 		 */
-		private function _set($key:String, $values:Array):void 
+		protected function _set($key:String, $values:Array):void 
 		{
-			var dic:Dictionary = _handlerDic[$key], f:*;
+			var dic:Dictionary = handlerDic[$key], fn:*;
 			
-			for(f in dic)	f.apply(null, $values.concat(dic[f]));
+			for(fn in dic)	fn.apply(null, $values.concat(dic[fn]));
 		}
 		
 		
@@ -66,7 +66,7 @@ package com.minarto.data
 		 * @param $key	이벤트 키
 		 * @param $value	이벤트 값
 		 */
-		public function event($key:String, ...$values):void 
+		public function evt($key:String, ...$values):void 
 		{
 			_set($key, $values);
 		}
@@ -79,7 +79,7 @@ package com.minarto.data
 		 */				
 		public function add($key:String, $handler:Function, ...$args):void 
 		{
-			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true));
+			var dic:Dictionary = handlerDic[$key] || (handlerDic[$key] = new Dictionary(true));
 			
 			dic[$handler] = $args;
 		}
@@ -93,16 +93,11 @@ package com.minarto.data
 		 */				
 		public function addPlay($key:String, $handler:Function, ...$args):void 
 		{
-			var dic:Dictionary = _handlerDic[$key] || (_handlerDic[$key] = new Dictionary(true)), values:Array;
+			var dic:Dictionary = handlerDic[$key] || (handlerDic[$key] = new Dictionary(true)), values:Array;
 			
 			dic[$handler] = $args;
 			
-			if(values = _valueDic[$key])
-			{
-				$args = $args.concat();
-				$args.unshift.apply(null, values);
-				$handler.apply(null, $args);
-			}
+			if(values = valueDic[$key])	$handler.apply(null, values.concat($args));
 		}
 		
 		
@@ -112,38 +107,38 @@ package com.minarto.data
 		 * @param $handler	바인딩 핸들러
 		 * 
 		 */			
-		public function del($key:String=null, $handler:*=null):void 
+		public function del($key:String=null, $handler:Function=null):void 
 		{
-			var dic:Dictionary, f:*;
+			var dic:Dictionary, fn:*;
 			
 			if($key)
 			{
 				if($handler)
 				{
-					if(dic = _handlerDic[$key])
+					if(dic = handlerDic[$key])
 					{
 						delete	dic[$handler];
 						
 						$handler = null;
-						for(f in dic)
+						for(fn in dic)
 						{
-							$handler = f;
+							$handler = fn;
 							break;
 						}
-						if(!$handler)	delete	_handlerDic[$key];
+						if(!$handler)	delete	handlerDic[$key];
 					}
 				}
-				else	delete	_handlerDic[$key];
+				else	delete	handlerDic[$key];
 			}
 			else if($handler)
 			{
-				for($key in _handlerDic)
+				for($key in handlerDic)
 				{
-					dic = _handlerDic[$key];
+					dic = handlerDic[$key];
 					delete	dic[$handler];
 				}
 			}
-			else	_handlerDic = {};
+			else	handlerDic = {};
 		}
 		
 		
@@ -155,7 +150,7 @@ package com.minarto.data
 		 */
 		public function get($key:String):Array 
 		{
-			return	_valueDic[$key];
+			return	valueDic[$key];
 		}
 		
 		
@@ -168,7 +163,7 @@ package com.minarto.data
 		 */
 		public function getAt($key:String, $index:uint=0):* 
 		{
-			arguments = _valueDic[$key];
+			arguments = valueDic[$key];
 			
 			return	arguments ? arguments[$index] : undefined;
 		}

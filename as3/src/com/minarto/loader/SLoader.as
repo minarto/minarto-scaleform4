@@ -10,10 +10,10 @@ package com.minarto.loader
 	 */
 	public class SLoader 
 	{
-		private const _uLoader:URLLoader = new URLLoader, _urq:URLRequest = new URLRequest, _reservations:Array = [];
+		protected const uLoader:URLLoader = new URLLoader, urq:URLRequest = new URLRequest, reservations:Array = [], contents:Array = [];
 		
 		
-		private var _currentVars:*, _dLoader:Loader = new Loader, _allVars:*, _count:uint;
+		protected var currentVar:*, dLoader:Loader, allVar:*, loadedIndex:uint;
 		
 		
 		/**
@@ -24,28 +24,24 @@ package com.minarto.loader
 		 * @return 
 		 * 
 		 */		
-		public function add($type:String, $src:String, $vars:*):void
+		public function add($type:String, $src:String, $completeOrVar:*):void
 		{
-			var info:LoaderInfo, onComplete:Function = $vars as Function;
+			var cVar:*;
 			
-			if(onComplete)
+			if(allVar)	throw	new Error("can't add on Loading");
+			
+			if($completeOrVar as Function)
 			{
-				$vars = {};
-				$vars.onComplete = onComplete;
+				cVar = {};
+				cVar.onComplete = $completeOrVar;
 			}
-			else if(!$vars)
-			{
-				$vars = {};
-			}
+			else	cVar = $completeOrVar || {};
 			
 			switch($type = ($type || "").toLowerCase())
 			{
 				case "img" :
-					break;
 				case "swf" :
-					break;
 				case "txt" :
-					break;
 				case "xml" :
 					break;
 				
@@ -53,11 +49,10 @@ package com.minarto.loader
 					throw	new Error("load type error");
 			}
 			
-			$vars.type = $type;
-			$vars.src = $src;
-
-			_reservations.push($vars);
-			++ _count;
+			cVar.type = $type;
+			cVar.src = $src;
+			
+			reservations.push(cVar);
 		}
 		
 		
@@ -68,39 +63,34 @@ package com.minarto.loader
 		 */		
 		public function del($key:String, $v:*):void
 		{
-			var i:uint = _reservations.length, vars:*, loader:*, info:LoaderInfo;
-			
-			if(_currentVars && (_currentVars[$key] == $v))
-			{
-				switch(_currentVars.type)
-				{
-					case "xml" :
-					case "txt" :
-						loader = _uLoader;
-						break;
-					
-					default :
-						info = _dLoader.contentLoaderInfo;
-						info.removeEventListener(Event.COMPLETE, _complete);
-						info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
-						
-						loader = _dLoader;
-				}
-				
-				-- _count;
-				loader.close();
-				
-				_load();
-			}
+			var i:uint = reservations.length, cVar:*, loader:*, info:LoaderInfo;
 			
 			while(i --)
 			{
-				vars = _reservations[i];
-				if(vars[$key] == $v)
+				cVar = reservations[i];
+				if (cVar[$key] == $v)	reservations.splice(i, 1);
+			}
+			
+			if(currentVar && (currentVar[$key] == $v))
+			{
+				switch(currentVar.type)
 				{
-					-- _count;
-					_reservations.splice(i, 1);
+					case "xml" :
+					case "txt" :
+						loader = uLoader;
+						break;
+					
+					default :
+						info = dLoader.contentLoaderInfo;
+						info.removeEventListener(Event.COMPLETE, complete);
+						info.removeEventListener(IOErrorEvent.IO_ERROR, error);
+						
+						loader = dLoader;
 				}
+				
+				loader.close();
+				
+				_load();
 			}
 		}
 		
@@ -108,70 +98,80 @@ package com.minarto.loader
 		/**
 		 * 로드
 		 * @param $complete
-		 * @param $args
+		 * @param $vars
 		 * 
 		 */		
-		public function load($complete:Function, $vars:*=null):void
+		public function load($complete:Function, $var:*=null):void
 		{
-			if(_currentVars)	return;
+			var key:String = "onProgress", funcParams:Array, total:uint = reservations.length;
 			
-			if(!$vars)	$vars = {};
-			$vars.onComplete = $complete;
-			$vars.content = [];
-			_allVars = $vars;
+			loadedIndex = 0;
 			
-			_uLoader.addEventListener(Event.COMPLETE, _complete);
-			_uLoader.addEventListener(IOErrorEvent.IO_ERROR, _error);
+			if(!$var) $var = {};
+			$var.onComplete = $complete;
+			allVar = $var;
+			
+			$complete = $var[key];
+			if($complete)
+			{
+				funcParams = $var[key + "Params"];
+				if(funcParams)	funcParams.unshift(0, total);
+				else	$var[key + "Params"] = funcParams = [0, total];
+			}
+			
+			uLoader.addEventListener(Event.COMPLETE, complete);
+			uLoader.addEventListener(IOErrorEvent.IO_ERROR, error);
 			
 			_load();
 		}
 		
 		
-		private function _complete($e:Event):void
+		protected function complete($e:Event):void
 		{
-			var data:*, info:LoaderInfo, onComplete:Function = _currentVars.onComplete, a:Array = _allVars.content;
+			var data:*, info:LoaderInfo, key:String = "onProgress", func:Function = allVar[key], funcParams:Array;
 			
-			switch(_currentVars.type)
+			++ loadedIndex;
+			
+			switch(currentVar.type)
 			{
 				case "xml" :
-					try
-					{
-						data = XML(_uLoader.data);
-					}
-					catch($error:Error)
-					{
-					}
+					try	{	data = XML(uLoader.data);	}
+					catch($error:Error)	{}
 					
 					break;
 				
 				case "txt" :
-					data = _uLoader.data;
+					data = uLoader.data;
 					break;
 				
 				default :
-					info = _dLoader.contentLoaderInfo;
-					info.removeEventListener(Event.COMPLETE, _complete);
-					info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
+					info = dLoader.contentLoaderInfo;
+					info.removeEventListener(Event.COMPLETE, complete);
+					info.removeEventListener(IOErrorEvent.IO_ERROR, error);
 					
 					data = info.content;
 			}
 			
-			_currentVars.data = data;
-			a.push(_currentVars);
+			contents.push(data);
 			
-			if(onComplete)
+			if(func)
 			{
-				a = _currentVars.onCompleteParams;
-				
-				if(a)
+				funcParams = allVar[key + "Params"];
+				funcParams[0] = loadedIndex;
+				func.apply(null, funcParams);
+			}
+			
+			key = "onComplete";
+			func = currentVar[key];
+			if (func)
+			{
+				funcParams = allVar[key + "Params"];
+				if (funcParams)
 				{
-					a.unshift(data);
-					onComplete.apply(null, a);
+					funcParams.unshift(data);
+					func.apply(null, funcParams);
 				}
-				else
-				{
-					onComplete(data);
-				}
+				else	func(data);
 			}
 			
 			_load();
@@ -183,92 +183,87 @@ package com.minarto.loader
 		 * @param $e
 		 * 
 		 */		
-		private function _error($e:IOErrorEvent):void 
+		protected function error($e:IOErrorEvent):void 
 		{
-			var data:* = undefined, info:LoaderInfo, onError:Function = _currentVars.onError, contents:Array = _allVars.content;
+			var info:LoaderInfo, key:String = "onProgress", func:Function = allVar[key], funcParams:Array;
 			
-			switch(_currentVars.type)
+			++ loadedIndex;
+			
+			switch(currentVar.type)
 			{
 				case "swf" :
 				case "img" :
-					info = _dLoader.contentLoaderInfo;
-					info.removeEventListener(Event.COMPLETE, _complete);
-					info.removeEventListener(IOErrorEvent.IO_ERROR, _error);
-
+					info = dLoader.contentLoaderInfo;
+					info.removeEventListener(Event.COMPLETE, complete);
+					info.removeEventListener(IOErrorEvent.IO_ERROR, error);
+					
 					break;
 			}
 			
-			_currentVars.data = data;
-			contents.push(_currentVars);
+			contents.push(null);
 			
-			if(onError)	onError.apply(null, _currentVars.onErrorParams);
+			if(func)
+			{
+				funcParams = allVar[key + "Params"];
+				funcParams[0] = loadedIndex;
+				func.apply(null, funcParams);
+			}
+
+			key = "onError";
+			func = currentVar[key];
+			if(func)	func.apply(null, currentVar[key + "Params"]);
 			
 			_load();
 		}
 		
 		
-		private function _load():void 
+		protected function _load():void 
 		{
-			var loader:*, info:LoaderInfo, func:Function, funcParams:Array, loadedFileLength:uint = _count - _reservations.length;
+			var key:String, func:Function, funcParams:Array, loader:*, info:LoaderInfo;
 			
-			if(loadedFileLength < _count)
+			if(currentVar = reservations.shift())
 			{
-				func = _allVars.onProgress;
-				if(func)
-				{
-					funcParams = _allVars.onProgressParams;
-					if(funcParams)
-					{
-						funcParams.unshift(loadedFileLength, _count);
-						func.apply(null, funcParams);
-					}
-					else	func(loadedFileLength, _count);
-				}
-			}
-			
-			if(_currentVars = _reservations.shift())
-			{
-				_urq.url = _currentVars.src;
+				urq.url = currentVar.src;
 				
-				switch(_currentVars.type)
+				switch(currentVar.type)
 				{
 					case "txt" :
 					case "xml" :
-						loader = _uLoader;
+						loader = uLoader;
 						break;
 					
 					default :
-						_dLoader = new Loader;
+						loader = dLoader = new Loader;
 						
-						info = _dLoader.contentLoaderInfo;
-						info.addEventListener(Event.COMPLETE, _complete);
-						info.addEventListener(IOErrorEvent.IO_ERROR, _error);
-						
-						loader = _dLoader;
+						info = dLoader.contentLoaderInfo;
+						info.addEventListener(Event.COMPLETE, complete);
+						info.addEventListener(IOErrorEvent.IO_ERROR, error);
 				}
 				
-				loader.load(_urq);
+				loader.load(urq);
 			}
 			else
 			{
-				_uLoader.removeEventListener(Event.COMPLETE, _complete);
-				_uLoader.removeEventListener(IOErrorEvent.IO_ERROR, _error);
+				uLoader.removeEventListener(Event.COMPLETE, complete);
+				uLoader.removeEventListener(IOErrorEvent.IO_ERROR, error);
 				
-				func = _allVars.onComplete;
-				if(func)
+				key = "onComplete";
+				func = allVar[key];
+				if (func)
 				{
-					funcParams = _allVars.onCompleteParams;
-					if(funcParams)
+					funcParams = allVar[key + "Params"];
+					if (funcParams)
 					{
-						funcParams.unshift(_allVars.content);
+						funcParams.unshift(contents.concat());
 						func.apply(null, funcParams);
 					}
-					else	func(_allVars.content);
+					else	func(contents.concat());
 				}
 				
-				_allVars = null;
-				_count = 0;
-				_dLoader = null;
+				loadedIndex = 0;
+				contents.length = 0;
+				allVar = null;
+				dLoader = null;
 			}
 		}
 	}
