@@ -8,14 +8,12 @@ package com.minarto.data
 		static private const _dic:* = {};
 		
 		
-		static public function link($uid0:*, $uid1:*):Bind
+		static public function link($uid0:*, $uid1:*):void
 		{
-			var b:Bind = _dic[$uid0] || _dic[$uid1] || new Bind;
+			var b:Bind = _dic[$uid0] || get($uid1);
 			
 			_dic[$uid0] = b;
 			_dic[$uid1] = b;
-			
-			return	b;
 		}
 		
 		
@@ -31,8 +29,9 @@ package com.minarto.data
 		/**
 		 * 값 설정
 		 */	
-		static public function set($uid:*, ...$values):void
+		static public function set($uid:*, $key:String, ...$values):void
 		{
+			$values.unshift($key);
 			get($uid).set.apply(null, $values);
 		}
 		
@@ -40,8 +39,9 @@ package com.minarto.data
 		/**
 		 * 이벤트 발생
 		 */	
-		static public function evt($uid:*, ...$values):void
+		static public function evt($uid:*, $key:String, ...$values):void
 		{
+			$values.unshift($key);
 			get($uid).evt.apply(null, $values);
 		}
 	}

@@ -3,7 +3,7 @@ package com.minarto.data
 	import flash.utils.*;
 	
 
-	public class DateBind extends Bind
+	public class DBind extends Bind
 	{
 		static protected const gbind:Bind = new Bind;
 		
@@ -11,22 +11,22 @@ package com.minarto.data
 		static protected var offsetTime:Number;
 		
 		
+		static protected function onTime($year:uint, $month:uint, $date:uint, $hour:uint, $min:uint, $sec:uint=0, $millisec:uint=0):void
+		{
+			var date:Date = new Date($year, $month, $date, $hour, $min, $sec, $millisec);
+			
+			offsetTime = date.time - getTimer();
+		};
+		
+		
 		static protected function getOffsetTime():Number
 		{
 			if(isNaN(offsetTime))
 			{
-				var date:Date;
-				
-				var onTime:Function = function($year:uint, $month:uint, $date:uint, $hour:uint, $sec:uint, $millisec:uint=0):void
-				{
-					var date:Date = new Date($year, $month, $date, $hour, $sec, $millisec);
-					
-					offsetTime = date.time - getTimer();
-				};
+				var date:Date = new Date;
 				
 				gbind.add("serverDate", onTime);
 				
-				date = new Date;
 				gbind.evt("serverDate", date.fullYear, date.month, date.date, date.hours, date.minutes, date.seconds, date.milliseconds);
 			}
 			
@@ -42,11 +42,11 @@ package com.minarto.data
 		
 		public function toString():String
 		{
-			return	"[com.minarto.data.DateBind interval:" + getInterval() + "sec]"
+			return	"[com.minarto.data.DBind interval:" + getInterval() + "sec]";
 		}
 		
 		
-		protected var interval:uint = 100, intervalID:Number;
+		protected var interval:uint = 100, intervalID:uint;
 		
 		
 		/**
@@ -58,7 +58,6 @@ package com.minarto.data
 			
 			if(getIsPlaying())
 			{
-				stop();
 				play();
 			}
 		}
@@ -71,7 +70,10 @@ package com.minarto.data
 		{
 			var key:String, date:Date = getDate();
 			
-			for(key in handlerDic)	evt(key, date);
+			for(key in handlerDic)
+			{
+				evt(key, date);
+			}
 		}
 		
 		
@@ -81,6 +83,7 @@ package com.minarto.data
 		 */		
 		public function play():void
 		{
+			clearInterval(intervalID);
 			intervalID = setInterval(intervalFunc, interval);
 		}
 		

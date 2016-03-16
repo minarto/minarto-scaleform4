@@ -25,16 +25,10 @@ package com.minarto.loader
 		 */		
 		public function add($src:String, $completeOrVar:*=null):void
 		{
-			var cVar:*;
+			var cVar:* = {}, p:*;
 			
-			if(allVar)	throw	new Error("can't add on Loading");
-			
-			if($completeOrVar as Function)
-			{
-				cVar = {};
-				cVar.onComplete = $completeOrVar;
-			}
-			else	cVar = $completeOrVar || {};
+			if($completeOrVar as Function)	cVar.onComplete = $completeOrVar;
+			else if($completeOrVar)	for(p in $completeOrVar)	cVar[p] = $completeOrVar[p];
 			
 			cVar.src = $src;
 			

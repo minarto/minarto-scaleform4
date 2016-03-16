@@ -17,33 +17,41 @@ package com.minarto.data
 		/**
 		 * 값 설정 
 		 * @param $key	바인딩 키
-		 * @param $value	바인딩 값
+		 * @param $values	바인딩 값
 		 */
 		public function set($key:String, ...$values):void
 		{
-			var a:Array = reservations[$key], fn:*, i:uint, l:uint;
+			var dic:Dictionary = handlerDic[$key], fn:*, a:Array;
 			
 			valueDic[$key] = $values;
 			
-			for(fn in handlerDic[$key])
+			for(fn in dic)
 			{
-				i = 1;
-				break;
-			}
-			
-			if(i)
-			{
-				if(a)
-				{
-					for(i=0, l=a.push($values); i<l; ++i)	_set($key, a[i]);
-					delete	reservations[$key];
-				}
-				else	_set($key, $values);
-				
+				_set($key, $values);
 				return;
 			}
 			
-			if(!a)	reservations[$key] = a = [];
+			a = reservations[$key] || (reservations[$key] = []);
+			a.push($values);
+		}
+		
+		
+		/**
+		 * 이벤트 발생
+		 * @param $key	이벤트 키
+		 * @param $value	이벤트 값
+		 */
+		public function evt($key:String, ...$values):void 
+		{
+			var dic:Dictionary = handlerDic[$key], fn:*, a:Array;
+			
+			for(fn in dic)
+			{
+				_set($key, $values);
+				return;
+			}
+			
+			a = reservations[$key] || (reservations[$key] = []);
 			a.push($values);
 		}
 		
@@ -57,18 +65,10 @@ package com.minarto.data
 		{
 			var dic:Dictionary = handlerDic[$key], fn:*;
 			
-			for(fn in dic)	fn.apply(null, $values.concat(dic[fn]));
-		}
-		
-		
-		/**
-		 * 이벤트 발생
-		 * @param $key	이벤트 키
-		 * @param $value	이벤트 값
-		 */
-		public function evt($key:String, ...$values):void 
-		{
-			_set($key, $values);
+			for(fn in dic)
+			{
+				fn.apply(null, $values.concat(dic[fn]));
+			}
 		}
 		
 		
@@ -82,6 +82,8 @@ package com.minarto.data
 			var dic:Dictionary = handlerDic[$key] || (handlerDic[$key] = new Dictionary(true));
 			
 			dic[$handler] = $args;
+			
+			delete	reservations[$key];
 		}
 		
 		
@@ -93,11 +95,16 @@ package com.minarto.data
 		 */				
 		public function addPlay($key:String, $handler:Function, ...$args):void 
 		{
-			var dic:Dictionary = handlerDic[$key] || (handlerDic[$key] = new Dictionary(true)), values:Array;
+			var values:Array = [$key, $handler];
 			
-			dic[$handler] = $args;
+			values.concat($args);
+			add.apply(this, values);
 			
-			if(values = valueDic[$key])	$handler.apply(null, values.concat($args));
+			values = valueDic[$key];
+			if(values)
+			{
+				$handler.apply(null, values.concat($args));
+			}
 		}
 		
 		

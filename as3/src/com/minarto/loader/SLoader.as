@@ -24,18 +24,12 @@ package com.minarto.loader
 		 * @return 
 		 * 
 		 */		
-		public function add($type:String, $src:String, $completeOrVar:*):void
+		public function add($type:String, $src:String, $vars:*):void
 		{
-			var cVar:*;
+			var cVar:* = {}, p:*;
 			
-			if(allVar)	throw	new Error("can't add on Loading");
-			
-			if($completeOrVar as Function)
-			{
-				cVar = {};
-				cVar.onComplete = $completeOrVar;
-			}
-			else	cVar = $completeOrVar || {};
+			if($vars as Function)	cVar.onComplete = $vars;
+			else if($vars)	for(p in $vars)	cVar[p] = $vars[p];
 			
 			switch($type = ($type || "").toLowerCase())
 			{

@@ -30,32 +30,72 @@ package com.minarto.manager
 		public function set($sceneID:*, $vars:*=null):void
 		{
 			var sceneDatas:Array = sceneDataDic[$sceneID], i:uint, l:uint = sceneDatas ? sceneDatas.length : 0, a:Array = []
-				, vars:*, id:*, src:String, pVars:*;
+				, cVars:*, id:*, src:String, pVars:*, content:DisplayObject;
 			
 			sceneID = $sceneID;
 			
 			for(; i < l; ++ i)
 			{
-				vars = sceneDatas[i];
+				cVars = sceneDatas[i];
 				
-				id = vars.id;
-				src = vars.src;
-				src = srcDic[src] ? srcDic[src] : src;
+				id = cVars.id;
+				src = cVars.src;
 				
-				pVars = get(id);
-				if(pVars && (pVars.src == src) && vars.noCache)
+				pVars = dic[id];
+				if(!cVars.noCache && pVars && (pVars.src == src))
 				{
+					content = pVars.content;
+					delete	pVars.content;
+					
+					cVars.content = content;
 					delete	dic[id];
-					trashDic[id] = pVars;
 				}
-				else	continue;
+			}
+			
+			for(i=0; i < l; ++ i)
+			{
+				cVars = sceneDatas[i];
 				
-				a.push(id, src, vars);
+				src = cVars.src;
+				
+				if(!cVars.content && !cVars.noCache)
+				{
+					for(id in dic)
+					{
+						pVars = dic[id];
+						if(pVars.src == src)
+						{
+							content = pVars.content;
+							delete	pVars.content;
+							
+							cVars.content = content;
+							delete	dic[id];
+							
+							break;
+						}
+					}
+				}
 			}
 			
 			del(null);
 			
-			add.apply(null, a);
+			for(i = 0; i < l; ++ i)
+			{
+				cVars = sceneDatas[i];
+				
+				id = cVars.id;
+				src = cVars.src;
+				src = srcDic[src] ? srcDic[src] : src;
+				
+				dic[id] = cVars;
+				
+				content = cVars.content;
+				if(content)	continue;
+				
+				loader.add(src, $vars);
+			}
+			
+			loader.load(allComplete);
 		}
 		
 		
@@ -75,7 +115,17 @@ package com.minarto.manager
 				$src = srcDic[$src] ? srcDic[$src] : $src;
 				
 				pVars = get($id);
-				if(pVars && (pVars.src == $src) && $vars.noCache)	trashDic[$id] = pVars;
+				if(pVars && (pVars.src == $src))
+				{
+					if($vars.noCache)
+					{
+						trashDic[$id] = pVars;
+					}
+					else
+					{
+						
+					}
+				}
 				else	continue;
 				
 				$vars.id = $id;
@@ -223,6 +273,18 @@ package com.minarto.manager
 		}
 		
 		
+		protected function complete($d:DisplayObject, $var:*):void
+		{
+			ExternalInterface.call("addComplete", $var.id);
+		}
+		
+		
+		protected function error($var:*):void
+		{
+			ExternalInterface.call("addComplete", $var.id);
+		}
+		
+		
 		protected function allComplete($contents:Array, ...$args):void
 		{
 			var i:uint, l:uint = $contents.length, vars:*, id:*, d:DisplayObject, io:InteractiveObject, func:Function, index:uint = container.numChildren;
@@ -242,6 +304,7 @@ package com.minarto.manager
 					}
 					
 					if(vars.visible === false)	d.visible = false;
+					if(!isNaN(vars.alpha))	d.alpha = vars.alpha;
 					if(vars.add !== false)
 					{
 						if(container.contains(d))	container.setChildIndex(d, index + i);
@@ -254,12 +317,6 @@ package com.minarto.manager
 						func = d["init"];
 						func();
 					}
-					
-					ExternalInterface.call("addComplete", id);
-				}
-				else
-				{
-					ExternalInterface.call("addError", id);
 				}
 			}
 			
